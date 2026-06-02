@@ -5179,6 +5179,21 @@ async function confirmDashboardAdjust(id, delta) {
 }
 
 // ── Hoofd sync ─────────────────────────────────────────────
+function buildExportObject() {
+  return {
+    version: 4,
+    exportedAt: new Date().toISOString(),
+    shelves: state.shelves,
+    boxes: state.boxes,
+    items: state.items,
+    stockItems: state.stockItems,
+    categories: state.categories,
+    units: state.units,
+    stockNames: state.stockNames,
+    shops: state.shops
+  };
+}
+
 async function driveSync(showFeedback) {
   if (gSyncing || !isGTokenValid()) return;
   gSyncing = true;
