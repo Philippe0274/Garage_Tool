@@ -70,34 +70,7 @@
   }
   .lang-btn.active { background:var(--mode-accent); color:white; }
 
-  /* MODE TABS */
-  .mode-tabs {
-    display:grid; grid-template-columns:1fr 1fr;
-    background:var(--surface); border-bottom:1px solid var(--border);
-    position:sticky; top:53px; z-index:99; gap:0;
-    padding:8px 12px; gap:6px;
-  }
-  .mode-tab {
-    background:var(--surface-2); border:1px solid var(--border); color:var(--text-dim);
-    padding:10px 8px; cursor:pointer; border-radius:var(--radius-sm);
-    font-family:'JetBrains Mono'; font-size:11px;
-    text-transform:uppercase; letter-spacing:1px; font-weight:700;
-    display:flex; align-items:center; justify-content:center; gap:6px;
-    position:relative; transition:all .2s;
-  }
-  .mode-tab[data-mode="material"].active {
-    color:#fff; background:var(--accent); border-color:var(--accent);
-  }
-  .mode-tab[data-mode="stock"].active {
-    color:#fff; background:var(--accent-stock); border-color:var(--accent-stock);
-  }
-  .mode-tab .badge {
-    position:absolute; top:-6px; right:-6px;
-    background:var(--danger); color:white;
-    font-size:9px; padding:2px 5px; border-radius:8px;
-    font-weight:700; min-width:16px; text-align:center;
-    border:2px solid var(--bg);
-  }
+  /* MODE TABS — CSS kept for legacy compatibility only */
 
   /* SEARCH BAR */
   .search-bar {
@@ -125,7 +98,7 @@
   main { padding:12px; max-width:800px; margin:0 auto; }
   .view { display:none; }
   .view.active { display:block; }
-  .mode-content { display:none; }
+  /* .mode-content removed — not used in new interface */
   .mode-content.active { display:block; }
 
   .section-title {
@@ -2084,25 +2057,7 @@ function showLowStockPopup(lowItems) {
   `;
   openModal(t('low_stock_alert'), html);
 }
-// ============================================================================
-// MAIN RENDER — updates home stats + badges only
-// ============================================================================
-function render() {
-  const low = getLowStockItems();
-  const expiring = getExpiringItems();
-  const setEl = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
-  setEl('stat-items', state.items.length);
-  setEl('stat-boxes', state.boxes.length);
-  setEl('stat-stock-low', low.length);
-  setEl('stat-stock-expiring', expiring.length);
-  const total = low.length + expiring.length;
-  const nb = document.getElementById('nav-stock-badge');
-  const bb = document.getElementById('browse-stock-badge');
-  if (nb) { nb.style.display = total > 0 ? 'inline-block' : 'none'; nb.textContent = total; }
-  if (bb) { bb.style.display = total > 0 ? 'inline-block' : 'none'; bb.textContent = total; }
-}
-
-function renderRecentItems() {} // no longer used
+// renderRecentItems — no longer used
 
 function renderResultItem(item, type) {
   if (type === 'stock') {
@@ -2199,47 +2154,8 @@ function renderBoxesList() {
 }
 
 // ============================================================================
-// STOCK LIST
+// STOCK LIST — renderStockRow is used by renderBrowseStock
 // ============================================================================
-function renderCategoryChips() {
-  const c = document.getElementById('cat-filter-chips');
-  if (!c) return;
-  const cats = state.categories;
-  let html = `<button class="cat-chip ${currentCategoryFilter==='all'?'active':''}" onclick="filterCategory('all')">${t('all_categories')}</button>`;
-  cats.forEach(cat => {
-    html += `<button class="cat-chip ${currentCategoryFilter===cat.id?'active':''}" onclick="filterCategory('${cat.id}')">${cat.icon || ''} ${escapeHtml(catName(cat))}</button>`;
-  });
-  html += `<button class="cat-manage-btn" onclick="openCategoryManager()">⚙️</button>`;
-  c.innerHTML = html;
-}
-
-function filterCategory(catId) {
-  currentCategoryFilter = catId;
-  renderCategoryChips();
-  renderStockList();
-}
-
-function renderStockList() {
-  const c = document.getElementById('stockList');
-  if (!c) return;
-  let list = [...state.stockItems];
-  if (currentCategoryFilter !== 'all') {
-    list = list.filter(it => it.categoryId === currentCategoryFilter);
-  }
-  // sort: low/empty first, then alphabetic
-  list.sort((a,b) => {
-    const aLow = (a.minQuantity||0)>0 && (a.quantity||0) <= (a.minQuantity||0);
-    const bLow = (b.minQuantity||0)>0 && (b.quantity||0) <= (b.minQuantity||0);
-    if (aLow !== bLow) return aLow ? -1 : 1;
-    return a.name.localeCompare(b.name);
-  });
-
-  if (list.length === 0) {
-    c.innerHTML = `<div class="empty"><div class="empty-icon">🥫</div><div class="empty-text">${t('no_stock_yet')}</div></div>`;
-    return;
-  }
-  c.innerHTML = list.map(renderStockRow).join('');
-}
 
 function renderStockRow(it) {
   const cat = findCat(it.categoryId);
@@ -2316,11 +2232,6 @@ function promptSetQty(id) {
   item.lastUpdated = Date.now();
   dbPut('stockItems', item).then(() => { renderStockList(); render(); });
 }
-
-// ============================================================================
-// SEARCH — legacy stub (search now lives in browse screens)
-// ============================================================================
-function performSearch() {} // replaced by renderBrowseMaterial / renderBrowseStock
 
 // ============================================================================
 // VOICE INPUT
@@ -2472,14 +2383,14 @@ function refreshShelfPhotoArea() {
   area.innerHTML = (editingShelfPhoto
     ? `<div class="photo-thumb"><img src="${editingShelfPhoto}"><button class="photo-remove" onclick="removeShelfPhoto()">×</button></div>`
     : '') +
-  `<label class="photo-add-btn" title="Camera">
+  `<button type="button" class="photo-add-btn" onclick="document.getElementById('ph-shelf-cam').click()">
     <span>📷</span><span>Camera</span>
-    <input type="file" accept="image/*" capture="environment" style="display:none" onchange="addShelfPhoto(event)">
-  </label>
-  <label class="photo-add-btn" title="Galerij">
+  </button>
+  <button type="button" class="photo-add-btn" onclick="document.getElementById('ph-shelf-gal').click()">
     <span>🖼️</span><span>Galerij</span>
-    <input type="file" accept="image/*" style="display:none" onchange="addShelfPhoto(event)">
-  </label>`;
+  </button>
+  <input type="file" id="ph-shelf-cam" accept="image/*" capture="environment" style="display:none" onchange="addShelfPhoto(event)">
+  <input type="file" id="ph-shelf-gal" accept="image/*" style="display:none" onchange="addShelfPhoto(event)">`;
 }
 
 async function saveShelf(id) {
@@ -2708,7 +2619,14 @@ function refreshBoxPhotoArea() {
   area.innerHTML = (editingBoxPhoto
     ? `<div class="photo-thumb"><img src="${editingBoxPhoto}"><button class="photo-remove" onclick="removeBoxPhoto()">×</button></div>`
     : '') +
-    `<label class="photo-add">+<input type="file" accept="image/*" capture="environment" style="display:none" onchange="addBoxPhoto(event)"></label>`;
+  `<button type="button" class="photo-add-btn" onclick="document.getElementById('ph-box-cam').click()">
+    <span>📷</span><span>Camera</span>
+  </button>
+  <button type="button" class="photo-add-btn" onclick="document.getElementById('ph-box-gal').click()">
+    <span>🖼️</span><span>Galerij</span>
+  </button>
+  <input type="file" id="ph-box-cam" accept="image/*" capture="environment" style="display:none" onchange="addBoxPhoto(event)">
+  <input type="file" id="ph-box-gal" accept="image/*" style="display:none" onchange="addBoxPhoto(event)">`;
 }
 
 async function saveBox(id) {
@@ -2860,6 +2778,7 @@ function openItemEditor(itemId, preselectBoxId) {
     </details>
     <div class="btn-row" style="margin-top:14px;">
       ${item ? `<button class="btn btn-danger" onclick="deleteItem('${item.id}')">${t('delete')}</button>` : ''}
+      ${item ? `<button class="btn btn-secondary" onclick="duplicateItem('${item.id}')">⎘ ${currentLang==='fr'?'Dupliquer':'Dupliceren'}</button>` : ''}
       <button class="btn" onclick="saveItem('${item?.id || ''}')">${t('save')}</button>
     </div>
   `);
@@ -2879,14 +2798,14 @@ function refreshItemPhotoArea() {
   area.innerHTML = editingItemPhotos.map((p, i) =>
     `<div class="photo-thumb"><img src="${p}"><button class="photo-remove" onclick="removeItemPhoto(${i})">×</button></div>`
   ).join('') +
-  `<label class="photo-add-btn" title="Camera">
+  `<button type="button" class="photo-add-btn" onclick="document.getElementById('ph-item-cam').click()">
     <span>📷</span><span>Camera</span>
-    <input type="file" accept="image/*" capture="environment" style="display:none" onchange="addItemPhoto(event)">
-  </label>
-  <label class="photo-add-btn" title="Galerij">
+  </button>
+  <button type="button" class="photo-add-btn" onclick="document.getElementById('ph-item-gal').click()">
     <span>🖼️</span><span>Galerij</span>
-    <input type="file" accept="image/*" style="display:none" onchange="addItemPhoto(event)">
-  </label>`;
+  </button>
+  <input type="file" id="ph-item-cam" accept="image/*" capture="environment" style="display:none" onchange="addItemPhoto(event)">
+  <input type="file" id="ph-item-gal" accept="image/*" style="display:none" onchange="addItemPhoto(event)">`;
 }
 
 async function saveItem(id) {
@@ -2919,6 +2838,23 @@ async function deleteItem(id) {
   renderShelvesList('material', 'shelvesList');
   renderBoxesList();
   render();
+}
+
+async function duplicateItem(id) {
+  const orig = state.items.find(i => i.id === id);
+  if (!orig) return;
+  const copy = {
+    ...orig,
+    id: uid(),
+    name: orig.name + (currentLang==='fr' ? ' (copie)' : ' (kopie)'),
+    createdAt: Date.now(),
+    photos: [...(orig.photos||[])]
+  };
+  await dbPut('items', copy);
+  state.items.push(copy);
+  closeModal();
+  toast(currentLang==='fr' ? '⎘ Dupliqué' : '⎘ Gedupliceerd');
+  openItemEditor(copy.id);
 }
 // ============================================================================
 // STOCK ITEM EDITOR
@@ -3061,6 +2997,7 @@ function openStockEditor(stockId, preselectShelfId, preselectLevel, preselectPos
 
     <div class="btn-row" style="margin-top:14px;">
       ${item ? `<button class="btn btn-danger" onclick="deleteStock('${item.id}')">${t('delete')}</button>` : ''}
+      ${item ? `<button class="btn btn-secondary" onclick="duplicateStock('${item.id}')">⎘ ${currentLang==='fr'?'Dupliquer':'Dupliceren'}</button>` : ''}
       <button class="btn" onclick="saveStock('${item?.id || ''}')">${t('save')}</button>
     </div>
   `);
@@ -3080,14 +3017,14 @@ function refreshStockPhotoArea() {
   area.innerHTML = editingStockPhotos.map((p, i) =>
     `<div class="photo-thumb"><img src="${p}"><button class="photo-remove" onclick="removeStockPhoto(${i})">×</button></div>`
   ).join('') +
-  `<label class="photo-add-btn" title="Camera">
+  `<button type="button" class="photo-add-btn" onclick="document.getElementById('ph-stk-cam').click()">
     <span>📷</span><span>Camera</span>
-    <input type="file" accept="image/*" capture="environment" style="display:none" onchange="addStockPhoto(event)">
-  </label>
-  <label class="photo-add-btn" title="Galerij">
+  </button>
+  <button type="button" class="photo-add-btn" onclick="document.getElementById('ph-stk-gal').click()">
     <span>🖼️</span><span>Galerij</span>
-    <input type="file" accept="image/*" style="display:none" onchange="addStockPhoto(event)">
-  </label>`;
+  </button>
+  <input type="file" id="ph-stk-cam" accept="image/*" capture="environment" style="display:none" onchange="addStockPhoto(event)">
+  <input type="file" id="ph-stk-gal" accept="image/*" style="display:none" onchange="addStockPhoto(event)">`;
 }
 
 // ============================================================================
@@ -3099,11 +3036,6 @@ function isMilkName(name) {
   // Exacte match of aparte woord — gebruik word-boundary via split
   const words = n.split(/[\s\-\/,]+/);
   return MILK_KEYWORDS.some(k => words.includes(k) || n === k);
-}
-function checkMilkType(val) {
-  const grp = document.getElementById('type-group');
-  if (!grp) return;
-  grp.style.display = isMilkName(val) ? 'block' : 'none';
 }
 function selectType(btn, typeVal) {
   document.querySelectorAll('#type-group .type-pill').forEach(p => {
@@ -3402,6 +3334,27 @@ async function deleteStock(id) {
   showView('browse');
   showBrowse('stock');
   render();
+}
+
+async function duplicateStock(id) {
+  const orig = state.stockItems.find(i => i.id === id);
+  if (!orig) return;
+  const copy = {
+    ...orig,
+    id: uid(),
+    name: orig.name + (currentLang==='fr' ? ' (copie)' : ' (kopie)'),
+    quantity: 0,
+    createdAt: Date.now(),
+    lastUpdated: Date.now(),
+    photos: [...(orig.photos||[])],
+    priceHistory: []
+  };
+  await dbPut('stockItems', copy);
+  await rememberStockName(copy.name);
+  state.stockItems.push(copy);
+  closeModal();
+  toast(currentLang==='fr' ? '⎘ Dupliqué' : '⎘ Gedupliceerd');
+  openStockEditor(copy.id);
 }
 
 // ============================================================================
