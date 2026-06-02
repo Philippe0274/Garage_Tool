@@ -18,6 +18,7 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   :root {
@@ -610,7 +611,7 @@
 
   /* ── SUB-CHOICE CARDS ─────────────────────────────────── */
   .subchoice-row {
-    display:grid; grid-template-columns:1fr 1fr;
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(90px, 1fr));
     gap:10px; padding:16px;
   }
   .subchoice-card {
@@ -733,6 +734,34 @@
     font-size:13px; color:var(--text-dim); line-height:1.6;
   }
 
+  /* ── GOOGLE DRIVE SYNC ────────────────────────────────── */
+  .sync-status-bar {
+    display:flex; align-items:center; gap:8px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:10px 14px; margin-bottom:10px;
+  }
+  .sync-dot {
+    width:8px; height:8px; border-radius:50%; flex-shrink:0;
+  }
+  .sync-dot.ok { background:var(--success); }
+  .sync-dot.busy { background:var(--warning); animation:pulse 1s infinite; }
+  .sync-dot.error { background:var(--danger); }
+  .sync-dot.off { background:var(--border-strong); }
+  .sync-info { flex:1; min-width:0; }
+  .sync-title { font-size:13px; font-weight:600; }
+  .sync-sub { font-size:11px; color:var(--text-dim); font-family:'JetBrains Mono'; margin-top:1px; }
+  .sync-btn {
+    background:var(--surface-2); border:1px solid var(--border);
+    color:var(--text); padding:6px 12px; border-radius:var(--radius-sm);
+    font-size:12px; font-weight:600; cursor:pointer; font-family:inherit;
+    white-space:nowrap; transition:all .15s;
+  }
+  .sync-btn:active { background:var(--surface-3); }
+  .sync-btn.primary { background:var(--accent); color:white; border-color:var(--accent); }
+  .google-avatar {
+    width:28px; height:28px; border-radius:50%; object-fit:cover; flex-shrink:0;
+  }
+
   /* main padding */
   main { max-width:800px; margin:0 auto; padding-bottom:0; }
   .view { display:none; }
@@ -827,6 +856,11 @@
       <div class="subchoice-label" id="lbl-stock">Voorraad</div>
       <span class="badge" id="browse-stock-badge" style="display:none;">!</span>
     </div>
+    <div class="subchoice-card" onclick="showBrowse('freezer')">
+      <div class="subchoice-icon">🧊</div>
+      <div class="subchoice-label" id="lbl-freezer">Vriezer</div>
+      <span class="badge" id="browse-freezer-badge" style="display:none;">!</span>
+    </div>
   </div>
 
   <!-- Browse Materiaal -->
@@ -862,6 +896,23 @@
     <div id="browse-stock-count" class="browse-count"></div>
     <div id="browse-stock-list"></div>
   </div>
+
+  <!-- Browse Vriezer -->
+  <div id="browse-freezer" style="display:none;">
+    <div class="search-bar-inline">
+      <input type="text" class="search-input" id="searchFreezerInput" placeholder="Zoek in vriezer..." oninput="performBrowseSearch('freezer')">
+      <button class="icon-btn" onclick="startVoiceForBrowse('freezer')">🎤</button>
+    </div>
+    <div class="filter-row" id="freezer-filter-row">
+      <button class="fchip active" id="fchip-frz-all" onclick="filterFreezerStatus('all',this)">Alles</button>
+      <button class="fchip" id="fchip-frz-old" onclick="filterFreezerStatus('old',this)">⚠️ Te lang</button>
+    </div>
+    <div class="stock-action-row">
+      <button class="btn btn-small btn-secondary" onclick="downloadTemplate('freezer')">📥 <span id="lbl-dl-frz-tmpl">Template Vriezer</span></button>
+    </div>
+    <div id="browse-freezer-count" class="browse-count"></div>
+    <div id="browse-freezer-list"></div>
+  </div>
 </div>
 
 <!-- ─── SCHERM 3 · TOEVOEGEN (keuze mat/stock) ──────────── -->
@@ -890,6 +941,9 @@
       </button>
       <button class="add-import-btn" onclick="downloadTemplate('stock')">
         <span>📥</span><span id="lbl-dl-stk-tmpl">Template Voorraad</span>
+      </button>
+      <button class="add-import-btn" onclick="downloadTemplate('freezer')">
+        <span>📥</span><span id="lbl-dl-frz-tmpl">Template Vriezer</span>
       </button>
       <label class="add-import-btn">
         <span>📤</span><span id="lbl-import-excel">Importeer Excel</span>
@@ -968,7 +1022,7 @@
         <div class="form-group" id="bulk-type-group" style="display:none;">
           <label class="form-label">Type</label>
           <div class="type-pills">
-            <button type="button" class="type-pill active" data-type="volle" onclick="selectBulkType(this,'volle')" id="lbl-type-volle">Volle</button>
+            <button type="button" class="type-pill" data-type="volle" onclick="selectBulkType(this,'volle')" id="lbl-type-volle">Volle</button>
             <button type="button" class="type-pill" data-type="halfvolle" onclick="selectBulkType(this,'halfvolle')" id="lbl-type-half">Halfvolle</button>
             <button type="button" class="type-pill" data-type="andere" onclick="selectBulkType(this,'andere')" id="lbl-type-other">Andere</button>
           </div>
@@ -1075,7 +1129,20 @@
     <span class="subscreen-title" data-i18n="settings">Instellingen</span>
   </div>
   <div style="padding:0 12px 12px;">
-    <div class="section-title"><span class="section-title-text">Beheer</span></div>
+    <!-- Google Drive Sync -->
+    <div class="section-title"><span class="section-title-text" id="lbl-sync-section">☁️ Cloud Sync</span></div>
+    <div class="sync-status-bar" id="sync-status-bar">
+      <div class="sync-dot off" id="sync-dot"></div>
+      <div class="sync-info">
+        <div class="sync-title" id="sync-title">Google Drive</div>
+        <div class="sync-sub" id="sync-sub">Niet verbonden</div>
+      </div>
+      <button class="sync-btn primary" id="sync-action-btn" onclick="handleSyncAction()">Verbinden</button>
+    </div>
+    <button class="btn btn-secondary" id="sync-manual-btn" onclick="driveSync(true)" style="display:none;margin-bottom:6px;">
+      🔄 <span id="lbl-sync-now">Nu synchroniseren</span>
+    </button>
+    <div class="section-title" style="margin-top:8px;"><span class="section-title-text">Beheer</span></div>
     <button class="btn btn-secondary" onclick="openCategoryManager()" data-i18n="manage_cats">🏷️ Categorieën beheren</button>
     <button class="btn btn-secondary" onclick="openUnitManager()" data-i18n="manage_units">📏 Eenheden beheren</button>
     <button class="btn btn-secondary" onclick="openShopManager()" data-i18n="manage_shops">🏪 Winkels beheren</button>
@@ -1364,6 +1431,9 @@ function updateHomeLabels() {
   el('lbl-screen-scan', nl ? 'Scannen' : 'Scanner');
   el('lbl-material', nl ? 'Materiaal' : 'Matériel');
   el('lbl-stock', nl ? 'Voorraad' : 'Stock');
+  el('lbl-freezer', nl ? 'Vriezer' : 'Congélateur');
+  el('fchip-frz-all', nl ? 'Alles' : 'Tout');
+  el('fchip-frz-old', nl ? '⚠️ Te lang' : '⚠️ Trop long');
   el('lbl-add-material', nl ? 'Materiaal' : 'Matériel');
   el('lbl-add-stock', nl ? 'Voorraad' : 'Stock');
   el('lbl-shoplist', nl ? 'Boodschappenlijst' : 'Liste de courses');
@@ -1385,6 +1455,7 @@ function updateHomeLabels() {
   el('fchip-expiring', nl ? 'Vervalt' : 'Expire');
   // fase 2
   if (typeof _fase2Labels === 'function') _fase2Labels();
+  if (typeof updateSyncLabels === 'function') updateSyncLabels();
 }
 
 // ============================================================================
@@ -1417,10 +1488,10 @@ function showView(name) {
     showAddSubchoice();
   }
   if (name === 'browse') {
-    // Reset to subchoice view
     document.getElementById('browse-subchoice').style.display = '';
     document.getElementById('browse-material').style.display = 'none';
     document.getElementById('browse-stock').style.display = 'none';
+    document.getElementById('browse-freezer').style.display = 'none';
     currentBrowseMode = null;
   }
   render();
@@ -1428,20 +1499,103 @@ function showView(name) {
 
 function showBrowse(mode) {
   currentBrowseMode = mode;
-  // hide subchoice, show the right panel
   document.getElementById('browse-subchoice').style.display = 'none';
   document.getElementById('browse-material').style.display = mode === 'material' ? 'block' : 'none';
   document.getElementById('browse-stock').style.display   = mode === 'stock'    ? 'block' : 'none';
+  document.getElementById('browse-freezer').style.display = mode === 'freezer'  ? 'block' : 'none';
 
   if (mode === 'material') {
     buildMatCategoryFilter();
     renderBrowseMaterial();
-  } else {
+  } else if (mode === 'stock') {
     buildBrowseCatFilter();
     renderBrowseStock();
-    // Low stock alert when switching to stock
     checkLowStockOnLoad();
+  } else if (mode === 'freezer') {
+    renderBrowseFreezer();
+    checkFreezerOnLoad();
   }
+}
+
+// ── VRIEZER BROWSE ─────────────────────────────────────────
+let currentFreezerStatusFilter = 'all';
+
+function filterFreezerStatus(status, btn) {
+  currentFreezerStatusFilter = status;
+  document.querySelectorAll('#freezer-filter-row .fchip').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderBrowseFreezer();
+}
+
+function renderBrowseFreezer() {
+  const q = (document.getElementById('searchFreezerInput')?.value || '').trim().toLowerCase();
+  let list = state.stockItems.filter(i => i.storageLocation === 'freezer');
+  if (q) list = list.filter(i => i.name.toLowerCase().includes(q));
+  if (currentFreezerStatusFilter === 'old') {
+    const limit = Date.now() - 90 * 86400000; // 3 maanden
+    list = list.filter(i => i.freezeDate && new Date(i.freezeDate).getTime() < limit);
+  }
+  list.sort((a,b) => {
+    // Oudste invriesdatum eerst
+    const ad = a.freezeDate ? new Date(a.freezeDate).getTime() : 0;
+    const bd = b.freezeDate ? new Date(b.freezeDate).getTime() : 0;
+    return ad - bd;
+  });
+  const cnt = document.getElementById('browse-freezer-count');
+  if (cnt) cnt.textContent = list.length + (currentLang==='nl' ? ' items in vriezer' : ' articles au congélateur');
+  const c = document.getElementById('browse-freezer-list');
+  if (!c) return;
+  if (list.length === 0) {
+    c.innerHTML = `<div style="padding:0 12px;"><div class="empty"><div class="empty-icon">🧊</div>
+      <div class="empty-text">${currentLang==='nl'?'Vriezer is leeg':'Congélateur vide'}</div>
+      <div class="empty-hint">${currentLang==='nl'?'Voeg items toe via Voorraad → Bewaarplaats: Vriezer':'Ajoutez des articles via Stock → Emplacement: Congélateur'}</div>
+    </div></div>`;
+    return;
+  }
+  c.innerHTML = '<div style="padding:0 12px;">' + list.map(it => {
+    const cat = findCat(it.categoryId);
+    const qty = it.quantity || 0;
+    const freezeMs = it.freezeDate ? new Date(it.freezeDate).getTime() : null;
+    const daysInFreezer = freezeMs ? Math.floor((Date.now() - freezeMs) / 86400000) : null;
+    const isTooLong = daysInFreezer !== null && daysInFreezer > 90;
+    const freezeLabel = it.freezeDate
+      ? `❄️ ${new Date(it.freezeDate).toLocaleDateString(currentLang==='fr'?'fr-BE':'nl-BE')}${daysInFreezer!==null?' ('+daysInFreezer+(currentLang==='nl'?' d)':' j)'):''}` : '';
+    const rowBorder = isTooLong ? 'border-color:#e8c07a;background:linear-gradient(90deg,var(--warning-bg),var(--surface));' : '';
+    return `<div class="stock-row" style="${rowBorder}" onclick="openStockEditor('${it.id}')">
+      <div class="stock-thumb">${cat?.icon || '🧊'}</div>
+      <div class="stock-info">
+        <div class="stock-name">🧊 ${escapeHtml(it.name)}${it.subtype?` <span style="font-size:11px;color:var(--mode-accent);">· ${escapeHtml(it.subtype)}</span>`:''}
+          <span style="color:var(--text-dim);font-weight:400;font-size:12px;"> ×${qty}${it.unit?' '+escapeHtml(it.unit):''}</span>
+        </div>
+        <div class="stock-meta">${freezeLabel}</div>
+        ${isTooLong?`<div class="stock-warnings"><span class="badge-warn badge-expiring">⚠️ ${currentLang==='nl'?'Te lang ingevroren':'Trop longtemps congelé'}</span></div>`:''}
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+// ── VRIEZER STARTUP CHECK ──────────────────────────────────
+function checkFreezerOnLoad() {
+  const limit = Date.now() - 90 * 86400000;
+  const old = state.stockItems.filter(i =>
+    i.storageLocation === 'freezer' && i.freezeDate && new Date(i.freezeDate).getTime() < limit
+  );
+  if (old.length === 0) return;
+  setTimeout(() => {
+    openModal(
+      currentLang==='fr' ? '🧊 Congélateur — attention' : '🧊 Vriezer — opgelet',
+      `<p style="margin-bottom:12px;color:var(--text-dim);font-size:13px;">
+        <strong style="color:var(--warning);">${old.length}</strong>
+        ${currentLang==='nl' ? ' item(s) zitten meer dan 3 maanden in de vriezer:' : ' article(s) sont dans le congélateur depuis plus de 3 mois :'}
+      </p>
+      ${old.map(it => `<div class="shopping-item">
+        <span style="font-size:18px;">🧊</span>
+        <div class="name">${escapeHtml(it.name)}</div>
+        <div class="unit" style="color:var(--warning);">${it.freezeDate ? Math.floor((Date.now()-new Date(it.freezeDate).getTime())/86400000) : '?'} ${currentLang==='nl'?'dagen':'jours'}</div>
+      </div>`).join('')}
+      <button class="btn btn-secondary" style="margin-top:14px;" onclick="closeModal()">${t('skip')}</button>`
+    );
+  }, 500);
 }
 
 // Legacy setMode — kept so existing save/editor functions still work
@@ -1461,12 +1615,20 @@ function render() {
   setEl('stat-stock-low', low.length);
   setEl('stat-stock-expiring', expiring.length);
 
-  // badges
+  // voorraad badge
   const nb = document.getElementById('nav-stock-badge');
   const bb = document.getElementById('browse-stock-badge');
   const total = low.length + expiring.length;
   if (nb) { nb.style.display = total > 0 ? 'inline-block' : 'none'; nb.textContent = total; }
   if (bb) { bb.style.display = total > 0 ? 'inline-block' : 'none'; bb.textContent = total; }
+
+  // vriezer badge — items ouder dan 3 maanden
+  const limit = Date.now() - 90 * 86400000;
+  const oldFreezer = state.stockItems.filter(i =>
+    i.storageLocation === 'freezer' && i.freezeDate && new Date(i.freezeDate).getTime() < limit
+  ).length;
+  const fb = document.getElementById('browse-freezer-badge');
+  if (fb) { fb.style.display = oldFreezer > 0 ? 'inline-block' : 'none'; fb.textContent = oldFreezer; }
 }
 
 // ── BROWSE MATERIAL ────────────────────────────────────────
@@ -1591,11 +1753,12 @@ function renderBrowseStock() {
 
 function performBrowseSearch(mode) {
   if (mode === 'material') renderBrowseMaterial();
-  else renderBrowseStock();
+  else if (mode === 'stock') renderBrowseStock();
+  else if (mode === 'freezer') renderBrowseFreezer();
 }
 
 function startVoiceForBrowse(mode) {
-  const inputId = mode === 'material' ? 'searchMatInput' : 'searchStockInput';
+  const inputId = mode === 'material' ? 'searchMatInput' : mode === 'freezer' ? 'searchFreezerInput' : 'searchStockInput';
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { toast(t('voice_not_supported')); return; }
   const r = new SR();
@@ -1755,7 +1918,7 @@ const DEFAULT_SHOPS = [
 // INDEXEDDB
 // ============================================================================
 const DB_NAME = 'GarageOrgDB';
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 let db = null;
 
 function openDB() {
@@ -1869,6 +2032,35 @@ async function loadState() {
   state.units = await dbAll('units');
   state.stockNames = await dbAll('stockNames');
   state.shops = await dbAll('shops');
+
+  // ── Migratie: subtype wissen bij niet-melk items ────────
+  let subtypeFixed = 0;
+  for (const item of state.stockItems) {
+    if (item.subtype && !isMilkName(item.name)) {
+      item.subtype = null;
+      await dbPut('stockItems', item);
+      subtypeFixed++;
+    }
+  }
+  if (subtypeFixed > 0) console.log(`Migratie: subtype gewist bij ${subtypeFixed} niet-melk items`);
+
+  // ── Ontdubbel categorieën (zelfde naam_nl) ─────────────
+  const seenCatNames = new Map();
+  const toDeleteCats = [];
+  for (const c of state.categories) {
+    const key = (c.name_nl || c.name || '').toLowerCase().trim();
+    if (seenCatNames.has(key)) {
+      // Bewaar de eerste (laagste order), verwijder de rest
+      toDeleteCats.push(c.id);
+    } else {
+      seenCatNames.set(key, c.id);
+    }
+  }
+  for (const id of toDeleteCats) {
+    await dbDelete('categories', id);
+    state.categories = state.categories.filter(c => c.id !== id);
+  }
+  if (toDeleteCats.length > 0) console.log(`Ontdubbeld: ${toDeleteCats.length} dubbele categorieën verwijderd`);
 
   // ── Seed default categories if any are missing ──────────
   // Always ensure all default categories exist (they may have been lost on version bump)
@@ -2230,7 +2422,7 @@ function promptSetQty(id) {
   if (isNaN(n) || n < 0) return;
   item.quantity = n;
   item.lastUpdated = Date.now();
-  dbPut('stockItems', item).then(() => { renderStockList(); render(); });
+  dbPut('stockItems', item).then(() => { renderStockList(); render(); markSyncDirty(); });
 }
 
 // ============================================================================
@@ -2404,7 +2596,7 @@ async function saveShelf(id) {
   await dbPut('shelves', shelf);
   if (!id) state.shelves.push(shelf);
   closeModal();
-  toast(t('shelf_added'));
+  toast(t('shelf_added')); markSyncDirty();
   if ((shelf.kind || 'material') === 'stock') {
     openStockShelvesManager();
   } else {
@@ -2643,7 +2835,7 @@ async function saveBox(id) {
   await dbPut('boxes', box);
   if (!id) state.boxes.push(box);
   closeModal();
-  toast(t('box_added'));
+  toast(t('box_added')); markSyncDirty();
   showView('material');
   renderShelvesList('material', 'shelvesList');
   renderBoxesList();
@@ -2821,7 +3013,7 @@ async function saveItem(id) {
   await dbPut('items', item);
   if (!id) state.items.push(item);
   closeModal();
-  toast(t('item_added'));
+  toast(t('item_added')); markSyncDirty();
   setMode('material');
   showView('material');
   renderShelvesList('material', 'shelvesList');
@@ -2898,9 +3090,9 @@ function openStockEditor(stockId, preselectShelfId, preselectLevel, preselectPos
     <div class="form-group" id="type-group" style="display:${isMilkName(item?.name||'') ? 'block' : 'none'};">
       <label class="form-label">${currentLang==='fr'?'Type':'Type'}</label>
       <div class="type-pills">
-        <button type="button" class="type-pill${(item?.subtype||'volle')==='volle'?' active':''}" data-type="volle" onclick="selectType(this,'volle')">${currentLang==='fr'?'Entier':'Volle'}</button>
-        <button type="button" class="type-pill${(item?.subtype||'')==='halfvolle'?' active':''}" data-type="halfvolle" onclick="selectType(this,'halfvolle')">${currentLang==='fr'?'Demi-écrémé':'Halfvolle'}</button>
-        <button type="button" class="type-pill${(item?.subtype||'')==='andere'?' active':''}" data-type="andere" onclick="selectType(this,'andere')">${currentLang==='fr'?'Autre':'Andere'}</button>
+        <button type="button" class="type-pill${item?.subtype==='volle'?' active':(!item?.subtype&&isMilkName(item?.name||''))?' active':''}" data-type="volle" onclick="selectType(this,'volle')">${currentLang==='fr'?'Entier':'Volle'}</button>
+        <button type="button" class="type-pill${item?.subtype==='halfvolle'?' active':''}" data-type="halfvolle" onclick="selectType(this,'halfvolle')">${currentLang==='fr'?'Demi-écrémé':'Halfvolle'}</button>
+        <button type="button" class="type-pill${item?.subtype==='andere'?' active':''}" data-type="andere" onclick="selectType(this,'andere')">${currentLang==='fr'?'Autre':'Andere'}</button>
       </div>
     </div>
 
@@ -2954,6 +3146,20 @@ function openStockEditor(stockId, preselectShelfId, preselectLevel, preselectPos
         }).join(' · ')}
       </div>
     ` : ''}
+
+    <div class="form-group">
+      <label class="form-label">${currentLang==='fr'?'Emplacement':'Bewaarplaats'}</label>
+      <div class="type-pills">
+        <button type="button" class="type-pill${(!item?.storageLocation||item?.storageLocation==='shelf')?' active':''}" data-loc="shelf" onclick="selectStorageLoc(this,'shelf')">📦 ${currentLang==='fr'?'Étagère':'Schap'}</button>
+        <button type="button" class="type-pill${item?.storageLocation==='freezer'?' active':''}" data-loc="freezer" onclick="selectStorageLoc(this,'freezer')">🧊 ${currentLang==='fr'?'Congélateur':'Vriezer'}</button>
+      </div>
+    </div>
+
+    <div class="form-group" id="freeze-date-group" style="display:${item?.storageLocation==='freezer'?'block':'none'};">
+      <label class="form-label">❄️ ${currentLang==='fr'?'Date de congélation':'Invriesdatum'}</label>
+      <input type="date" class="form-input" id="stock-freeze-date" value="${item?.freezeDate||''}">
+      <div class="form-hint">${currentLang==='fr'?'Alerte après 3 mois':'Waarschuwing na 3 maanden'}</div>
+    </div>
 
     <div class="form-group">
       <label class="form-label">${t('expiry_date')} (${t('optional')})</label>
@@ -3028,14 +3234,11 @@ function refreshStockPhotoArea() {
 }
 
 // ============================================================================
-// TYPE FIELD (Melk / lait) — alleen tonen als naam echt over melk gaat
-const MILK_KEYWORDS = ['melk','lait','milk','halfvolle melk','volle melk','lait entier','lait demi'];
+// TYPE FIELD — enkel voor "Melk" of "Lait" (exacte naam, hoofdletterongevoelig)
+const MILK_EXACT = ['melk', 'lait'];
 function isMilkName(name) {
-  if (!name || name.trim().length < 3) return false;
-  const n = name.toLowerCase().trim();
-  // Exacte match of aparte woord — gebruik word-boundary via split
-  const words = n.split(/[\s\-\/,]+/);
-  return MILK_KEYWORDS.some(k => words.includes(k) || n === k);
+  if (!name) return false;
+  return MILK_EXACT.includes(name.trim().toLowerCase());
 }
 function selectType(btn, typeVal) {
   document.querySelectorAll('#type-group .type-pill').forEach(p => {
@@ -3043,6 +3246,13 @@ function selectType(btn, typeVal) {
   });
   btn.classList.add('active');
   btn.dataset.type = typeVal;
+}
+
+function selectStorageLoc(btn, loc) {
+  document.querySelectorAll('.type-pill[data-loc]').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  const fdg = document.getElementById('freeze-date-group');
+  if (fdg) fdg.style.display = loc === 'freezer' ? 'block' : 'none';
 }
 // Ensure data-type is set on all pills on page render
 document.addEventListener('DOMContentLoaded', () => {
@@ -3064,14 +3274,21 @@ async function saveStock(id) {
   item.quantity = parseInt(document.getElementById('stock-qty').value) || 0;
   const unitVal = document.getElementById('stock-unit').value;
   item.unit = (unitVal && unitVal !== '__new__') ? unitVal.trim() : '';
-  // subtype (melk-type etc.)
+  // subtype — enkel opslaan als het een melk-item is
+  const typeGroupVisible = document.getElementById('type-group')?.style.display !== 'none';
   const activePill = document.querySelector('#type-group .type-pill.active');
-  item.subtype = activePill ? activePill.dataset.type : null;
+  item.subtype = (typeGroupVisible && activePill) ? activePill.dataset.type : null;
   item.minQuantity = parseInt(document.getElementById('stock-min').value) || 0;
   const tgt = document.getElementById('stock-target').value;
   item.targetQuantity = tgt === '' ? null : parseInt(tgt) || null;
   item.categoryId = document.getElementById('stock-cat').value || null;
   item.expiryDate = document.getElementById('stock-expiry').value || null;
+  // bewaarplaats + invriesdatum
+  const locPill = document.querySelector('.type-pill[data-loc].active');
+  item.storageLocation = locPill ? locPill.dataset.loc : 'shelf';
+  item.freezeDate = (item.storageLocation === 'freezer')
+    ? (document.getElementById('stock-freeze-date')?.value || null)
+    : null;
   item.shelfId = document.getElementById('stock-shelf').value || null;
   const levelV = document.getElementById('stock-level').value;
   item.level = levelV ? parseInt(levelV) : null;
@@ -3106,7 +3323,7 @@ async function saveStock(id) {
   await rememberStockName(name);
   if (!id) state.stockItems.push(item);
   closeModal();
-  toast(t('stock_added'));
+  toast(t('stock_added')); markSyncDirty();
   setMode('stock');
   showView('browse');
   showBrowse('stock');
@@ -3618,27 +3835,60 @@ async function saveCategory(id) {
     toast(currentLang === 'fr' ? 'Donnez un nom' : 'Geef een naam in');
     return;
   }
-  if (!db) {
-    toast('DEBUG: DB niet open');
-    return;
+  const isNew = !id || id === '';
+
+  // ── Check op duplicaat ──────────────────────────────────
+  if (isNew) {
+    const existing = state.categories.find(c =>
+      (c.name_nl||'').toLowerCase() === nlName.toLowerCase() ||
+      (frName && (c.name_fr||'').toLowerCase() === frName.toLowerCase())
+    );
+    if (existing) {
+      // Toon popup met keuze
+      openModal(
+        currentLang==='fr' ? '⚠️ Catégorie existante' : '⚠️ Categorie bestaat al',
+        `<p style="margin-bottom:14px;color:var(--text-dim);font-size:14px;">
+          ${currentLang==='fr'
+            ? `La catégorie <strong>${escapeHtml(catName(existing))}</strong> existe déjà. Que voulez-vous faire ?`
+            : `De categorie <strong>${escapeHtml(catName(existing))}</strong> bestaat al. Wat wil je doen?`}
+        </p>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="openCategoryManager()">
+            ${currentLang==='fr' ? 'Utiliser existante' : 'Bestaande gebruiken'}
+          </button>
+          <button class="btn" onclick="forceSaveCategory('','${escapeHtml(nlName)}','${escapeHtml(frName)}','${(iconEl?.value||'📦').trim()}')">
+            ${currentLang==='fr' ? 'Quand même ajouter' : 'Toch toevoegen'}
+          </button>
+        </div>`
+      );
+      return;
+    }
   }
-  if (!db.objectStoreNames.contains('categories')) {
-    toast('DEBUG: categories-store ontbreekt!');
-    return;
-  }
+
+  await _doSaveCategory(id, nlName, frName, (iconEl?.value || '').trim() || '📦');
+}
+
+async function forceSaveCategory(id, nlName, frName, icon) {
+  await _doSaveCategory(id, nlName, frName, icon || '📦');
+}
+
+async function _doSaveCategory(id, nlName, frName, icon) {
+  if (!db) { toast('DEBUG: DB niet open'); return; }
+  if (!db.objectStoreNames.contains('categories')) { toast('DEBUG: categories-store ontbreekt!'); return; }
   try {
     const isNew = !id || id === '';
     const cat = isNew
       ? { id: uid(), order: (state.categories.length + 1), createdAt: Date.now() }
       : state.categories.find(c => c.id === id);
     if (!cat) { toast('DEBUG: cat-object null'); return; }
-    cat.icon = (iconEl?.value || '').trim() || '📦';
+    cat.icon = icon || '📦';
     cat.name_nl = nlName || frName;
     cat.name_fr = frName || nlName;
     await dbPut('categories', cat);
     if (isNew) state.categories.push(cat);
     state.categories.sort((a,b) => (a.order||999) - (b.order||999));
     toast(currentLang === 'fr' ? '✓ Catégorie enregistrée' : '✓ Categorie opgeslagen');
+    markSyncDirty();
     openCategoryManager();
     render();
   } catch (err) {
@@ -4294,7 +4544,12 @@ function downloadTemplate(type) {
 
   let headers, example, filename, sheetName;
 
-  if (type === 'material') {
+  if (type === 'freezer') {
+    sheetName = currentLang==='nl' ? 'Vriezer' : 'Congélateur';
+    filename  = 'template-vriezer.xlsx';
+    headers   = ['Naam NL','Naam FR','Eenheid','Categorie','Huidig aantal','Invriesdatum (JJJJ-MM-DD)','Minimum','Prijs €'];
+    example   = ['Gehakt','Viande hachée','Pak 500 g','Vlees en vis','2','2024-11-15','1','3.99'];
+  } else if (type === 'material') {
     sheetName = currentLang==='nl' ? 'Materiaal' : 'Matériel';
     filename  = 'template-materiaal.xlsx';
     headers   = ['Naam NL','Naam FR','Aantal','Box','Beschrijving','Tags'];
@@ -4402,7 +4657,8 @@ async function importExcel(e) {
   const data = rows.slice(1).filter(r => r.some(c => String(c).trim() !== ''));
 
   // Detecteer type op kolomnamen
-  const isStock = hdr.some(h => ['eenheid','unité','unit','minimum','min','huidig aantal','quantité actuelle'].includes(h));
+  const isStock = hdr.some(h => ['eenheid','unité','unit','minimum','min','huidig aantal','quantité actuelle','invriesdatum','date de congélation'].includes(h));
+  const isFreezer = hdr.some(h => ['invriesdatum','date de congélation','freeze date'].includes(h));
 
   const get = (row, keys) => {
     for (const k of keys) {
@@ -4435,11 +4691,15 @@ async function importExcel(e) {
         (c.name_fr||'').toLowerCase() === catClean
       );
 
+      const freezeDateRaw = get(row, ['invriesdatum','date de congélation','freeze date','freezedate']);
+      const freezeDate = freezeDateRaw || null;
       const item = {
         id: uid(), name: nameNl, quantity: qty, unit,
         minQuantity: min, targetQuantity: target || null,
         price: price, categoryId: cat?.id || null,
         subtype: subtype || null,
+        storageLocation: isFreezer ? 'freezer' : 'shelf',
+        freezeDate: freezeDate,
         photos: [], description: '',
         createdAt: Date.now(), lastUpdated: Date.now()
       };
@@ -4477,6 +4737,7 @@ function _fase2Labels() {
   const el = (id, txt) => { const e = document.getElementById(id); if(e) e.textContent = txt; };
   el('lbl-dl-mat-tmpl',  nl ? '📥 Template Materiaal' : '📥 Modèle Matériel');
   el('lbl-dl-stk-tmpl',  nl ? '📥 Template Voorraad'  : '📥 Modèle Stock');
+  el('lbl-dl-frz-tmpl',  nl ? '📥 Template Vriezer'   : '📥 Modèle Congélateur');
   el('lbl-import-excel', nl ? '📤 Importeer CSV/Excel' : '📤 Importer CSV/Excel');
   el('lbl-add-material2',nl ? 'Materiaal toevoegen'   : 'Ajouter du matériel');
   el('lbl-add-stock2',   nl ? 'Voorraad toevoegen'    : 'Ajouter du stock');
@@ -4502,6 +4763,310 @@ function _fase2Labels() {
 
 
 
+// ============================================================================
+// GOOGLE DRIVE SYNC
+// ============================================================================
+const GDRIVE_CLIENT_ID = '884286275404-gar06iqgtvcgs51grsn0cvuknfkh5krg.apps.googleusercontent.com';
+const GDRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.profile';
+const GDRIVE_FILE_NAME = 'garageorg-backup.json';
+const GDRIVE_SPACES = 'appDataFolder';
+
+let gTokenClient = null;
+let gAccessToken = localStorage.getItem('gdrive_token') || null;
+let gTokenExpiry = parseInt(localStorage.getItem('gdrive_token_expiry') || '0');
+let gFileId = localStorage.getItem('gdrive_file_id') || null;
+let gUserName = localStorage.getItem('gdrive_user_name') || null;
+let gUserPic = localStorage.getItem('gdrive_user_pic') || null;
+let gSyncDirty = false;
+let gSyncTimer = null;
+let gSyncing = false;
+let gLastSync = parseInt(localStorage.getItem('gdrive_last_sync') || '0');
+
+function isGTokenValid() {
+  return !!(gAccessToken && Date.now() < gTokenExpiry - 60000);
+}
+
+function initGoogleDrive() {
+  if (typeof google === 'undefined' || !google.accounts) {
+    setTimeout(initGoogleDrive, 1000);
+    return;
+  }
+  gTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GDRIVE_CLIENT_ID,
+    scope: GDRIVE_SCOPE,
+    callback: async (resp) => {
+      if (resp.error) {
+        updateSyncUI('error', currentLang==='nl'?'Inloggen mislukt':'Connexion échouée');
+        toast('❌ ' + (resp.error_description || resp.error));
+        return;
+      }
+      gAccessToken = resp.access_token;
+      gTokenExpiry = Date.now() + (resp.expires_in * 1000);
+      localStorage.setItem('gdrive_token', gAccessToken);
+      localStorage.setItem('gdrive_token_expiry', String(gTokenExpiry));
+      await fetchGUserInfo();
+      updateSyncUI('busy', currentLang==='nl'?'Verbonden, zoeken...':'Connecté, recherche...');
+      await driveSyncOnConnect();
+    }
+  });
+  if (isGTokenValid()) {
+    updateSyncUI('ok', formatLastSync());
+    startSyncTimer();
+  } else if (gUserName) {
+    updateSyncUI('off', currentLang==='nl'?'Sessie verlopen':'Session expirée');
+  }
+}
+
+async function fetchGUserInfo() {
+  try {
+    const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${gAccessToken}` }
+    });
+    const d = await r.json();
+    gUserName = d.name || d.email || 'Google';
+    gUserPic  = d.picture || null;
+    localStorage.setItem('gdrive_user_name', gUserName);
+    if (gUserPic) localStorage.setItem('gdrive_user_pic', gUserPic);
+  } catch(e) { console.warn('userinfo:', e); }
+}
+
+function handleSyncAction() {
+  if (isGTokenValid()) {
+    confirmGDriveLogout();
+  } else {
+    if (!gTokenClient) { toast(currentLang==='nl'?'Google laden...':'Chargement Google...'); return; }
+    gTokenClient.requestAccessToken({ prompt: gUserName ? '' : 'consent' });
+  }
+}
+
+function confirmGDriveLogout() {
+  openModal(
+    currentLang==='nl' ? '☁️ Google Drive ontkoppelen' : '☁️ Déconnecter Google Drive',
+    `<p style="margin-bottom:14px;color:var(--text-dim);font-size:14px;">
+      ${currentLang==='nl'
+        ? `Verbonden als <strong>${escapeHtml(gUserName||'')}</strong>.<br>Je data op Drive blijft bewaard.`
+        : `Connecté en tant que <strong>${escapeHtml(gUserName||'')}</strong>.<br>Vos données sur Drive restent intactes.`}
+    </p>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn btn-danger" onclick="gDriveLogout()">${currentLang==='nl'?'Ontkoppelen':'Déconnecter'}</button>
+    </div>`
+  );
+}
+
+function gDriveLogout() {
+  if (gAccessToken) { try { google.accounts.oauth2.revoke(gAccessToken, ()=>{}); } catch(e){} }
+  gAccessToken = null; gTokenExpiry = 0; gUserName = null; gUserPic = null;
+  localStorage.removeItem('gdrive_token'); localStorage.removeItem('gdrive_token_expiry');
+  localStorage.removeItem('gdrive_user_name'); localStorage.removeItem('gdrive_user_pic');
+  if (gSyncTimer) { clearTimeout(gSyncTimer); clearInterval(gSyncTimer); gSyncTimer = null; }
+  closeModal();
+  updateSyncUI('off', currentLang==='nl'?'Niet verbonden':'Non connecté');
+  toast(currentLang==='nl'?'✓ Google Drive ontkoppeld':'✓ Google Drive déconnecté');
+}
+
+function updateSyncUI(st, subtitle) {
+  const dot = document.getElementById('sync-dot');
+  const titleEl = document.getElementById('sync-title');
+  const sub = document.getElementById('sync-sub');
+  const btn = document.getElementById('sync-action-btn');
+  const manualBtn = document.getElementById('sync-manual-btn');
+  if (!dot) return;
+  dot.className = 'sync-dot ' + st;
+  if (st === 'ok' || st === 'busy') {
+    const pic = gUserPic ? `<img class="google-avatar" src="${escapeHtml(gUserPic)}" onerror="this.style.display='none'"> ` : '';
+    if (titleEl) titleEl.innerHTML = pic + escapeHtml(gUserName || 'Google Drive');
+    if (btn) { btn.textContent = currentLang==='nl'?'Ontkoppelen':'Déconnecter'; btn.className = 'sync-btn'; }
+    if (manualBtn) manualBtn.style.display = 'block';
+  } else {
+    if (titleEl) titleEl.textContent = 'Google Drive';
+    if (btn) { btn.textContent = currentLang==='nl'?'Verbinden':'Connecter'; btn.className = 'sync-btn primary'; }
+    if (manualBtn) manualBtn.style.display = 'none';
+  }
+  if (sub && subtitle) sub.textContent = subtitle;
+}
+
+function formatLastSync() {
+  if (!gLastSync) return currentLang==='nl'?'Nog nooit gesynchroniseerd':'Jamais synchronisé';
+  const mins = Math.floor((Date.now() - gLastSync) / 60000);
+  if (mins < 1) return currentLang==='nl'?'Zonet gesynchroniseerd':'Synchronisé à l\'instant';
+  if (mins < 60) return (currentLang==='nl'?'Laatste sync: ':'Dernière sync : ') + mins + (currentLang==='nl'?' min geleden':' min');
+  const hrs = Math.floor(mins/60);
+  return (currentLang==='nl'?'Laatste sync: ':'Dernière sync : ') + hrs + (currentLang==='nl'?' u geleden':' h');
+}
+
+function markSyncDirty() {
+  gSyncDirty = true;
+  if (!isGTokenValid()) return;
+  // Debounce: sync 30 sec na laatste wijziging
+  if (gSyncTimer) clearTimeout(gSyncTimer);
+  gSyncTimer = setTimeout(async () => {
+    if (gSyncDirty && !gSyncing) await driveSync(false);
+    startSyncTimer();
+  }, 30000);
+}
+
+function startSyncTimer() {
+  if (gSyncTimer) clearInterval(gSyncTimer);
+  gSyncTimer = setInterval(async () => {
+    if (isGTokenValid()) updateSyncUI('ok', formatLastSync());
+    if (gSyncDirty && isGTokenValid() && !gSyncing) await driveSync(false);
+  }, 60000);
+}
+
+async function driveSyncOnConnect() {
+  updateSyncUI('busy', currentLang==='nl'?'Zoeken naar backup...':'Recherche de sauvegarde...');
+  const fileId = await driveFindFile();
+  if (fileId) {
+    gFileId = fileId;
+    localStorage.setItem('gdrive_file_id', gFileId);
+    const driveDate = await driveGetFileDate(fileId);
+    openModal(
+      currentLang==='nl' ? '☁️ Backup gevonden op Drive' : '☁️ Sauvegarde trouvée',
+      `<p style="margin-bottom:14px;color:var(--text-dim);font-size:14px;">
+        ${currentLang==='nl'
+          ? `Backup van <strong>${driveDate}</strong> gevonden.<br>Wat wil je doen?`
+          : `Sauvegarde du <strong>${driveDate}</strong> trouvée.<br>Que faire ?`}
+      </p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="btn" onclick="driveLoadFromDrive()">
+          📥 ${currentLang==='nl'?'Drive laden (vervangt lokale data)':'Charger Drive (remplace données locales)'}
+        </button>
+        <button class="btn btn-secondary" onclick="drivePushLocal()">
+          📤 ${currentLang==='nl'?'Lokale data uploaden naar Drive':'Envoyer données locales vers Drive'}
+        </button>
+        <button class="btn btn-secondary" onclick="closeModal();startSyncTimer();">
+          ${currentLang==='nl'?'Annuleren':'Annuler'}
+        </button>
+      </div>`
+    );
+  } else {
+    await driveSync(true);
+    startSyncTimer();
+  }
+}
+
+async function driveLoadFromDrive() {
+  closeModal();
+  updateSyncUI('busy', currentLang==='nl'?'Laden van Drive...':'Chargement depuis Drive...');
+  try {
+    const resp = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${gFileId}?alt=media`,
+      { headers: { Authorization: `Bearer ${gAccessToken}` } }
+    );
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    await importDataObj(data);
+    gLastSync = Date.now();
+    localStorage.setItem('gdrive_last_sync', String(gLastSync));
+    gSyncDirty = false;
+    updateSyncUI('ok', formatLastSync());
+    startSyncTimer();
+    toast(currentLang==='nl'?'✓ Data geladen van Google Drive':'✓ Données chargées depuis Google Drive');
+    showView('home');
+  } catch(e) {
+    updateSyncUI('error', 'Fout: ' + (e.message||e));
+    toast('❌ Drive laden mislukt: ' + (e.message||e));
+  }
+}
+
+async function drivePushLocal() {
+  closeModal();
+  await driveSync(true);
+  startSyncTimer();
+}
+
+async function driveSync(showFeedback) {
+  if (gSyncing || !isGTokenValid()) return;
+  gSyncing = true;
+  if (showFeedback) updateSyncUI('busy', currentLang==='nl'?'Synchroniseren...':'Synchronisation...');
+  try {
+    const json = JSON.stringify(buildExportObject());
+    if (gFileId) {
+      await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${gFileId}?uploadType=media`,
+        { method:'PATCH', headers:{ Authorization:`Bearer ${gAccessToken}`, 'Content-Type':'application/json' }, body:json }
+      );
+    } else {
+      const meta = { name: GDRIVE_FILE_NAME, parents: [GDRIVE_SPACES] };
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
+      form.append('file', new Blob([json], {type:'application/json'}));
+      const r = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        { method:'POST', headers:{ Authorization:`Bearer ${gAccessToken}` }, body:form }
+      );
+      const created = await r.json();
+      gFileId = created.id;
+      localStorage.setItem('gdrive_file_id', gFileId);
+    }
+    gSyncDirty = false;
+    gLastSync = Date.now();
+    localStorage.setItem('gdrive_last_sync', String(gLastSync));
+    updateSyncUI('ok', formatLastSync());
+    if (showFeedback) toast(currentLang==='nl'?'✓ Gesynchroniseerd met Google Drive':'✓ Synchronisé avec Google Drive');
+  } catch(e) {
+    updateSyncUI('error', 'Sync fout');
+    if (showFeedback) toast('❌ Sync mislukt: ' + (e.message||e));
+    console.error('Drive sync:', e);
+  } finally { gSyncing = false; }
+}
+
+async function driveFindFile() {
+  try {
+    const r = await fetch(
+      `https://www.googleapis.com/drive/v3/files?spaces=${GDRIVE_SPACES}&q=name='${GDRIVE_FILE_NAME}'&fields=files(id,modifiedTime)`,
+      { headers: { Authorization:`Bearer ${gAccessToken}` } }
+    );
+    const d = await r.json();
+    return d.files?.[0]?.id || null;
+  } catch(e) { return null; }
+}
+
+async function driveGetFileDate(fileId) {
+  try {
+    const r = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=modifiedTime`,
+      { headers: { Authorization:`Bearer ${gAccessToken}` } }
+    );
+    const d = await r.json();
+    return d.modifiedTime ? new Date(d.modifiedTime).toLocaleDateString(currentLang==='fr'?'fr-BE':'nl-BE') : '?';
+  } catch(e) { return '?'; }
+}
+
+async function importDataObj(data) {
+  await dbClear('shelves'); await dbClear('boxes'); await dbClear('items');
+  await dbClear('stockItems'); await dbClear('categories');
+  await dbClear('units'); await dbClear('stockNames'); await dbClear('shops');
+  state = { shelves:[], boxes:[], items:[], stockItems:[], categories:[], units:[], stockNames:[], shops:[] };
+  for (const s of (data.shelves||[])) { await dbPut('shelves',s); state.shelves.push(s); }
+  for (const b of (data.boxes||[])) { await dbPut('boxes',b); state.boxes.push(b); }
+  for (const i of (data.items||[])) { await dbPut('items',i); state.items.push(i); }
+  for (const i of (data.stockItems||[])) { await dbPut('stockItems',i); state.stockItems.push(i); }
+  for (const c of (data.categories?.length ? data.categories : DEFAULT_CATEGORIES)) { await dbPut('categories',c); state.categories.push(c); }
+  for (const u of (data.units?.length ? data.units : DEFAULT_UNITS)) { await dbPut('units',u); state.units.push(u); }
+  for (const n of (data.stockNames||[])) { await dbPut('stockNames',n); state.stockNames.push(n); }
+  for (const s of (data.shops?.length ? data.shops : DEFAULT_SHOPS)) { await dbPut('shops',s); state.shops.push(s); }
+  state.categories.sort((a,b)=>(a.order||999)-(b.order||999));
+  state.units.sort((a,b)=>a.label.localeCompare(b.label,'nl'));
+  render();
+}
+
+function updateSyncLabels() {
+  const nl = currentLang === 'nl';
+  const el = (id,txt) => { const e=document.getElementById(id); if(e) e.textContent=txt; };
+  el('lbl-sync-section', nl?'☁️ Cloud Sync':'☁️ Synchronisation Cloud');
+  el('lbl-sync-now', nl?'Nu synchroniseren':'Synchroniser maintenant');
+  if (!isGTokenValid()) {
+    el('sync-sub', nl?'Niet verbonden':'Non connecté');
+    const btn = document.getElementById('sync-action-btn');
+    if (btn) { btn.textContent = nl?'Verbinden':'Connecter'; }
+  } else {
+    const sub = document.getElementById('sync-sub');
+    if (sub) sub.textContent = formatLastSync();
+  }
+}
+
 (async () => {
   try {
     await openDB();
@@ -4509,6 +5074,8 @@ function _fase2Labels() {
     setLang(currentLang);
     showView('home');
     handleHashChange();
+    // Init Google Drive na korte delay (wacht op GSI library)
+    setTimeout(initGoogleDrive, 1500);
   } catch (err) {
     console.error('INIT ERROR:', err);
     document.body.innerHTML = `
