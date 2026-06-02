@@ -734,6 +734,16 @@
     font-size:13px; color:var(--text-dim); line-height:1.6;
   }
 
+  .device-role-card {
+    background:var(--surface); border:2px solid var(--border);
+    border-radius:var(--radius); padding:12px 14px;
+    cursor:pointer; transition:all .15s; text-align:center;
+  }
+  .device-role-card.active {
+    border-color:var(--accent); background:var(--accent-bg);
+  }
+  .device-role-card:active { border-color:var(--accent); }
+
   /* ── GOOGLE DRIVE SYNC ────────────────────────────────── */
   .sync-status-bar {
     display:flex; align-items:center; gap:8px;
@@ -1129,8 +1139,17 @@
     <span class="subscreen-title" data-i18n="settings">Instellingen</span>
   </div>
   <div style="padding:0 12px 12px;">
+    <!-- Toestel info -->
+    <div class="section-title" style="margin-top:8px;"><span class="section-title-text" id="lbl-device-section">📱 Dit toestel</span></div>
+    <div class="sync-status-bar" style="margin-bottom:4px;">
+      <div style="font-size:20px;">📱</div>
+      <div class="sync-info">
+        <div id="device-info" style="font-size:13px;color:var(--text-dim);">Niet geconfigureerd</div>
+      </div>
+    </div>
+
     <!-- Google Drive Sync -->
-    <div class="section-title"><span class="section-title-text" id="lbl-sync-section">☁️ Cloud Sync</span></div>
+    <div class="section-title" style="margin-top:8px;"><span class="section-title-text" id="lbl-sync-section">☁️ Cloud Sync</span></div>
     <div class="sync-status-bar" id="sync-status-bar">
       <div class="sync-dot off" id="sync-dot"></div>
       <div class="sync-info">
@@ -2395,9 +2414,9 @@ function renderStockRow(it) {
       ${expHtml ? `<div class="stock-warnings">${expHtml}</div>` : ''}
     </div>
     <div class="stock-counter">
-      <button class="counter-btn minus" onclick="event.stopPropagation();adjustStock('${it.id}',-1)">−</button>
+      <button class="counter-btn minus" onclick="event.stopPropagation();dashboardAdjustStock('${it.id}',-1)">−</button>
       <div class="${counterClass}" onclick="event.stopPropagation();promptSetQty('${it.id}')">${qty}<span class="stock-unit">${escapeHtml(it.unit||'')}</span></div>
-      <button class="counter-btn plus" onclick="event.stopPropagation();adjustStock('${it.id}',1)">+</button>
+      <button class="counter-btn plus" onclick="event.stopPropagation();dashboardAdjustStock('${it.id}',1)">+</button>
     </div>
   </div>`;
 }
@@ -4267,22 +4286,6 @@ function handleHashChange() {
 // ============================================================================
 // EXPORT / IMPORT
 // ============================================================================
-
-function buildExportObject() {
-  return {
-    version: 4,
-    exportedAt: new Date().toISOString(),
-    shelves: state.shelves || [],
-    boxes: state.boxes || [],
-    items: state.items || [],
-    stockItems: state.stockItems || [],
-    categories: state.categories || [],
-    units: state.units || [],
-    stockNames: state.stockNames || [],
-    shops: state.shops || []
-  };
-}
-
 async function exportData() {
   const data = {
     version: 4,
@@ -4780,13 +4783,19 @@ function _fase2Labels() {
 
 
 // ============================================================================
-// GOOGLE DRIVE SYNC
+// GOOGLE DRIVE SYNC — Multi-toestel met rollen
 // ============================================================================
 const GDRIVE_CLIENT_ID = '333079195698-gt6gm0ra37e53ujd782424nea5e9iiqq.apps.googleusercontent.com';
 const GDRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.profile';
 const GDRIVE_FILE_NAME = 'garageorg-backup.json';
 const GDRIVE_SPACES = 'appDataFolder';
 
+// ── Toestelrollen ──────────────────────────────────────────
+const DEVICE_ROLES = { MASTER: 'master', DASHBOARD: 'dashboard' };
+let deviceRole = localStorage.getItem('device_role') || null;
+let deviceName = localStorage.getItem('device_name') || null;
+
+// ── Drive state ────────────────────────────────────────────
 let gTokenClient = null;
 let gAccessToken = localStorage.getItem('gdrive_token') || null;
 let gTokenExpiry = parseInt(localStorage.getItem('gdrive_token_expiry') || '0');
@@ -4797,11 +4806,140 @@ let gSyncDirty = false;
 let gSyncTimer = null;
 let gSyncing = false;
 let gLastSync = parseInt(localStorage.getItem('gdrive_last_sync') || '0');
+let localVersion = parseInt(localStorage.getItem('local_version') || '0');
 
 function isGTokenValid() {
   return !!(gAccessToken && Date.now() < gTokenExpiry - 60000);
 }
+function isMaster() {
+  return !deviceRole || deviceRole === DEVICE_ROLES.MASTER;
+}
 
+// ── Toestel setup bij eerste gebruik ──────────────────────
+function checkDeviceSetup() {
+  if (deviceRole && deviceName) { applyRoleUI(); return; }
+  setTimeout(showDeviceSetup, 800);
+}
+
+function showDeviceSetup() {
+  openModal(
+    currentLang==='nl' ? '📱 Welkom — Configureer dit toestel' : '📱 Bienvenue — Configurez cet appareil',
+    `<p style="margin-bottom:14px;color:var(--text-dim);font-size:13px;">
+      ${currentLang==='nl'
+        ? 'Geef dit toestel een naam en kies de rol.'
+        : 'Donnez un nom à cet appareil et choisissez son rôle.'}
+    </p>
+    <div class="form-group">
+      <label class="form-label">${currentLang==='nl'?'Naam van dit toestel':'Nom de cet appareil'}</label>
+      <input type="text" class="form-input" id="setup-device-name"
+        placeholder="${currentLang==='nl'?'bv. GSM Philippe':'ex. GSM Philippe'}"
+        value="${escapeHtml(deviceName||'')}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">${currentLang==='nl'?'Rol':'Rôle'}</label>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px;">
+        <div class="device-role-card ${(!deviceRole||deviceRole===DEVICE_ROLES.MASTER)?'active':''}"
+          onclick="selectDeviceRole('${DEVICE_ROLES.MASTER}',this)">
+          <div style="font-size:22px;margin-bottom:4px;">📱</div>
+          <div style="font-weight:700;font-size:14px;">${currentLang==='nl'?'Master':'Maître'}</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:3px;">
+            ${currentLang==='nl'?'GSM of hoofdtablet — volledige rechten':'GSM ou tablette principale — droits complets'}
+          </div>
+        </div>
+        <div class="device-role-card ${deviceRole===DEVICE_ROLES.DASHBOARD?'active':''}"
+          onclick="selectDeviceRole('${DEVICE_ROLES.DASHBOARD}',this)">
+          <div style="font-size:22px;margin-bottom:4px;">📊</div>
+          <div style="font-weight:700;font-size:14px;">Dashboard</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:3px;">
+            ${currentLang==='nl'?'Muur-tablet — enkel aantallen beheren':'Tablette murale — gestion des quantités uniquement'}
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="btn" onclick="saveDeviceSetup()" style="margin-top:8px;">
+      ${currentLang==='nl'?'Bevestigen':'Confirmer'}
+    </button>`
+  );
+}
+
+function selectDeviceRole(role, el) {
+  deviceRole = role;
+  document.querySelectorAll('.device-role-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function saveDeviceSetup() {
+  const nameEl = document.getElementById('setup-device-name');
+  const name = nameEl?.value.trim();
+  if (!name) { toast(currentLang==='nl'?'Geef een naam in':'Donnez un nom'); return; }
+  if (!deviceRole) deviceRole = DEVICE_ROLES.MASTER;
+  deviceName = name;
+  localStorage.setItem('device_name', deviceName);
+  localStorage.setItem('device_role', deviceRole);
+  closeModal();
+  applyRoleUI();
+  updateDeviceUI();
+  const roleLabel = deviceRole === DEVICE_ROLES.MASTER
+    ? (currentLang==='nl'?'Master':'Maître') : 'Dashboard';
+  toast(`✓ ${escapeHtml(deviceName)} — ${roleLabel}`);
+}
+
+function applyRoleUI() {
+  const isDashboard = deviceRole === DEVICE_ROLES.DASHBOARD;
+  // Verberg Toevoegen en Materiaal nav voor Dashboard
+  document.querySelectorAll('.nav-btn[data-view="add"]').forEach(b =>
+    b.style.display = isDashboard ? 'none' : '');
+  document.querySelectorAll('.nav-btn[data-view="material"]').forEach(b =>
+    b.style.display = isDashboard ? 'none' : '');
+  // Toon toestelindicator in header voor dashboard
+  const logoText = document.querySelector('.logo-text');
+  if (logoText && isDashboard && deviceName) {
+    logoText.innerHTML = `GARAGE<span>/</span>ORG&nbsp;<span style="font-size:10px;background:var(--accent-stock-bg);color:var(--accent-stock);padding:2px 6px;border-radius:8px;font-weight:600;vertical-align:middle;">${escapeHtml(deviceName)}</span>`;
+  }
+}
+
+function updateDeviceUI() {
+  const el = document.getElementById('device-info');
+  if (!el) return;
+  if (deviceName && deviceRole) {
+    const roleLabel = deviceRole === DEVICE_ROLES.MASTER
+      ? (currentLang==='nl'?'Master':'Maître') : 'Dashboard';
+    el.innerHTML = `<span style="font-weight:600;">${escapeHtml(deviceName)}</span>
+      <span style="color:var(--text-dim);font-size:11px;font-family:'JetBrains Mono';"> · ${roleLabel}</span>
+      <button onclick="showDeviceSetup()" style="background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;margin-left:8px;">✏️</button>`;
+  } else {
+    el.innerHTML = `<button onclick="showDeviceSetup()" class="btn btn-secondary btn-small">
+      ${currentLang==='nl'?'Toestel configureren':'Configurer l\'appareil'}
+    </button>`;
+  }
+}
+
+// ── Versie tracking ────────────────────────────────────────
+function bumpLocalVersion() {
+  localVersion++;
+  localStorage.setItem('local_version', String(localVersion));
+}
+
+function markSyncDirty() {
+  bumpLocalVersion();
+  gSyncDirty = true;
+  if (!isGTokenValid()) return;
+  if (gSyncTimer) clearTimeout(gSyncTimer);
+  gSyncTimer = setTimeout(async () => {
+    if (gSyncDirty && !gSyncing) await driveSync(false);
+    startSyncTimer();
+  }, 30000);
+}
+
+function startSyncTimer() {
+  if (gSyncTimer) clearInterval(gSyncTimer);
+  gSyncTimer = setInterval(async () => {
+    if (isGTokenValid()) updateSyncUI('ok', formatLastSync());
+    if (gSyncDirty && isGTokenValid() && !gSyncing) await driveSync(false);
+  }, 60000);
+}
+
+// ── Google OAuth ───────────────────────────────────────────
 function initGoogleDrive() {
   if (typeof google === 'undefined' || !google.accounts) {
     setTimeout(initGoogleDrive, 1000);
@@ -4821,7 +4959,7 @@ function initGoogleDrive() {
       localStorage.setItem('gdrive_token', gAccessToken);
       localStorage.setItem('gdrive_token_expiry', String(gTokenExpiry));
       await fetchGUserInfo();
-      updateSyncUI('busy', currentLang==='nl'?'Verbonden, zoeken...':'Connecté, recherche...');
+      updateSyncUI('busy', currentLang==='nl'?'Verbonden, synchroniseren...':'Connecté, synchronisation...');
       await driveSyncOnConnect();
     }
   });
@@ -4831,6 +4969,7 @@ function initGoogleDrive() {
   } else if (gUserName) {
     updateSyncUI('off', currentLang==='nl'?'Sessie verlopen':'Session expirée');
   }
+  updateDeviceUI();
 }
 
 async function fetchGUserInfo() {
@@ -4881,6 +5020,7 @@ function gDriveLogout() {
   toast(currentLang==='nl'?'✓ Google Drive ontkoppeld':'✓ Google Drive déconnecté');
 }
 
+// ── Sync UI ────────────────────────────────────────────────
 function updateSyncUI(st, subtitle) {
   const dot = document.getElementById('sync-dot');
   const titleEl = document.getElementById('sync-title');
@@ -4911,54 +5051,74 @@ function formatLastSync() {
   return (currentLang==='nl'?'Laatste sync: ':'Dernière sync : ') + hrs + (currentLang==='nl'?' u geleden':' h');
 }
 
-function markSyncDirty() {
-  gSyncDirty = true;
-  if (!isGTokenValid()) return;
-  // Debounce: sync 30 sec na laatste wijziging
-  if (gSyncTimer) clearTimeout(gSyncTimer);
-  gSyncTimer = setTimeout(async () => {
-    if (gSyncDirty && !gSyncing) await driveSync(false);
-    startSyncTimer();
-  }, 30000);
-}
-
-function startSyncTimer() {
-  if (gSyncTimer) clearInterval(gSyncTimer);
-  gSyncTimer = setInterval(async () => {
-    if (isGTokenValid()) updateSyncUI('ok', formatLastSync());
-    if (gSyncDirty && isGTokenValid() && !gSyncing) await driveSync(false);
-  }, 60000);
-}
-
+// ── Eerste sync na connect ─────────────────────────────────
 async function driveSyncOnConnect() {
   updateSyncUI('busy', currentLang==='nl'?'Zoeken naar backup...':'Recherche de sauvegarde...');
   const fileId = await driveFindFile();
-  if (fileId) {
-    gFileId = fileId;
-    localStorage.setItem('gdrive_file_id', gFileId);
-    const driveDate = await driveGetFileDate(fileId);
+  if (!fileId) {
+    // Geen backup → upload lokale data
+    await driveSync(true);
+    startSyncTimer();
+    return;
+  }
+  gFileId = fileId;
+  localStorage.setItem('gdrive_file_id', gFileId);
+
+  if (deviceRole === DEVICE_ROLES.DASHBOARD) {
+    // Dashboard laadt altijd van Drive
+    await driveLoadFromDrive();
+    startSyncTimer();
+    return;
+  }
+
+  // Master: vergelijk versies
+  const driveData = await driveGetData();
+  if (!driveData) { await driveSync(true); startSyncTimer(); return; }
+
+  const driveVersion = driveData.syncVersion || 0;
+  const driveDate = driveData.lastModified
+    ? new Date(driveData.lastModified).toLocaleDateString(currentLang==='fr'?'fr-BE':'nl-BE')
+      + ' ' + new Date(driveData.lastModified).toLocaleTimeString(currentLang==='fr'?'fr-BE':'nl-BE',{hour:'2-digit',minute:'2-digit'})
+    : '?';
+  const localCount = state.stockItems.length + state.items.length;
+  const driveCount = (driveData.stockItems?.length||0) + (driveData.items?.length||0);
+  const driveDevice = driveData.deviceName || '?';
+
+  if (localVersion > driveVersion || localCount > driveCount) {
+    // Lokaal is nieuwer → vraag gebruiker
+    const driveDataStr = encodeURIComponent(JSON.stringify(driveData));
     openModal(
-      currentLang==='nl' ? '☁️ Backup gevonden op Drive' : '☁️ Sauvegarde trouvée',
-      `<p style="margin-bottom:14px;color:var(--text-dim);font-size:14px;">
+      currentLang==='nl' ? '☁️ Synchronisatie' : '☁️ Synchronisation',
+      `<p style="margin-bottom:12px;color:var(--text-dim);font-size:13px;">
         ${currentLang==='nl'
-          ? `Backup van <strong>${driveDate}</strong> gevonden.<br>Wat wil je doen?`
-          : `Sauvegarde du <strong>${driveDate}</strong> trouvée.<br>Que faire ?`}
+          ? `Lokaal: <strong>${localCount} items</strong> (versie ${localVersion})<br>
+             Drive: <strong>${driveCount} items</strong> van ${escapeHtml(driveDevice)} (${driveDate})`
+          : `Local: <strong>${localCount} articles</strong> (version ${localVersion})<br>
+             Drive: <strong>${driveCount} articles</strong> de ${escapeHtml(driveDevice)} (${driveDate})`}
+      </p>
+      <p style="font-weight:600;font-size:13px;margin-bottom:14px;">
+        ${currentLang==='nl'?'Lokale data lijkt nieuwer. Wat wil je doen?':'Les données locales semblent plus récentes. Que faire ?'}
       </p>
       <div style="display:flex;flex-direction:column;gap:8px;">
-        <button class="btn" onclick="driveLoadFromDrive()">
+        <button class="btn" onclick="drivePushLocal()">
+          📤 ${currentLang==='nl'?'Mijn data uploaden naar Drive':'Envoyer mes données vers Drive'}
+        </button>
+        <button class="btn btn-secondary" onclick="driveLoadFromDrive()">
           📥 ${currentLang==='nl'?'Drive laden (vervangt lokale data)':'Charger Drive (remplace données locales)'}
-        </button>
-        <button class="btn btn-secondary" onclick="drivePushLocal()">
-          📤 ${currentLang==='nl'?'Lokale data uploaden naar Drive':'Envoyer données locales vers Drive'}
-        </button>
-        <button class="btn btn-secondary" onclick="closeModal();startSyncTimer();">
-          ${currentLang==='nl'?'Annuleren':'Annuler'}
         </button>
       </div>`
     );
   } else {
-    await driveSync(true);
+    // Drive gelijk of nieuwer → stil laden
+    await importDataObj(driveData);
+    localVersion = driveVersion;
+    localStorage.setItem('local_version', String(localVersion));
+    gLastSync = Date.now();
+    localStorage.setItem('gdrive_last_sync', String(gLastSync));
+    gSyncDirty = false;
+    updateSyncUI('ok', formatLastSync());
     startSyncTimer();
+    toast(currentLang==='nl'?'✓ Gesynchroniseerd met Drive':'✓ Synchronisé avec Drive');
   }
 }
 
@@ -4966,13 +5126,11 @@ async function driveLoadFromDrive() {
   closeModal();
   updateSyncUI('busy', currentLang==='nl'?'Laden van Drive...':'Chargement depuis Drive...');
   try {
-    const resp = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${gFileId}?alt=media`,
-      { headers: { Authorization: `Bearer ${gAccessToken}` } }
-    );
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
+    const data = await driveGetData();
+    if (!data) throw new Error('Geen data');
     await importDataObj(data);
+    localVersion = data.syncVersion || 0;
+    localStorage.setItem('local_version', String(localVersion));
     gLastSync = Date.now();
     localStorage.setItem('gdrive_last_sync', String(gLastSync));
     gSyncDirty = false;
@@ -4992,12 +5150,48 @@ async function drivePushLocal() {
   startSyncTimer();
 }
 
+// ── Dashboard: bevestiging bij +/- ────────────────────────
+function dashboardAdjustStock(id, delta) {
+  if (isMaster()) { adjustStock(id, delta); return; }
+  const item = state.stockItems.find(i => i.id === id);
+  if (!item) return;
+  const newQty = Math.max(0, (item.quantity || 0) + delta);
+  openModal(
+    currentLang==='nl'?'Voorraad aanpassen':'Ajuster le stock',
+    `<p style="margin-bottom:14px;font-size:15px;text-align:center;">
+      <strong>${escapeHtml(item.name)}</strong><br>
+      <span style="font-size:24px;font-weight:900;">${item.quantity||0}</span>
+      <span style="color:var(--text-dim);"> → </span>
+      <span style="font-size:24px;font-weight:900;color:${delta>0?'var(--success)':'var(--danger)'};">${newQty}</span>
+      ${item.unit ? `<span style="font-size:13px;color:var(--text-dim);"> ${escapeHtml(item.unit)}</span>` : ''}
+    </p>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn" onclick="confirmDashboardAdjust('${id}',${delta})">✓ ${currentLang==='nl'?'Bevestigen':'Confirmer'}</button>
+    </div>`
+  );
+}
+
+async function confirmDashboardAdjust(id, delta) {
+  closeModal();
+  await adjustStock(id, delta);
+  if (isGTokenValid()) await driveSync(true);
+}
+
+// ── Hoofd sync ─────────────────────────────────────────────
 async function driveSync(showFeedback) {
   if (gSyncing || !isGTokenValid()) return;
   gSyncing = true;
   if (showFeedback) updateSyncUI('busy', currentLang==='nl'?'Synchroniseren...':'Synchronisation...');
   try {
-    const json = JSON.stringify(buildExportObject());
+    const exportObj = {
+      ...buildExportObject(),
+      syncVersion: localVersion,
+      lastModified: Date.now(),
+      deviceName: deviceName || 'Onbekend',
+      deviceRole: deviceRole || DEVICE_ROLES.MASTER
+    };
+    const json = JSON.stringify(exportObj);
     if (gFileId) {
       await fetch(
         `https://www.googleapis.com/upload/drive/v3/files/${gFileId}?uploadType=media`,
@@ -5028,6 +5222,7 @@ async function driveSync(showFeedback) {
   } finally { gSyncing = false; }
 }
 
+// ── Drive helpers ──────────────────────────────────────────
 async function driveFindFile() {
   try {
     const r = await fetch(
@@ -5039,15 +5234,15 @@ async function driveFindFile() {
   } catch(e) { return null; }
 }
 
-async function driveGetFileDate(fileId) {
+async function driveGetData() {
   try {
     const r = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=modifiedTime`,
+      `https://www.googleapis.com/drive/v3/files/${gFileId}?alt=media`,
       { headers: { Authorization:`Bearer ${gAccessToken}` } }
     );
-    const d = await r.json();
-    return d.modifiedTime ? new Date(d.modifiedTime).toLocaleDateString(currentLang==='fr'?'fr-BE':'nl-BE') : '?';
-  } catch(e) { return '?'; }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  } catch(e) { console.error('driveGetData:', e); return null; }
 }
 
 async function importDataObj(data) {
@@ -5059,10 +5254,10 @@ async function importDataObj(data) {
   for (const b of (data.boxes||[])) { await dbPut('boxes',b); state.boxes.push(b); }
   for (const i of (data.items||[])) { await dbPut('items',i); state.items.push(i); }
   for (const i of (data.stockItems||[])) { await dbPut('stockItems',i); state.stockItems.push(i); }
-  for (const c of (data.categories?.length ? data.categories : DEFAULT_CATEGORIES)) { await dbPut('categories',c); state.categories.push(c); }
-  for (const u of (data.units?.length ? data.units : DEFAULT_UNITS)) { await dbPut('units',u); state.units.push(u); }
+  for (const c of (data.categories?.length?data.categories:DEFAULT_CATEGORIES)) { await dbPut('categories',c); state.categories.push(c); }
+  for (const u of (data.units?.length?data.units:DEFAULT_UNITS)) { await dbPut('units',u); state.units.push(u); }
   for (const n of (data.stockNames||[])) { await dbPut('stockNames',n); state.stockNames.push(n); }
-  for (const s of (data.shops?.length ? data.shops : DEFAULT_SHOPS)) { await dbPut('shops',s); state.shops.push(s); }
+  for (const s of (data.shops?.length?data.shops:DEFAULT_SHOPS)) { await dbPut('shops',s); state.shops.push(s); }
   state.categories.sort((a,b)=>(a.order||999)-(b.order||999));
   state.units.sort((a,b)=>a.label.localeCompare(b.label,'nl'));
   render();
@@ -5073,14 +5268,16 @@ function updateSyncLabels() {
   const el = (id,txt) => { const e=document.getElementById(id); if(e) e.textContent=txt; };
   el('lbl-sync-section', nl?'☁️ Cloud Sync':'☁️ Synchronisation Cloud');
   el('lbl-sync-now', nl?'Nu synchroniseren':'Synchroniser maintenant');
+  el('lbl-device-section', nl?'📱 Dit toestel':'📱 Cet appareil');
   if (!isGTokenValid()) {
     el('sync-sub', nl?'Niet verbonden':'Non connecté');
     const btn = document.getElementById('sync-action-btn');
-    if (btn) { btn.textContent = nl?'Verbinden':'Connecter'; }
+    if (btn) btn.textContent = nl?'Verbinden':'Connecter';
   } else {
     const sub = document.getElementById('sync-sub');
     if (sub) sub.textContent = formatLastSync();
   }
+  updateDeviceUI();
 }
 
 (async () => {
@@ -5090,7 +5287,8 @@ function updateSyncLabels() {
     setLang(currentLang);
     showView('home');
     handleHashChange();
-    // Init Google Drive na korte delay (wacht op GSI library)
+    applyRoleUI();
+    checkDeviceSetup();
     setTimeout(initGoogleDrive, 1500);
   } catch (err) {
     console.error('INIT ERROR:', err);
