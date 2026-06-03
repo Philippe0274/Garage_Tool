@@ -6419,8 +6419,7 @@ function buildExportObject() {
 async function driveSync(showFeedback) {
   if (gSyncing || !isGTokenValid()) return;
 
-  // Dashboard mag NOOIT de volledige data uploaden naar Drive
-  // — alleen lezen, nooit overschrijven
+  // Dashboard mag NOOIT de volledige data uploaden — enkel lezen
   if (isDashboardDevice()) {
     await driveLoadFromDrive();
     return;
@@ -6428,15 +6427,76 @@ async function driveSync(showFeedback) {
 
   gSyncing = true;
   if (showFeedback) updateSyncUI('busy', currentLang==='nl'?'Synchroniseren...':'Synchronisation...');
+
   try {
-    const exportObj = {
-      ...buildExportObject(),
-      syncVersion: localVersion,
-      lastModified: Date.now(),
-      deviceName: deviceName || 'Onbekend',
-      deviceRole: deviceRole || DEVICE_ROLES.MASTER
-    };
-    const json = JSON.stringify(exportObj);
+    // Stap 1: haal Drive data op VOOR upload
+    const driveData = gFileId ? await driveGetData() : null;
+    const driveVersion = driveData?.syncVersion || 0;
+
+    let uploadData;
+
+    if (driveData && driveVersion > localVersion) {
+      // Drive is nieuwer (dashboard heeft gewijzigd) → slim mergen
+      // Basis = Drive data (bevat dashboard-aanpassingen aan aantallen)
+      // Toevoegen = nieuwe items/rekken/boxen van master die nog niet op Drive staan
+      const mergedStockItems = [...(driveData.stockItems || [])];
+
+      for (const localItem of state.stockItems) {
+        const exists = mergedStockItems.find(i => i.id === localItem.id);
+        if (!exists) {
+          // Nieuw item op master dat nog niet op Drive staat → toevoegen
+          mergedStockItems.push(localItem);
+        } else {
+          // Item bestaat op beide → neem recentste op basis van lastUpdated
+          const localUpdated = localItem.lastUpdated || localItem.createdAt || 0;
+          const driveUpdated = exists.lastUpdated || exists.createdAt || 0;
+          if (localUpdated > driveUpdated) {
+            const idx = mergedStockItems.findIndex(i => i.id === localItem.id);
+            mergedStockItems[idx] = localItem;
+          }
+          // Anders: Drive versie (dashboard aanpassing) behouden
+        }
+      }
+
+      uploadData = {
+        ...driveData,
+        stockItems: mergedStockItems,
+        shelves: state.shelves,
+        boxes: state.boxes,
+        items: state.items,
+        categories: state.categories,
+        units: state.units,
+        shops: state.shops,
+        syncVersion: driveVersion + 1,
+        lastModified: Date.now(),
+        deviceName: deviceName || 'Master',
+        deviceRole: DEVICE_ROLES.MASTER,
+      };
+
+      // Update lokale state met de gemergde aantallen van Drive
+      for (const di of mergedStockItems) {
+        const local = state.stockItems.find(i => i.id === di.id);
+        if (local && local.quantity !== di.quantity) {
+          local.quantity = di.quantity;
+          await dbPut('stockItems', local);
+        }
+      }
+      localVersion = driveVersion + 1;
+
+    } else {
+      // Drive is gelijk of ouder → gewoon uploaden
+      uploadData = {
+        ...buildExportObject(),
+        syncVersion: localVersion + 1,
+        lastModified: Date.now(),
+        deviceName: deviceName || 'Master',
+        deviceRole: DEVICE_ROLES.MASTER,
+      };
+      localVersion++;
+    }
+
+    // Upload
+    const json = JSON.stringify(uploadData);
     if (gFileId) {
       await fetch(
         `https://www.googleapis.com/upload/drive/v3/files/${gFileId}?uploadType=media`,
@@ -6455,11 +6515,15 @@ async function driveSync(showFeedback) {
       gFileId = created.id;
       localStorage.setItem('gdrive_file_id', gFileId);
     }
+
+    localStorage.setItem('local_version', String(localVersion));
     gSyncDirty = false;
     gLastSync = Date.now();
     localStorage.setItem('gdrive_last_sync', String(gLastSync));
     updateSyncUI('ok', formatLastSync());
+    render();
     if (showFeedback) toast(currentLang==='nl'?'✓ Gesynchroniseerd met Google Drive':'✓ Synchronisé avec Google Drive');
+
   } catch(e) {
     updateSyncUI('error', 'Sync fout');
     if (showFeedback) toast('❌ Sync mislukt: ' + (e.message||e));
