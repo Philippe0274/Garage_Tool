@@ -1628,12 +1628,25 @@
       </div>
     </div>
 
-    <div style="display:flex;align-items:center;gap:16px;">
-      <!-- Sync status dot -->
-      <div id="db-sync-indicator" style="display:flex;align-items:center;gap:6px;font-size:11px;color:#aaa;font-family:'JetBrains Mono';">
-        <div id="db-sync-dot" style="width:8px;height:8px;border-radius:50%;background:#c8c4bc;"></div>
-        <span id="db-sync-lbl">—</span>
-      </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <!-- Sync knop — klikbaar -->
+      <button id="db-sync-btn" onclick="dbOpenSyncPanel()" style="
+        display:flex; align-items:center; gap:8px;
+        background:#f5f3ef; border:1px solid #e0dbd4;
+        border-radius:10px; padding:7px 12px; cursor:pointer;
+        font-family:'JetBrains Mono'; font-size:11px; color:#888;
+        transition:all .15s;
+      ">
+        <div id="db-sync-dot" style="width:8px;height:8px;border-radius:50%;background:#c8c4bc;flex-shrink:0;"></div>
+        <span id="db-sync-lbl">Niet verbonden</span>
+      </button>
+      <!-- Instellingen knop -->
+      <button onclick="dbOpenSettings()" style="
+        background:#f5f3ef; border:1px solid #e0dbd4;
+        border-radius:10px; width:36px; height:36px;
+        display:flex; align-items:center; justify-content:center;
+        font-size:18px; cursor:pointer; color:#888;
+      " id="db-settings-btn" title="Instellingen">⚙️</button>
       <!-- Lang switch -->
       <div class="db-lang-switch">
         <button class="db-lang-btn active" id="db-lang-nl" onclick="dbSetLang('nl')">NL</button>
@@ -1644,6 +1657,66 @@
         <div class="db-clock-time" id="db-clock">00:00</div>
         <div class="db-clock-date" id="db-date"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- Mini sync/settings panel (slide-in) -->
+  <div id="db-settings-panel" style="
+    display:none; position:fixed; top:57px; right:0; bottom:0;
+    width:320px; background:#fff; border-left:1px solid #e8e4dc;
+    box-shadow:-4px 0 20px rgba(0,0,0,0.1); z-index:200;
+    flex-direction:column; overflow-y:auto;
+  ">
+    <div style="padding:16px 20px; border-bottom:1px solid #e8e4dc; display:flex; justify-content:space-between; align-items:center;">
+      <div style="font-weight:800; font-size:15px;" id="db-panel-title">Instellingen</div>
+      <button onclick="dbCloseSettings()" style="background:var(--surface-2);border:1px solid var(--border);border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:16px;">×</button>
+    </div>
+    <div style="padding:16px 20px; display:flex; flex-direction:column; gap:12px;">
+
+      <!-- Sync sectie -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:#aaa;text-transform:uppercase;font-family:'JetBrains Mono';" id="db-panel-sync-title">☁️ Google Drive</div>
+      <div style="background:#f5f3ef;border:1px solid #e0dbd4;border-radius:10px;padding:12px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <div id="db-panel-dot" style="width:10px;height:10px;border-radius:50%;background:#c8c4bc;flex-shrink:0;"></div>
+          <div>
+            <div id="db-panel-user" style="font-size:13px;font-weight:600;">Niet verbonden</div>
+            <div id="db-panel-lastsync" style="font-size:11px;color:#aaa;font-family:'JetBrains Mono';"></div>
+          </div>
+        </div>
+        <button id="db-panel-connect-btn" onclick="dbHandleSync()" style="
+          width:100%; padding:10px; border-radius:8px;
+          background:#e05a2b; border:none; color:#fff;
+          font-size:13px; font-weight:700; cursor:pointer;
+          font-family:'Archivo',sans-serif;
+        " id="db-panel-sync-action">Verbinden met Google</button>
+        <button id="db-panel-manual-sync" onclick="driveSync(true).then(dbUpdateSyncPanel)" style="
+          display:none; width:100%; margin-top:8px; padding:10px; border-radius:8px;
+          background:#f5f3ef; border:1px solid #e0dbd4; color:#666;
+          font-size:13px; font-weight:700; cursor:pointer;
+          font-family:'Archivo',sans-serif;
+        " id="db-lbl-sync-now2">🔄 Nu synchroniseren</button>
+      </div>
+
+      <!-- Toestel sectie -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:#aaa;text-transform:uppercase;font-family:'JetBrains Mono';margin-top:4px;" id="db-panel-device-title">📱 Dit toestel</div>
+      <div style="background:#f5f3ef;border:1px solid #e0dbd4;border-radius:10px;padding:12px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;" id="db-panel-device-name">—</div>
+        <button onclick="showDeviceSetup();dbCloseSettings();" style="
+          width:100%; padding:10px; border-radius:8px;
+          background:#f5f3ef; border:1px solid #e0dbd4; color:#666;
+          font-size:13px; font-weight:700; cursor:pointer;
+          font-family:'Archivo',sans-serif;
+        " id="db-panel-device-btn">✏️ Toestel wijzigen</button>
+      </div>
+
+      <!-- Export -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:#aaa;text-transform:uppercase;font-family:'JetBrains Mono';margin-top:4px;" id="db-panel-data-title">💾 Data</div>
+      <button onclick="exportData()" style="
+        width:100%; padding:10px; border-radius:8px;
+        background:#f5f3ef; border:1px solid #e0dbd4; color:#666;
+        font-size:13px; font-weight:700; cursor:pointer;
+        font-family:'Archivo',sans-serif;
+      " id="db-panel-export-btn">📤 Exporteer alle data</button>
     </div>
   </div>
 
@@ -5490,14 +5563,21 @@ function dbUpdateClock() {
 function dbUpdateSyncDot() {
   const dot = document.getElementById('db-sync-dot');
   const lbl = document.getElementById('db-sync-lbl');
-  if (!dot || !lbl) return;
+  const btn = document.getElementById('db-sync-btn');
+  const nl = dbLang === 'nl';
+  if (!dot) return;
   if (isGTokenValid()) {
     dot.style.background = '#0f8c6b';
-    lbl.textContent = formatLastSync();
+    if (lbl) lbl.textContent = formatLastSync();
+    if (btn) { btn.style.borderColor = '#b0e0d0'; btn.style.color = '#0f8c6b'; }
   } else {
-    dot.style.background = '#c8c4bc';
-    lbl.textContent = dbLang==='nl'?'Niet verbonden':'Non connecté';
+    dot.style.background = '#e05a2b';
+    if (lbl) lbl.textContent = nl ? '⚠ Niet verbonden' : '⚠ Non connecté';
+    if (btn) { btn.style.borderColor = '#f0b0b0'; btn.style.color = '#b83030'; btn.style.background = '#fff0f0'; }
   }
+  // Update panel if open
+  const panel = document.getElementById('db-settings-panel');
+  if (panel && panel.style.display !== 'none') dbUpdateSyncPanel();
 }
 
 function dbSetLang(lang) {
@@ -5527,6 +5607,8 @@ function dbUpdateLabels() {
   el('db-rotate-sub',  nl ? 'Dit scherm werkt enkel in landscape' : 'Cet écran fonctionne uniquement en mode paysage');
   el('db-btn-cancel',  nl ? 'Annuleren' : 'Annuler');
   el('db-btn-confirm', nl ? '✓ Bevestigen' : '✓ Confirmer');
+  dbUpdateSettingsPanelLabels();
+  dbUpdateSyncDot();
   const inp = document.getElementById('db-search-input');
   if (inp) inp.placeholder = nl ? 'Zoek in NL of FR...' : 'Rechercher en NL ou FR...';
 }
@@ -5737,6 +5819,74 @@ function dbCardHTML(it, nl) {
   </div>`;
 }
 
+function dbOpenSyncPanel() {
+  dbOpenSettings();
+}
+
+function dbOpenSettings() {
+  const panel = document.getElementById('db-settings-panel');
+  if (panel) panel.style.display = 'flex';
+  dbUpdateSyncPanel();
+  dbUpdateSettingsPanelLabels();
+}
+
+function dbCloseSettings() {
+  const panel = document.getElementById('db-settings-panel');
+  if (panel) panel.style.display = 'none';
+}
+
+function dbUpdateSyncPanel() {
+  const nl = dbLang === 'nl';
+  const connected = isGTokenValid();
+  const dot = document.getElementById('db-panel-dot');
+  const user = document.getElementById('db-panel-user');
+  const lastsync = document.getElementById('db-panel-lastsync');
+  const connectBtn = document.getElementById('db-panel-connect-btn');
+  const manualBtn = document.getElementById('db-panel-manual-sync');
+
+  if (dot) dot.style.background = connected ? '#0f8c6b' : '#c8c4bc';
+  if (user) user.textContent = connected ? (gUserName || 'Google') : (nl ? 'Niet verbonden' : 'Non connecté');
+  if (lastsync) lastsync.textContent = connected ? formatLastSync() : '';
+  if (connectBtn) {
+    connectBtn.textContent = connected
+      ? (nl ? '🔓 Ontkoppelen' : '🔓 Déconnecter')
+      : (nl ? '🔗 Verbinden met Google' : '🔗 Connecter à Google');
+    connectBtn.style.background = connected ? '#f5f3ef' : '#e05a2b';
+    connectBtn.style.color = connected ? '#666' : '#fff';
+    connectBtn.style.border = connected ? '1px solid #e0dbd4' : 'none';
+  }
+  if (manualBtn) manualBtn.style.display = connected ? 'block' : 'none';
+
+  // Device info
+  const devName = document.getElementById('db-panel-device-name');
+  if (devName) devName.textContent = deviceName || '—';
+}
+
+function dbUpdateSettingsPanelLabels() {
+  const nl = dbLang === 'nl';
+  const el = (id, txt) => { const e = document.getElementById(id); if(e) e.textContent = txt; };
+  el('db-panel-title', nl ? 'Instellingen' : 'Paramètres');
+  el('db-panel-sync-title', nl ? '☁️ Google Drive' : '☁️ Google Drive');
+  el('db-panel-device-title', nl ? '📱 Dit toestel' : '📱 Cet appareil');
+  el('db-panel-data-title', nl ? '💾 Data' : '💾 Données');
+  el('db-panel-export-btn', nl ? '📤 Exporteer alle data' : '📤 Exporter toutes les données');
+  el('db-panel-device-btn', nl ? '✏️ Toestel wijzigen' : '✏️ Modifier l\'appareil');
+  el('db-lbl-sync-now2', nl ? '🔄 Nu synchroniseren' : '🔄 Synchroniser maintenant');
+}
+
+function dbHandleSync() {
+  if (isGTokenValid()) {
+    // Ontkoppelen
+    gDriveLogout();
+    dbUpdateSyncPanel();
+    dbUpdateSyncDot();
+  } else {
+    // Verbinden
+    if (!gTokenClient) { toast(currentLang==='nl'?'Google laden...':'Chargement Google...'); return; }
+    gTokenClient.requestAccessToken({ prompt: gUserName ? '' : 'consent' });
+  }
+}
+
 function dbAdjust(id, delta) {
   const item = state.stockItems.find(i => i.id === id);
   if (!item) return;
@@ -5944,6 +6094,7 @@ function initGoogleDrive() {
       localStorage.setItem('gdrive_token_expiry', String(gTokenExpiry));
       await fetchGUserInfo();
       updateSyncUI('busy', currentLang==='nl'?'Verbonden, synchroniseren...':'Connecté, synchronisation...');
+      if (isDashboardDevice()) { dbUpdateSyncDot(); dbUpdateSyncPanel(); }
       await driveSyncOnConnect();
     }
   });
