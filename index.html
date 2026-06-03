@@ -1569,11 +1569,12 @@
     <button class="btn btn-secondary" id="sync-manual-btn" onclick="driveSync(true)" style="display:none;margin-bottom:6px;">
       🔄 <span id="lbl-sync-now">Nu synchroniseren</span>
     </button>
-    <div class="section-title" style="margin-top:8px;"><span class="section-title-text">Beheer</span></div>
+    <div class="section-title" style="margin-top:8px;"><span class="section-title-text" id="lbl-settings-manage">Beheer</span></div>
     <button class="btn btn-secondary" onclick="openCategoryManager()" data-i18n="manage_cats">🏷️ Categorieën beheren</button>
     <button class="btn btn-secondary" onclick="openUnitManager()" data-i18n="manage_units">📏 Eenheden beheren</button>
     <button class="btn btn-secondary" onclick="openShopManager()" data-i18n="manage_shops">🏪 Winkels beheren</button>
     <button class="btn btn-secondary" onclick="openStockShelvesManager()">📦 <span id="lbl-stock-shelves">Voorraad-rekken beheren</span></button>
+    <button class="btn btn-secondary" onclick="openBoxManager()">📦 <span id="lbl-manage-boxes">Boxen beheren</span></button>
     <div class="section-title" style="margin-top:16px;"><span class="section-title-text">Data</span></div>
     <button class="btn btn-secondary" onclick="exportData()" data-i18n="export">📤 Exporteer alle data</button>
     <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()" data-i18n="import">📥 Importeer data</button>
@@ -2080,6 +2081,8 @@ function updateHomeLabels() {
     : 'Approchez votre téléphone d\'un tag NFC.\nFonctionne sur Android avec Chrome.');
   el('lbl-nfc-btn', nl ? 'NFC starten' : 'Démarrer NFC');
   el('lbl-stock-shelves', nl ? 'Voorraad-rekken beheren' : 'Gérer les rayons de stock');
+  el('lbl-manage-boxes', nl ? 'Boxen beheren' : 'Gérer les boîtes');
+  el('lbl-settings-manage', nl ? 'Beheer' : 'Gestion');
   el('nav-lbl-home', nl ? 'Start' : 'Accueil');
   el('nav-lbl-material', nl ? 'Materiaal' : 'Matériel');
   el('nav-lbl-stock', nl ? 'Voorraad' : 'Stock');
@@ -2339,7 +2342,7 @@ function renderBrowseMaterial() {
     return `<div class="browse-item-card" onclick="openItemEditor('${it.id}')">
       ${thumb ? `<img class="browse-thumb" src="${thumb}">` : `<div class="browse-thumb">📦</div>`}
       <div class="browse-info">
-        <div class="browse-name">${escapeHtml(it.name)}${it.quantity > 1 ? ` <span style="color:var(--text-dim);font-weight:400;font-size:12px;">×${it.quantity}</span>` : ''}</div>
+        <div class="browse-name">${escapeHtml(currentLang==='fr'&&it.name_fr ? it.name_fr : it.name)}${it.quantity > 1 ? ` <span style="color:var(--text-dim);font-weight:400;font-size:12px;">×${it.quantity}</span>` : ''}</div>
         <div class="browse-loc">${loc}</div>
       </div>
       <div class="browse-right">›</div>
@@ -2862,8 +2865,202 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// ── Auto-vertaling NL → FR ─────────────────────────────────
+async function autoTranslateStockName() {
+  const nlName = document.getElementById('stock-name')?.value.trim();
+  if (!nlName) {
+    toast(currentLang==='nl'?'Geef eerst een NL naam in':'Saisissez d\'abord un nom NL');
+    return;
+  }
+  const btn = document.querySelector('button[onclick="autoTranslateStockName()"]');
+  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 100,
+        messages: [{
+          role: 'user',
+          content: `Vertaal dit Nederlandse productnaam naar Frans. Geef ENKEL de vertaling, geen uitleg: "${nlName}"`
+        }]
+      })
+    });
+    const data = await resp.json();
+    const translation = data.content?.[0]?.text?.trim();
+    if (translation) {
+      const frField = document.getElementById('stock-name-fr');
+      if (frField) {
+        frField.value = translation;
+        frField.style.borderColor = 'var(--success)';
+        setTimeout(() => frField.style.borderColor = '', 2000);
+      }
+      toast('🌐 ' + translation);
+    } else {
+      toast(currentLang==='nl'?'Vertaling mislukt':'Traduction échouée');
+    }
+  } catch(e) {
+    toast(currentLang==='nl'?'Vertaling niet beschikbaar':'Traduction non disponible');
+  } finally {
+    if (btn) { btn.textContent = '🌐'; btn.disabled = false; }
+  }
+}
+
+// ── Auto-vertaling voor item-editor (materiaal) ────────────
+async function autoTranslateItemName() {
+  const nlName = document.getElementById('item-name')?.value.trim();
+  if (!nlName) {
+    toast(currentLang==='nl'?'Geef eerst een NL naam in':'Saisissez d\'abord un nom NL');
+    return;
+  }
+  const btn = document.querySelector('button[onclick="autoTranslateItemName()"]');
+  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 100,
+        messages: [{
+          role: 'user',
+          content: `Vertaal dit Nederlandse productnaam naar Frans. Geef ENKEL de vertaling, geen uitleg: "${nlName}"`
+        }]
+      })
+    });
+    const data = await resp.json();
+    const translation = data.content?.[0]?.text?.trim();
+    if (translation) {
+      const frField = document.getElementById('item-name-fr');
+      if (frField) {
+        frField.value = translation;
+        frField.style.borderColor = 'var(--success)';
+        setTimeout(() => frField.style.borderColor = '', 2000);
+      }
+      toast('🌐 ' + translation);
+    }
+  } catch(e) {
+    toast(currentLang==='nl'?'Vertaling niet beschikbaar':'Traduction non disponible');
+  } finally {
+    if (btn) { btn.textContent = '🌐'; btn.disabled = false; }
+  }
+}
+
 // ============================================================================
-// LOW-STOCK CHECK
+// BOX MANAGER — in Instellingen
+// ============================================================================
+function openBoxManager() {
+  const nl = currentLang === 'nl';
+  const boxes = [...state.boxes].sort((a,b) => (a.name||'').localeCompare(b.name||'', nl?'nl':'fr'));
+  const rowsHtml = boxes.length === 0
+    ? `<div class="empty"><div class="empty-icon">📦</div>
+       <div class="empty-text">${nl?'Nog geen boxen':'Pas encore de boîtes'}</div></div>`
+    : boxes.map(b => {
+        const shelf = state.shelves.find(s => s.id === b.shelfId);
+        const matCount = state.items.filter(i => i.boxId === b.id).length;
+        const stkCount = state.stockItems.filter(i => i.boxId === b.id).length;
+        const posMap = {left:nl?'Links':'Gauche',center:nl?'Midden':'Centre',right:nl?'Rechts':'Droite'};
+        const loc = shelf
+          ? `${escapeHtml(shelf.name)}${b.level?' · L'+b.level:''}${b.position?' · '+posMap[b.position]:''}`
+          : '—';
+        return `<div class="cat-row">
+          ${b.photo
+            ? `<img src="${b.photo}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0;">`
+            : `<span style="font-size:20px;width:36px;text-align:center;flex-shrink:0;">📦</span>`}
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;">${escapeHtml(b.name)}</div>
+            <div style="font-size:10px;color:var(--text-faint);font-family:'JetBrains Mono';">${loc} · ${matCount+stkCount} items</div>
+          </div>
+          <div class="cat-actions">
+            <button class="cat-action-btn" onclick="openBoxEditorFromManager('${b.id}')">✏️</button>
+            <button class="cat-action-btn" onclick="deleteBoxFromManager('${b.id}')">🗑️</button>
+          </div>
+        </div>`;
+      }).join('');
+
+  openModal(
+    nl ? '📦 Boxen beheren' : '📦 Gérer les boîtes',
+    `${rowsHtml}
+     <button class="btn" style="margin-top:14px;" onclick="openBoxEditorFromManager(null)">
+       ＋ ${nl?'Nieuwe box toevoegen':'Ajouter une boîte'}
+     </button>`
+  );
+}
+
+function openBoxEditorFromManager(boxId) {
+  closeModal();
+  openBoxEditor(boxId);
+}
+
+async function deleteBoxFromManager(id) {
+  const nl = currentLang === 'nl';
+  if (!confirm(nl?'Box verwijderen? Items blijven bewaard maar worden losgekoppeld.':'Supprimer la boîte ? Les articles sont conservés mais déliés.')) return;
+  await dbDelete('boxes', id);
+  state.boxes = state.boxes.filter(b => b.id !== id);
+  // Items losgekoppeld van box
+  for (const it of state.items.filter(i => i.boxId === id)) {
+    it.boxId = null; await dbPut('items', it);
+  }
+  for (const it of state.stockItems.filter(i => i.boxId === id)) {
+    it.boxId = null; await dbPut('stockItems', it);
+  }
+  markSyncDirty();
+  render();
+  openBoxManager();
+}
+
+// ============================================================================
+// AUTO-VERTALING NL → FR (via Claude API)
+// ============================================================================
+async function autoTranslate(nlName, targetInputId, btnEl) {
+  if (!nlName) {
+    toast(currentLang==='nl'?'Geef eerst een NL naam in':'Saisissez d\'abord un nom NL');
+    return;
+  }
+  if (btnEl) { btnEl.textContent = '⏳'; btnEl.disabled = true; }
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 60,
+        messages: [{ role: 'user', content: `Traduis ce nom de produit néerlandais en français. Donne UNIQUEMENT la traduction, sans explication: "${nlName}"` }]
+      })
+    });
+    const data = await resp.json();
+    const translation = data.content?.[0]?.text?.trim();
+    if (translation) {
+      const field = document.getElementById(targetInputId);
+      if (field) {
+        field.value = translation;
+        field.style.borderColor = 'var(--success)';
+        setTimeout(() => field.style.borderColor = '', 2000);
+      }
+      toast('🌐 ' + translation);
+    } else {
+      toast(currentLang==='nl'?'Vertaling mislukt':'Traduction échouée');
+    }
+  } catch(e) {
+    toast(currentLang==='nl'?'Vertaling niet beschikbaar':'Traduction non disponible');
+  } finally {
+    if (btnEl) { btnEl.textContent = '🌐'; btnEl.disabled = false; }
+  }
+}
+
+function autoTranslateStockName() {
+  const nlName = document.getElementById('stock-name')?.value.trim();
+  const btn = document.querySelector('button[onclick="autoTranslateStockName()"]');
+  autoTranslate(nlName, 'stock-name-fr', btn);
+}
+
+function autoTranslateItemName() {
+  const nlName = document.getElementById('item-name')?.value.trim();
+  const btn = document.querySelector('button[onclick="autoTranslateItemName()"]');
+  autoTranslate(nlName, 'item-name-fr', btn);
+}
+
 // ============================================================================
 function getLowStockItems() {
   return state.stockItems.filter(it => {
@@ -3498,7 +3695,8 @@ async function saveBox(id) {
   if (!id) state.boxes.push(box);
   closeModal();
   toast(t('box_added')); markSyncDirty();
-  showView('material');
+  // Return to box manager if open, else material view
+  openBoxManager();
   renderShelvesList('material', 'shelvesList');
   renderBoxesList();
   render();
@@ -3596,12 +3794,20 @@ function openItemEditor(itemId, preselectBoxId) {
   }).join('');
   openModal(item ? `✏️ ${escapeHtml(item.name)}` : t('add_item'), `
     <div class="form-group">
-      <label class="form-label">${t('item_name')}</label>
+      <label class="form-label">${t('item_name')} (NL)</label>
       <div style="display:flex;gap:6px;">
         <input type="text" class="form-input" id="item-name" value="${item?.name || ''}" placeholder="${currentLang==='fr'?'p.ex. perceuse':'bv. boormachine'}">
         <button class="icon-btn" data-voice-target="item-name" onclick="startVoiceForInput('item-name')" title="${currentLang==='fr'?'Dictée vocale':'Inspreken'}">🎤</button>
       </div>
       <div class="form-hint">${currentLang==='fr'?'🎤 ou tapez':'🎤 of typ'}</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">${t('item_name')} (FR)</label>
+      <div style="display:flex;gap:6px;">
+        <input type="text" class="form-input" id="item-name-fr" value="${item?.name_fr || ''}" placeholder="p.ex. perceuse">
+        <button class="icon-btn" onclick="autoTranslateItemName()" title="${currentLang==='fr'?'Traduire automatiquement':'Automatisch vertalen'}" style="font-size:13px;">🌐</button>
+      </div>
+      <div class="form-hint">${currentLang==='fr'?'Auto-traduction ou saisissez manuellement':'Auto-vertaling of zelf invullen'}</div>
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -3667,6 +3873,7 @@ async function saveItem(id) {
   if (!name) return;
   const item = id ? state.items.find(i => i.id === id) : { id: uid(), createdAt: Date.now() };
   item.name = name;
+  item.name_fr = document.getElementById('item-name-fr')?.value.trim() || item.name_fr || '';
   item.quantity = parseInt(document.getElementById('item-qty').value) || 1;
   item.boxId = document.getElementById('item-box').value || null;
   item.description = document.getElementById('item-desc').value;
@@ -3741,12 +3948,21 @@ function openStockEditor(stockId, preselectShelfId, preselectLevel, preselectPos
   openModal(item ? `🥫 ${escapeHtml(item.name)}` : t('add_stock_item_title'), `
     ${nameDatalist}
     <div class="form-group">
-      <label class="form-label">${t('item_name')}</label>
+      <label class="form-label">${t('item_name')} (NL)</label>
       <div style="display:flex;gap:6px;">
         <input type="text" class="form-input" id="stock-name" value="${item?.name || ''}" placeholder="${currentLang==='fr'?'p.ex. lait':'bv. melk'}" list="stock-name-suggestions" autocomplete="off" oninput="checkMilkType(this.value)">
         <button class="icon-btn" data-voice-target="stock-name" onclick="startVoiceForInput('stock-name')" title="${currentLang==='fr'?'Dictée vocale':'Inspreken'}">🎤</button>
       </div>
       <div class="form-hint">${currentLang==='fr'?'🎤 ou tapez · ' + state.stockNames.length + ' suggestions':'🎤 of typ · ' + state.stockNames.length + ' suggesties'}</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">${t('item_name')} (FR)</label>
+      <div style="display:flex;gap:6px;">
+        <input type="text" class="form-input" id="stock-name-fr" value="${item?.name_fr || ''}" placeholder="p.ex. lait">
+        <button class="icon-btn" onclick="autoTranslateStockName()" title="${currentLang==='fr'?'Traduire automatiquement':'Automatisch vertalen'}" style="font-size:13px;">🌐</button>
+      </div>
+      <div class="form-hint">${currentLang==='fr'?'Traduction automatique ou saisissez manuellement':'Auto-vertaling of zelf invullen'}</div>
     </div>
 
     <div class="form-group" id="type-group" style="display:${isMilkName(item?.name||'') ? 'block' : 'none'};">
@@ -3814,7 +4030,16 @@ function openStockEditor(stockId, preselectShelfId, preselectLevel, preselectPos
       <div class="type-pills">
         <button type="button" class="type-pill${(!item?.storageLocation||item?.storageLocation==='shelf')?' active':''}" data-loc="shelf" onclick="selectStorageLoc(this,'shelf')">📦 ${currentLang==='fr'?'Étagère':'Schap'}</button>
         <button type="button" class="type-pill${item?.storageLocation==='freezer'?' active':''}" data-loc="freezer" onclick="selectStorageLoc(this,'freezer')">🧊 ${currentLang==='fr'?'Congélateur':'Vriezer'}</button>
+        <button type="button" class="type-pill${item?.storageLocation==='box'?' active':''}" data-loc="box" onclick="selectStorageLoc(this,'box')">🗃️ Box</button>
       </div>
+    </div>
+
+    <div class="form-group" id="stock-box-group" style="display:${item?.storageLocation==='box'?'block':'none'};">
+      <label class="form-label">${currentLang==='fr'?'Boîte':'Box'}</label>
+      <select class="form-select" id="stock-box-select">
+        <option value="">—</option>
+        ${state.boxes.map(b => `<option value="${b.id}" ${item?.boxId===b.id?'selected':''}>${escapeHtml(b.name)}</option>`).join('')}
+      </select>
     </div>
 
     <div class="form-group" id="freeze-date-group" style="display:${item?.storageLocation==='freezer'?'block':'none'};">
@@ -3932,8 +4157,9 @@ function selectStorageLoc(btn, loc) {
   document.querySelectorAll('.type-pill[data-loc]').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   const fdg = document.getElementById('freeze-date-group');
+  const sbg = document.getElementById('stock-box-group');
   if (fdg) fdg.style.display = loc === 'freezer' ? 'block' : 'none';
-  // Reset freeze mode to 'known' when switching to freezer
+  if (sbg) sbg.style.display = loc === 'box' ? 'block' : 'none';
   if (loc === 'freezer') {
     const knownBtn = document.getElementById('frz-known-btn');
     if (knownBtn) selectFreezeMode(knownBtn, 'known');
@@ -3965,6 +4191,7 @@ async function saveStock(id) {
   if (!name) return;
   const item = id ? state.stockItems.find(i => i.id === id) : { id: uid(), createdAt: Date.now() };
   item.name = name;
+  item.name_fr = document.getElementById('stock-name-fr')?.value.trim() || item.name_fr || '';
   item.quantity = parseInt(document.getElementById('stock-qty').value) || 0;
   const unitVal = document.getElementById('stock-unit').value;
   item.unit = (unitVal && unitVal !== '__new__') ? unitVal.trim() : '';
@@ -3977,7 +4204,7 @@ async function saveStock(id) {
   item.targetQuantity = tgt === '' ? null : parseInt(tgt) || null;
   item.categoryId = document.getElementById('stock-cat').value || null;
   item.expiryDate = document.getElementById('stock-expiry').value || null;
-  // bewaarplaats + invriesdatum
+  // bewaarplaats + invriesdatum + box
   const locPill = document.querySelector('.type-pill[data-loc].active');
   item.storageLocation = locPill ? locPill.dataset.loc : 'shelf';
   if (item.storageLocation === 'freezer') {
@@ -3993,13 +4220,21 @@ async function saveStock(id) {
       }
       item.freezeDate = dateVal;
     }
+    item.boxId = null;
+  } else if (item.storageLocation === 'box') {
+    item.boxId = document.getElementById('stock-box-select')?.value || null;
+    item.freezeDate = null;
+    item.shelfId = null; item.level = null; item.position = null;
   } else {
     item.freezeDate = null;
+    item.boxId = null;
   }
-  item.shelfId = document.getElementById('stock-shelf').value || null;
-  const levelV = document.getElementById('stock-level').value;
-  item.level = levelV ? parseInt(levelV) : null;
-  item.position = document.getElementById('stock-position').value || null;
+  if (item.storageLocation !== 'box') {
+    item.shelfId = document.getElementById('stock-shelf').value || null;
+    const levelV = document.getElementById('stock-level').value;
+    item.level = levelV ? parseInt(levelV) : null;
+    item.position = document.getElementById('stock-position').value || null;
+  }
 
   // Shop + price
   const newShopId = document.getElementById('stock-shop')?.value || null;
