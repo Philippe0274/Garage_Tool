@@ -611,8 +611,8 @@
 
   /* ── SUB-CHOICE CARDS ─────────────────────────────────── */
   .subchoice-row {
-    display:grid; grid-template-columns:repeat(auto-fit, minmax(90px, 1fr));
-    gap:10px; padding:16px;
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(75px, 1fr));
+    gap:8px; padding:12px;
   }
   .subchoice-card {
     background:var(--surface); border:1px solid var(--border);
@@ -1262,7 +1262,7 @@
     <span class="subscreen-title" id="lbl-screen-browse">Raadplegen</span>
   </div>
 
-  <!-- Sub-keuze: Materiaal of Voorraad -->
+  <!-- Sub-keuze: Materiaal / Voorraad / Vriezer / Ijskast / Vriezer keuken -->
   <div class="subchoice-row" id="browse-subchoice">
     <div class="subchoice-card" onclick="showBrowse('material')">
       <div class="subchoice-icon">🔧</div>
@@ -1277,6 +1277,16 @@
       <div class="subchoice-icon">🧊</div>
       <div class="subchoice-label" id="lbl-freezer">Vriezer</div>
       <span class="badge" id="browse-freezer-badge" style="display:none;">!</span>
+    </div>
+    <div class="subchoice-card" onclick="showBrowse('fridge')">
+      <div class="subchoice-icon">🌡️</div>
+      <div class="subchoice-label" id="lbl-fridge">Ijskast</div>
+      <span class="badge" id="browse-fridge-badge" style="display:none;">!</span>
+    </div>
+    <div class="subchoice-card" onclick="showBrowse('freezer_kitchen')">
+      <div class="subchoice-icon">❄️</div>
+      <div class="subchoice-label" id="lbl-freezer-kitchen">Vriezer keuken</div>
+      <span class="badge" id="browse-fzk-badge" style="display:none;">!</span>
     </div>
   </div>
 
@@ -1331,6 +1341,35 @@
     <div id="browse-freezer-count" class="browse-count"></div>
     <div id="browse-freezer-list"></div>
   </div>
+
+  <!-- Browse Ijskast -->
+  <div id="browse-fridge" style="display:none;">
+    <div class="search-bar-inline">
+      <input type="text" class="search-input" id="searchFridgeInput" oninput="performBrowseSearch('fridge')">
+      <button class="icon-btn" onclick="startVoiceForBrowse('fridge')">🎤</button>
+    </div>
+    <div class="filter-row" id="fridge-filter-row">
+      <button class="fchip active" id="fchip-fri-all" onclick="filterFridgeStatus('all',this)">Alles</button>
+      <button class="fchip" id="fchip-fri-old" onclick="filterFridgeStatus('old',this)">⚠️ Te lang</button>
+    </div>
+    <div id="browse-fridge-count" class="browse-count"></div>
+    <div id="browse-fridge-list"></div>
+  </div>
+
+  <!-- Browse Vriezer keuken -->
+  <div id="browse-freezer-kitchen" style="display:none;">
+    <div class="search-bar-inline">
+      <input type="text" class="search-input" id="searchFreezerKitchenInput" oninput="performBrowseSearch('freezer_kitchen')">
+      <button class="icon-btn" onclick="startVoiceForBrowse('freezer_kitchen')">🎤</button>
+    </div>
+    <div class="filter-row" id="fzk-filter-row">
+      <button class="fchip active" id="fchip-fzk-all" onclick="filterFreezerKitchenStatus('all',this)">Alles</button>
+      <button class="fchip" id="fchip-fzk-old" onclick="filterFreezerKitchenStatus('old',this)">⚠️ Te lang</button>
+    </div>
+    <div id="browse-fzk-count" class="browse-count"></div>
+    <div id="browse-fzk-list"></div>
+  </div>
+
 </div>
 
 <!-- ─── SCHERM 3 · TOEVOEGEN (keuze mat/stock) ──────────── -->
@@ -1753,6 +1792,18 @@
         <div class="db-mode-label" id="db-lbl-freezer">Vriezer</div>
         <div class="db-mode-count" id="db-count-freezer">0 items</div>
       </button>
+      <button class="db-mode-btn" onclick="dbShowMode('fridge')">
+        <span class="db-mode-badge" id="db-badge-fridge" style="display:none;">0</span>
+        <span class="db-mode-icon">🌡️</span>
+        <div class="db-mode-label" id="db-lbl-fridge-db">Ijskast</div>
+        <div class="db-mode-count" id="db-count-fridge">0 items</div>
+      </button>
+      <button class="db-mode-btn" onclick="dbShowMode('freezer_kitchen')">
+        <span class="db-mode-badge" id="db-badge-fzk" style="display:none;">0</span>
+        <span class="db-mode-icon">❄️</span>
+        <div class="db-mode-label" id="db-lbl-fzk-db">Vriezer keuken</div>
+        <div class="db-mode-count" id="db-count-fzk">0 items</div>
+      </button>
     </div>
   </div>
 
@@ -2049,6 +2100,8 @@ function setLang(lang) {
   if (currentBrowseMode === 'material') renderBrowseMaterial();
   else if (currentBrowseMode === 'stock') renderBrowseStock();
   else if (currentBrowseMode === 'freezer') renderBrowseFreezer();
+  else if (currentBrowseMode === 'fridge') renderBrowseFridge();
+  else if (currentBrowseMode === 'freezer_kitchen') renderBrowseFreezerKitchen();
 }
 
 function updateHomeLabels() {
@@ -2074,8 +2127,18 @@ function updateHomeLabels() {
   el('lbl-material', nl ? 'Materiaal' : 'Matériel');
   el('lbl-stock', nl ? 'Voorraad' : 'Stock');
   el('lbl-freezer', nl ? 'Vriezer' : 'Congélateur');
+  el('lbl-fridge', nl ? 'Ijskast' : 'Réfrigérateur');
+  el('lbl-freezer-kitchen', nl ? 'Vriezer keuken' : 'Congélateur cuisine');
   el('fchip-frz-all', nl ? 'Alles' : 'Tout');
   el('fchip-frz-old', nl ? '⚠️ Te lang' : '⚠️ Trop long');
+  el('fchip-fri-all', nl ? 'Alles' : 'Tout');
+  el('fchip-fri-old', nl ? '⚠️ Te lang' : '⚠️ Trop long');
+  el('fchip-fzk-all', nl ? 'Alles' : 'Tout');
+  el('fchip-fzk-old', nl ? '⚠️ Te lang' : '⚠️ Trop long');
+  const fi = document.getElementById('searchFridgeInput');
+  if (fi) fi.placeholder = nl ? 'Zoek in ijskast...' : 'Rechercher au réfrigérateur...';
+  const fk = document.getElementById('searchFreezerKitchenInput');
+  if (fk) fk.placeholder = nl ? 'Zoek in vriezer keuken...' : 'Rechercher au congélateur cuisine...';
   el('lbl-add-material', nl ? 'Materiaal' : 'Matériel');
   el('lbl-add-stock', nl ? 'Voorraad' : 'Stock');
   el('lbl-shoplist', nl ? 'Boodschappenlijst' : 'Liste de courses');
@@ -2137,6 +2200,8 @@ function showView(name) {
     document.getElementById('browse-material').style.display = 'none';
     document.getElementById('browse-stock').style.display = 'none';
     document.getElementById('browse-freezer').style.display = 'none';
+    document.getElementById('browse-fridge').style.display = 'none';
+    document.getElementById('browse-freezer-kitchen').style.display = 'none';
     currentBrowseMode = null;
   }
   render();
@@ -2145,9 +2210,11 @@ function showView(name) {
 function showBrowse(mode) {
   currentBrowseMode = mode;
   document.getElementById('browse-subchoice').style.display = 'none';
-  document.getElementById('browse-material').style.display = mode === 'material' ? 'block' : 'none';
-  document.getElementById('browse-stock').style.display   = mode === 'stock'    ? 'block' : 'none';
-  document.getElementById('browse-freezer').style.display = mode === 'freezer'  ? 'block' : 'none';
+  document.getElementById('browse-material').style.display        = mode === 'material'        ? 'block' : 'none';
+  document.getElementById('browse-stock').style.display           = mode === 'stock'           ? 'block' : 'none';
+  document.getElementById('browse-freezer').style.display         = mode === 'freezer'         ? 'block' : 'none';
+  document.getElementById('browse-fridge').style.display          = mode === 'fridge'          ? 'block' : 'none';
+  document.getElementById('browse-freezer-kitchen').style.display = mode === 'freezer_kitchen' ? 'block' : 'none';
 
   if (mode === 'material') {
     buildMatCategoryFilter();
@@ -2158,7 +2225,13 @@ function showBrowse(mode) {
     checkLowStockOnLoad();
   } else if (mode === 'freezer') {
     renderBrowseFreezer();
-    checkFreezerOnLoad();
+    checkFreezerOnLoad('freezer');
+  } else if (mode === 'fridge') {
+    renderBrowseFridge();
+    checkFridgeOnLoad();
+  } else if (mode === 'freezer_kitchen') {
+    renderBrowseFreezerKitchen();
+    checkFreezerOnLoad('freezer_kitchen');
   }
 }
 
@@ -2230,32 +2303,35 @@ function renderBrowseFreezer() {
 }
 
 // ── VRIEZER STARTUP CHECK ──────────────────────────────────
-function checkFreezerOnLoad() {
+function checkFreezerOnLoad(location) {
+  const loc = location || 'freezer';
   const limit = Date.now() - 90 * 86400000;
   const old = state.stockItems.filter(i =>
-    i.storageLocation === 'freezer' && (
+    i.storageLocation === loc && (
       i.freezeDate === 'unknown' ||
       (i.freezeDate && new Date(i.freezeDate).getTime() < limit)
     )
   );
   if (old.length === 0) return;
+  const nl = currentLang === 'nl';
+  const icon = loc === 'freezer_kitchen' ? '❄️' : '🧊';
+  const title = loc === 'freezer_kitchen'
+    ? (nl ? '❄️ Vriezer keuken — opgelet' : '❄️ Congélateur cuisine — attention')
+    : (nl ? '🧊 Vriezer — opgelet' : '🧊 Congélateur — attention');
   setTimeout(() => {
-    openModal(
-      currentLang==='fr' ? '🧊 Congélateur — attention' : '🧊 Vriezer — opgelet',
+    openModal(title,
       `<p style="margin-bottom:12px;color:var(--text-dim);font-size:13px;">
         <strong style="color:var(--warning);">${old.length}</strong>
-        ${currentLang==='nl' ? ' item(s) vereisen aandacht:' : ' article(s) nécessitent attention :'}
+        ${nl ? ' item(s) vereisen aandacht:' : ' article(s) nécessitent attention :'}
       </p>
       ${old.map(it => {
         const isUnknown = it.freezeDate === 'unknown';
         const days = isUnknown ? null : Math.floor((Date.now()-new Date(it.freezeDate).getTime())/86400000);
         return `<div class="shopping-item">
-          <span style="font-size:18px;">🧊</span>
+          <span style="font-size:18px;">${icon}</span>
           <div class="name">${escapeHtml(iName(it))}</div>
           <div class="unit" style="color:var(--warning);">
-            ${isUnknown
-              ? (currentLang==='nl'?'Datum onbekend':'Date inconnue')
-              : days + (currentLang==='nl'?' dagen':' jours')}
+            ${isUnknown ? (nl?'Datum onbekend':'Date inconnue') : days + (nl?' dagen':' jours')}
           </div>
         </div>`;
       }).join('')}
@@ -2288,16 +2364,29 @@ function render() {
   if (nb) { nb.style.display = total > 0 ? 'inline-block' : 'none'; nb.textContent = total; }
   if (bb) { bb.style.display = total > 0 ? 'inline-block' : 'none'; bb.textContent = total; }
 
-  // vriezer badge — items ouder dan 3 maanden OF datum onbekend
+  // vriezer badge
   const limit = Date.now() - 90 * 86400000;
   const oldFreezer = state.stockItems.filter(i =>
-    i.storageLocation === 'freezer' && (
-      i.freezeDate === 'unknown' ||
-      (i.freezeDate && new Date(i.freezeDate).getTime() < limit)
-    )
+    i.storageLocation === 'freezer' && (i.freezeDate === 'unknown' || (i.freezeDate && new Date(i.freezeDate).getTime() < limit))
   ).length;
   const fb = document.getElementById('browse-freezer-badge');
   if (fb) { fb.style.display = oldFreezer > 0 ? 'inline-block' : 'none'; fb.textContent = oldFreezer; }
+
+  // ijskast badge
+  const fridgeLimit = Date.now() - FRIDGE_WARN_DAYS * 86400000;
+  const oldFridge = state.stockItems.filter(i =>
+    i.storageLocation === 'fridge' && (!i.fridgeDate || new Date(i.fridgeDate).getTime() < fridgeLimit)
+  ).length;
+  const ffb = document.getElementById('browse-fridge-badge');
+  if (ffb) { ffb.style.display = oldFridge > 0 ? 'inline-block' : 'none'; ffb.textContent = oldFridge; }
+
+  // vriezer keuken badge
+  const oldFzk = state.stockItems.filter(i =>
+    i.storageLocation === 'freezer_kitchen' && (i.freezeDate === 'unknown' || (i.freezeDate && new Date(i.freezeDate).getTime() < limit))
+  ).length;
+  const fzkb = document.getElementById('browse-fzk-badge');
+  if (fzkb) { fzkb.style.display = oldFzk > 0 ? 'inline-block' : 'none'; fzkb.textContent = oldFzk; }
+
   // Refresh dashboard if active
   if (isDashboardDevice()) { dbUpdateHome(); if (dbMode) dbRender(); }
 }
@@ -2426,10 +2515,165 @@ function performBrowseSearch(mode) {
   if (mode === 'material') renderBrowseMaterial();
   else if (mode === 'stock') renderBrowseStock();
   else if (mode === 'freezer') renderBrowseFreezer();
+  else if (mode === 'fridge') renderBrowseFridge();
+  else if (mode === 'freezer_kitchen') renderBrowseFreezerKitchen();
+}
+
+// ── IJSKAST BROWSE ─────────────────────────────────────────
+const FRIDGE_WARN_DAYS = 7;
+let currentFridgeStatusFilter = 'all';
+
+function filterFridgeStatus(status, btn) {
+  currentFridgeStatusFilter = status;
+  document.querySelectorAll('#fridge-filter-row .fchip').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderBrowseFridge();
+}
+
+function renderBrowseFridge() {
+  const nl = currentLang === 'nl';
+  const q = (document.getElementById('searchFridgeInput')?.value || '').trim().toLowerCase();
+  let list = state.stockItems.filter(i => i.storageLocation === 'fridge');
+  if (q) list = list.filter(i => iName(i).toLowerCase().includes(q));
+  const limit = Date.now() - FRIDGE_WARN_DAYS * 86400000;
+  if (currentFridgeStatusFilter === 'old') {
+    list = list.filter(i => !i.fridgeDate || new Date(i.fridgeDate).getTime() < limit);
+  }
+  list.sort((a,b) => {
+    const ad = a.fridgeDate ? new Date(a.fridgeDate).getTime() : 0;
+    const bd = b.fridgeDate ? new Date(b.fridgeDate).getTime() : 0;
+    return ad - bd;
+  });
+  const cnt = document.getElementById('browse-fridge-count');
+  if (cnt) cnt.textContent = list.length + (nl ? ' items in ijskast' : ' articles au réfrigérateur');
+  const c = document.getElementById('browse-fridge-list');
+  if (!c) return;
+  if (list.length === 0) {
+    c.innerHTML = `<div style="padding:0 12px;"><div class="empty"><div class="empty-icon">🌡️</div>
+      <div class="empty-text">${nl?'Ijskast is leeg':'Réfrigérateur vide'}</div>
+      <div class="empty-hint">${nl?'Voeg items toe via Voorraad → Bewaarplaats: Ijskast':'Ajoutez via Stock → Emplacement: Réfrigérateur'}</div>
+    </div></div>`;
+    return;
+  }
+  c.innerHTML = '<div style="padding:0 12px;">' + list.map(it => {
+    const cat = findCat(it.categoryId);
+    const qty = it.quantity || 0;
+    const fridgeMs = it.fridgeDate ? new Date(it.fridgeDate).getTime() : null;
+    const daysIn = fridgeMs ? Math.floor((Date.now() - fridgeMs) / 86400000) : null;
+    const isTooLong = !fridgeMs || (daysIn !== null && daysIn > FRIDGE_WARN_DAYS);
+    const rowBorder = isTooLong ? 'border-color:#e8c07a;background:linear-gradient(90deg,var(--warning-bg),var(--surface));' : '';
+    const dateLabel = fridgeMs
+      ? `🌡️ ${new Date(it.fridgeDate).toLocaleDateString(nl?'nl-BE':'fr-BE')}${daysIn!==null?' ('+daysIn+(nl?' d)':' j)'):''}`
+      : `<span style="color:var(--warning);">❓ ${nl?'Datum onbekend':'Date inconnue'}</span>`;
+    return `<div class="stock-row" style="${rowBorder}" onclick="openStockEditor('${it.id}')">
+      <div class="stock-thumb">${cat?.icon || '🌡️'}</div>
+      <div class="stock-info">
+        <div class="stock-name">🌡️ ${escapeHtml(iName(it))}
+          <span style="color:var(--text-dim);font-weight:400;font-size:12px;"> ×${qty}${it.unit?' '+escapeHtml(it.unit):''}</span>
+        </div>
+        <div class="stock-meta">${dateLabel}</div>
+        ${isTooLong?`<div class="stock-warnings"><span class="badge-warn badge-expiring">⚠️ ${nl?'Al te lang in ijskast':'Trop longtemps au réfrigérateur'}</span></div>`:''}
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+function checkFridgeOnLoad() {
+  const limit = Date.now() - FRIDGE_WARN_DAYS * 86400000;
+  const old = state.stockItems.filter(i =>
+    i.storageLocation === 'fridge' && (!i.fridgeDate || new Date(i.fridgeDate).getTime() < limit)
+  );
+  if (old.length === 0) return;
+  setTimeout(() => {
+    openModal(
+      currentLang==='fr' ? '🌡️ Réfrigérateur — attention' : '🌡️ Ijskast — opgelet',
+      `<p style="margin-bottom:12px;color:var(--text-dim);font-size:13px;">
+        <strong style="color:var(--warning);">${old.length}</strong>
+        ${currentLang==='nl' ? ` item(s) zitten meer dan ${FRIDGE_WARN_DAYS} dagen in de ijskast:` : ` article(s) sont dans le réfrigérateur depuis plus de ${FRIDGE_WARN_DAYS} jours :`}
+      </p>
+      ${old.map(it => {
+        const days = it.fridgeDate ? Math.floor((Date.now()-new Date(it.fridgeDate).getTime())/86400000) : null;
+        return `<div class="shopping-item">
+          <span style="font-size:18px;">🌡️</span>
+          <div class="name">${escapeHtml(iName(it))}</div>
+          <div class="unit" style="color:var(--warning);">
+            ${days !== null ? days + (currentLang==='nl'?' dagen':' jours') : (currentLang==='nl'?'Datum onbekend':'Date inconnue')}
+          </div>
+        </div>`;
+      }).join('')}
+      <button class="btn btn-secondary" style="margin-top:14px;" onclick="closeModal()">${t('skip')}</button>`
+    );
+  }, 500);
+}
+
+// ── VRIEZER KEUKEN BROWSE ──────────────────────────────────
+let currentFreezerKitchenStatusFilter = 'all';
+
+function filterFreezerKitchenStatus(status, btn) {
+  currentFreezerKitchenStatusFilter = status;
+  document.querySelectorAll('#fzk-filter-row .fchip').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderBrowseFreezerKitchen();
+}
+
+function renderBrowseFreezerKitchen() {
+  const nl = currentLang === 'nl';
+  const q = (document.getElementById('searchFreezerKitchenInput')?.value || '').trim().toLowerCase();
+  let list = state.stockItems.filter(i => i.storageLocation === 'freezer_kitchen');
+  if (q) list = list.filter(i => iName(i).toLowerCase().includes(q));
+  const limit = Date.now() - 90 * 86400000;
+  if (currentFreezerKitchenStatusFilter === 'old') {
+    list = list.filter(i => i.freezeDate === 'unknown' || (i.freezeDate && new Date(i.freezeDate).getTime() < limit));
+  }
+  list.sort((a,b) => {
+    if (a.freezeDate === 'unknown' && b.freezeDate !== 'unknown') return -1;
+    if (b.freezeDate === 'unknown' && a.freezeDate !== 'unknown') return 1;
+    const ad = a.freezeDate && a.freezeDate !== 'unknown' ? new Date(a.freezeDate).getTime() : 0;
+    const bd = b.freezeDate && b.freezeDate !== 'unknown' ? new Date(b.freezeDate).getTime() : 0;
+    return ad - bd;
+  });
+  const cnt = document.getElementById('browse-fzk-count');
+  if (cnt) cnt.textContent = list.length + (nl ? ' items in vriezer keuken' : ' articles au congélateur cuisine');
+  const c = document.getElementById('browse-fzk-list');
+  if (!c) return;
+  if (list.length === 0) {
+    c.innerHTML = `<div style="padding:0 12px;"><div class="empty"><div class="empty-icon">❄️</div>
+      <div class="empty-text">${nl?'Vriezer keuken is leeg':'Congélateur cuisine vide'}</div>
+      <div class="empty-hint">${nl?'Voeg items toe via Voorraad → Bewaarplaats: Vriezer keuken':'Ajoutez via Stock → Emplacement: Congélateur cuisine'}</div>
+    </div></div>`;
+    return;
+  }
+  // Gebruik dezelfde render logica als garage vriezer maar met ❄️ icoon
+  c.innerHTML = '<div style="padding:0 12px;">' + list.map(it => {
+    const cat = findCat(it.categoryId);
+    const qty = it.quantity || 0;
+    const isUnknown = it.freezeDate === 'unknown';
+    const freezeMs = (!isUnknown && it.freezeDate) ? new Date(it.freezeDate).getTime() : null;
+    const daysIn = freezeMs ? Math.floor((Date.now() - freezeMs) / 86400000) : null;
+    const isTooLong = isUnknown || (daysIn !== null && daysIn > 90);
+    const rowBorder = isTooLong ? 'border-color:#e8c07a;background:linear-gradient(90deg,var(--warning-bg),var(--surface));' : '';
+    let dateLabel = '';
+    if (isUnknown) dateLabel = `<span style="color:var(--warning);font-weight:600;">❓ ${nl?'Datum onbekend':'Date inconnue'}</span>`;
+    else if (it.freezeDate) dateLabel = `❄️ ${new Date(it.freezeDate).toLocaleDateString(nl?'nl-BE':'fr-BE')}${daysIn!==null?' ('+daysIn+(nl?' d)':' j)'):'' }`;
+    return `<div class="stock-row" style="${rowBorder}" onclick="openStockEditor('${it.id}')">
+      <div class="stock-thumb">${cat?.icon || '❄️'}</div>
+      <div class="stock-info">
+        <div class="stock-name">❄️ ${escapeHtml(iName(it))}
+          <span style="color:var(--text-dim);font-weight:400;font-size:12px;"> ×${qty}${it.unit?' '+escapeHtml(it.unit):''}</span>
+        </div>
+        <div class="stock-meta">${dateLabel}</div>
+        ${isTooLong?`<div class="stock-warnings"><span class="badge-warn badge-expiring">⚠️ ${isUnknown?(nl?'Datum onbekend':'Date inconnue'):(nl?'Te lang ingevroren':'Trop longtemps congelé')}</span></div>`:''}
+      </div>
+    </div>`;
+  }).join('') + '</div>';
 }
 
 function startVoiceForBrowse(mode) {
-  const inputId = mode === 'material' ? 'searchMatInput' : mode === 'freezer' ? 'searchFreezerInput' : 'searchStockInput';
+  const inputId = mode === 'material' ? 'searchMatInput'
+    : mode === 'freezer' ? 'searchFreezerInput'
+    : mode === 'fridge' ? 'searchFridgeInput'
+    : mode === 'freezer_kitchen' ? 'searchFreezerKitchenInput'
+    : 'searchStockInput';
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { toast(t('voice_not_supported')); return; }
   const r = new SR();
@@ -2977,6 +3221,8 @@ async function fixAndPushCategories() {
   if (currentBrowseMode === 'material') renderBrowseMaterial();
   else if (currentBrowseMode === 'stock') renderBrowseStock();
   else if (currentBrowseMode === 'freezer') renderBrowseFreezer();
+  else if (currentBrowseMode === 'fridge') renderBrowseFridge();
+  else if (currentBrowseMode === 'freezer_kitchen') renderBrowseFreezerKitchen();
 }
 
 // ============================================================================
@@ -4119,6 +4365,8 @@ function openStockEditor(stockId, preselectShelfId, preselectLevel, preselectPos
       <div class="type-pills">
         <button type="button" class="type-pill${(!item?.storageLocation||item?.storageLocation==='shelf')?' active':''}" data-loc="shelf" onclick="selectStorageLoc(this,'shelf')">📦 ${currentLang==='fr'?'Étagère':'Schap'}</button>
         <button type="button" class="type-pill${item?.storageLocation==='freezer'?' active':''}" data-loc="freezer" onclick="selectStorageLoc(this,'freezer')">🧊 ${currentLang==='fr'?'Congélateur':'Vriezer'}</button>
+        <button type="button" class="type-pill${item?.storageLocation==='fridge'?' active':''}" data-loc="fridge" onclick="selectStorageLoc(this,'fridge')">🌡️ ${currentLang==='fr'?'Réfrigérateur':'Ijskast'}</button>
+        <button type="button" class="type-pill${item?.storageLocation==='freezer_kitchen'?' active':''}" data-loc="freezer_kitchen" onclick="selectStorageLoc(this,'freezer_kitchen')">❄️ ${currentLang==='fr'?'Congélateur cuisine':'Vriezer keuken'}</button>
         <button type="button" class="type-pill${item?.storageLocation==='box'?' active':''}" data-loc="box" onclick="selectStorageLoc(this,'box')">🗃️ Box</button>
       </div>
     </div>
@@ -4131,10 +4379,10 @@ function openStockEditor(stockId, preselectShelfId, preselectLevel, preselectPos
       </select>
     </div>
 
-    <div class="form-group" id="freeze-date-group" style="display:${item?.storageLocation==='freezer'?'block':'none'};">
+    <div class="form-group" id="freeze-date-group" style="display:${(item?.storageLocation==='freezer'||item?.storageLocation==='freezer_kitchen')?'block':'none'};">
       <label class="form-label">❄️ ${currentLang==='fr'?'Date de congélation *':'Invriesdatum *'}</label>
       <div class="type-pills" style="margin-bottom:8px;">
-        <button type="button" class="type-pill${(item?.freezeDate&&item.freezeDate!=='unknown')?' active':(!item?.freezeDate&&item?.storageLocation!=='freezer')?' active':''}"
+        <button type="button" class="type-pill${(item?.freezeDate&&item.freezeDate!=='unknown')?' active':(!item?.freezeDate&&(item?.storageLocation==='freezer'||item?.storageLocation==='freezer_kitchen'))?' active':''}"
           data-freeze="known" onclick="selectFreezeMode(this,'known')" id="frz-known-btn">
           📅 ${currentLang==='fr'?'Date connue':'Datum bekend'}
         </button>
@@ -4153,6 +4401,13 @@ function openStockEditor(stockId, preselectShelfId, preselectLevel, preselectPos
         ⚠️ ${currentLang==='fr'?'Apparaîtra dans "Trop long" — date inconnue':'Verschijnt in "Te lang" — datum onbekend'}
       </div>
       <div class="form-hint">${currentLang==='fr'?'Alerte après 3 mois':'Waarschuwing na 3 maanden'}</div>
+    </div>
+
+    <div class="form-group" id="fridge-date-group" style="display:${item?.storageLocation==='fridge'?'block':'none'};">
+      <label class="form-label">🌡️ ${currentLang==='fr'?'Date de mise au réfrigérateur *':'Datum in ijskast *'}</label>
+      <input type="date" class="form-input" id="stock-fridge-date"
+        value="${item?.fridgeDate||''}">
+      <div class="form-hint">${currentLang==='fr'?'Alerte après 7 jours':'Waarschuwing na 7 dagen'}</div>
     </div>
 
     <div class="form-group">
@@ -4253,10 +4508,12 @@ function selectStorageLoc(btn, loc) {
   document.querySelectorAll('.type-pill[data-loc]').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   const fdg = document.getElementById('freeze-date-group');
+  const frg = document.getElementById('fridge-date-group');
   const sbg = document.getElementById('stock-box-group');
-  if (fdg) fdg.style.display = loc === 'freezer' ? 'block' : 'none';
+  if (fdg) fdg.style.display = (loc === 'freezer' || loc === 'freezer_kitchen') ? 'block' : 'none';
+  if (frg) frg.style.display = loc === 'fridge' ? 'block' : 'none';
   if (sbg) sbg.style.display = loc === 'box' ? 'block' : 'none';
-  if (loc === 'freezer') {
+  if (loc === 'freezer' || loc === 'freezer_kitchen') {
     const knownBtn = document.getElementById('frz-known-btn');
     if (knownBtn) selectFreezeMode(knownBtn, 'known');
   }
@@ -4303,7 +4560,7 @@ async function saveStock(id) {
   // bewaarplaats + invriesdatum + box
   const locPill = document.querySelector('.type-pill[data-loc].active');
   item.storageLocation = locPill ? locPill.dataset.loc : 'shelf';
-  if (item.storageLocation === 'freezer') {
+  if (item.storageLocation === 'freezer' || item.storageLocation === 'freezer_kitchen') {
     const freezePill = document.querySelector('.type-pill[data-freeze].active');
     const freezeMode = freezePill ? freezePill.dataset.freeze : 'known';
     if (freezeMode === 'unknown') {
@@ -4316,13 +4573,25 @@ async function saveStock(id) {
       }
       item.freezeDate = dateVal;
     }
+    item.fridgeDate = null;
+    item.boxId = null;
+  } else if (item.storageLocation === 'fridge') {
+    const fridgeDateVal = document.getElementById('stock-fridge-date')?.value;
+    if (!fridgeDateVal) {
+      toast(currentLang==='fr'?'⚠️ Entrez la date de mise au réfrigérateur':'⚠️ Geef de datum in ijskast in');
+      return;
+    }
+    item.fridgeDate = fridgeDateVal;
+    item.freezeDate = null;
     item.boxId = null;
   } else if (item.storageLocation === 'box') {
     item.boxId = document.getElementById('stock-box-select')?.value || null;
     item.freezeDate = null;
+    item.fridgeDate = null;
     item.shelfId = null; item.level = null; item.position = null;
   } else {
     item.freezeDate = null;
+    item.fridgeDate = null;
     item.boxId = null;
   }
   if (item.storageLocation !== 'box') {
@@ -6002,22 +6271,31 @@ function dbUpdateHome() {
   const stockItems = state.stockItems.filter(i => !i.storageLocation || i.storageLocation === 'shelf');
   const matItems = state.items;
   const frzItems = state.stockItems.filter(i => i.storageLocation === 'freezer');
-  const lowCount = stockItems.filter(i => {
-    const q = i.quantity||0; const m = i.minQuantity||0;
-    return q===0 || (m>0 && q<=m);
-  }).length;
+  const friItems = state.stockItems.filter(i => i.storageLocation === 'fridge');
+  const fzkItems = state.stockItems.filter(i => i.storageLocation === 'freezer_kitchen');
+  const lowCount = stockItems.filter(i => { const q=i.quantity||0,m=i.minQuantity||0; return q===0||(m>0&&q<=m); }).length;
   const limit = Date.now() - 90*86400000;
+  const fridgeLimit = Date.now() - FRIDGE_WARN_DAYS*86400000;
   const frzAlert = frzItems.filter(i => i.freezeDate==='unknown'||(i.freezeDate&&new Date(i.freezeDate).getTime()<limit)).length;
-
-  const el = (id, txt) => { const e = document.getElementById(id); if(e) e.textContent = txt; };
-  el('db-count-stock',    stockItems.length + ' ' + (nl?'items':'articles'));
-  el('db-count-material', matItems.length   + ' ' + (nl?'items':'articles'));
-  el('db-count-freezer',  frzItems.length   + ' ' + (nl?'items':'articles'));
-
+  const friAlert = friItems.filter(i => !i.fridgeDate||new Date(i.fridgeDate).getTime()<fridgeLimit).length;
+  const fzkAlert = fzkItems.filter(i => i.freezeDate==='unknown'||(i.freezeDate&&new Date(i.freezeDate).getTime()<limit)).length;
+  const art = nl?'items':'articles';
+  const el = (id,txt) => { const e=document.getElementById(id); if(e) e.textContent=txt; };
+  el('db-count-stock',    stockItems.length+' '+art);
+  el('db-count-material', matItems.length+' '+art);
+  el('db-count-freezer',  frzItems.length+' '+art);
+  el('db-count-fridge',   friItems.length+' '+art);
+  el('db-count-fzk',      fzkItems.length+' '+art);
+  el('db-lbl-fridge-db',  nl?'Ijskast':'Réfrigérateur');
+  el('db-lbl-fzk-db',     nl?'Vriezer keuken':'Congélateur cuisine');
   const sb = document.getElementById('db-badge-stock');
-  if (sb) { sb.style.display = lowCount>0?'block':'none'; sb.textContent = lowCount; }
-  const fb = document.getElementById('db-badge-freezer');
-  if (fb) { fb.style.display = frzAlert>0?'block':'none'; fb.textContent = frzAlert; }
+  if (sb) { sb.style.display=lowCount>0?'block':'none'; sb.textContent=lowCount; }
+  const frb = document.getElementById('db-badge-freezer');
+  if (frb) { frb.style.display=frzAlert>0?'block':'none'; frb.textContent=frzAlert; }
+  const frib = document.getElementById('db-badge-fridge');
+  if (frib) { frib.style.display=friAlert>0?'block':'none'; frib.textContent=friAlert; }
+  const fzkb = document.getElementById('db-badge-fzk');
+  if (fzkb) { fzkb.style.display=fzkAlert>0?'block':'none'; fzkb.textContent=fzkAlert; }
 }
 
 function dbShowMode(mode) {
@@ -6030,22 +6308,23 @@ function dbShowMode(mode) {
   document.getElementById('db-back-btn').style.display = 'flex';
   document.getElementById('db-stats').style.display = mode==='stock' ? 'flex' : 'none';
 
-  const subtitles = { stock: nl?'VOORRAAD':'STOCK', material: nl?'MATERIAAL':'MATÉRIEL', freezer: nl?'VRIEZER':'CONGÉLATEUR' };
+  const subtitles = {
+    stock: nl?'VOORRAAD':'STOCK',
+    material: nl?'MATERIAAL':'MATÉRIEL',
+    freezer: nl?'VRIEZER':'CONGÉLATEUR',
+    fridge: nl?'IJSKAST':'RÉFRIGÉRATEUR',
+    freezer_kitchen: nl?'VRIEZER KEUKEN':'CONGÉL. CUISINE'
+  };
   const el = document.getElementById('db-subtitle');
   if (el) el.textContent = subtitles[mode];
 
   // Build filters
   const filterDefs = {
-    stock: [
-      {id:'all', nl:'Alles', fr:'Tout'},
-      {id:'low', nl:'Laag', fr:'Bas'},
-      {id:'empty', nl:'Op', fr:'Épuisé'},
-    ],
-    material: [{id:'all', nl:'Alles', fr:'Tout'}],
-    freezer: [
-      {id:'all', nl:'Alles', fr:'Tout'},
-      {id:'old', nl:'⚠️ Te lang', fr:'⚠️ Trop long'},
-    ],
+    stock: [{id:'all',nl:'Alles',fr:'Tout'},{id:'low',nl:'Laag',fr:'Bas'},{id:'empty',nl:'Op',fr:'Épuisé'}],
+    material: [{id:'all',nl:'Alles',fr:'Tout'}],
+    freezer: [{id:'all',nl:'Alles',fr:'Tout'},{id:'old',nl:'⚠️ Te lang',fr:'⚠️ Trop long'}],
+    fridge: [{id:'all',nl:'Alles',fr:'Tout'},{id:'old',nl:'⚠️ Te lang',fr:'⚠️ Trop long'}],
+    freezer_kitchen: [{id:'all',nl:'Alles',fr:'Tout'},{id:'old',nl:'⚠️ Te lang',fr:'⚠️ Trop long'}],
   };
   const fc = document.getElementById('db-filters');
   if (fc) {
@@ -6105,7 +6384,24 @@ function dbRender() {
     list = [...list].sort((a,b) => a.name.localeCompare(b.name, nl?'nl':'fr'));
   } else if (dbMode === 'freezer') {
     list = state.stockItems.filter(i => i.storageLocation === 'freezer');
-    if (q) list = list.filter(i => i.name.toLowerCase().includes(q));
+    if (q) list = list.filter(i => iName(i).toLowerCase().includes(q));
+    if (dbFilter === 'old') list = list.filter(i => i.freezeDate==='unknown'||(i.freezeDate&&new Date(i.freezeDate).getTime()<limit));
+    list.sort((a,b) => {
+      if (a.freezeDate==='unknown'&&b.freezeDate!=='unknown') return -1;
+      if (b.freezeDate==='unknown'&&a.freezeDate!=='unknown') return 1;
+      const ad = a.freezeDate&&a.freezeDate!=='unknown'?new Date(a.freezeDate).getTime():0;
+      const bd = b.freezeDate&&b.freezeDate!=='unknown'?new Date(b.freezeDate).getTime():0;
+      return ad-bd;
+    });
+  } else if (dbMode === 'fridge') {
+    list = state.stockItems.filter(i => i.storageLocation === 'fridge');
+    if (q) list = list.filter(i => iName(i).toLowerCase().includes(q));
+    const fridgeLimit = Date.now() - FRIDGE_WARN_DAYS*86400000;
+    if (dbFilter === 'old') list = list.filter(i => !i.fridgeDate||new Date(i.fridgeDate).getTime()<fridgeLimit);
+    list.sort((a,b) => (a.fridgeDate?new Date(a.fridgeDate).getTime():0) - (b.fridgeDate?new Date(b.fridgeDate).getTime():0));
+  } else if (dbMode === 'freezer_kitchen') {
+    list = state.stockItems.filter(i => i.storageLocation === 'freezer_kitchen');
+    if (q) list = list.filter(i => iName(i).toLowerCase().includes(q));
     if (dbFilter === 'old') list = list.filter(i => i.freezeDate==='unknown'||(i.freezeDate&&new Date(i.freezeDate).getTime()<limit));
     list.sort((a,b) => {
       if (a.freezeDate==='unknown'&&b.freezeDate!=='unknown') return -1;
@@ -6178,9 +6474,9 @@ function dbCardHTML(it, nl) {
     loc = parts.join(' · ') || '—';
   }
 
-  // Freeze label
+  // Freeze / fridge label
   let freezeHtml = '';
-  if (dbMode === 'freezer') {
+  if (dbMode === 'freezer' || dbMode === 'freezer_kitchen') {
     const freezeMs = (!isUnknown&&it.freezeDate)?new Date(it.freezeDate).getTime():null;
     const days = freezeMs?Math.floor((Date.now()-freezeMs)/86400000):null;
     if (isUnknown) {
@@ -6188,6 +6484,17 @@ function dbCardHTML(it, nl) {
     } else if (it.freezeDate) {
       const dateStr = new Date(it.freezeDate).toLocaleDateString(nl?'nl-BE':'fr-BE');
       freezeHtml = `<div class="db-freeze-label ${isTooLong?'alert':'normal'}">❄️ ${dateStr} (${days}d)${isTooLong?' ⚠️':''}</div>`;
+    }
+  } else if (dbMode === 'fridge') {
+    const fridgeLimit = Date.now() - FRIDGE_WARN_DAYS*86400000;
+    const fridgeMs = it.fridgeDate ? new Date(it.fridgeDate).getTime() : null;
+    const days = fridgeMs ? Math.floor((Date.now()-fridgeMs)/86400000) : null;
+    const tooLong = !fridgeMs || fridgeMs < fridgeLimit;
+    if (it.fridgeDate) {
+      const dateStr = new Date(it.fridgeDate).toLocaleDateString(nl?'nl-BE':'fr-BE');
+      freezeHtml = `<div class="db-freeze-label ${tooLong?'alert':'normal'}">🌡️ ${dateStr} (${days}d)${tooLong?' ⚠️':''}</div>`;
+    } else {
+      freezeHtml = `<div class="db-freeze-label alert">❓ ${nl?'Datum onbekend':'Date inconnue'} ⚠️</div>`;
     }
   }
 
@@ -6199,7 +6506,7 @@ function dbCardHTML(it, nl) {
         : `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${shop.color||'#737373'};margin-right:4px;vertical-align:middle;"></span>`)
     : '';
 
-  const hasButtons = dbMode === 'stock' || dbMode === 'freezer';
+  const hasButtons = dbMode === 'stock' || dbMode === 'freezer' || dbMode === 'fridge' || dbMode === 'freezer_kitchen';
 
   return `<div class="db-card" style="box-shadow:0 4px 0 ${isEmpty?'#d4a0a0':isLow?'#d4b870':isTooLong?'#d4b870':'#c8c4bc'},0 6px 16px ${shadow},0 12px 32px rgba(0,0,0,0.06);">
     <div class="db-card-bar ${barClass}"></div>
