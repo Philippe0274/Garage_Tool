@@ -2587,7 +2587,7 @@ const DEFAULT_SHOPS = [
 // INDEXEDDB
 // ============================================================================
 const DB_NAME = 'GarageOrgDB';
-const DB_VERSION = 6;
+const DB_VERSION = 7;
 let db = null;
 
 function openDB() {
@@ -2732,19 +2732,18 @@ async function loadState() {
   if (toDeleteCats.length > 0) console.log(`Ontdubbeld: ${toDeleteCats.length} dubbele categorieën verwijderd`);
 
   // ── Seed default categories if any are missing ──────────
-  // Always ensure all default categories exist (they may have been lost on version bump)
-  // Also update icon/name of existing defaults in case they changed
+  // Always ensure all default categories exist + update FR names
   for (const c of DEFAULT_CATEGORIES) {
     const existing = state.categories.find(x => x.id === c.id);
     if (!existing) {
       await dbPut('categories', c);
       state.categories.push(c);
     } else {
-      // update icon and names in case they changed
       let changed = false;
       if (existing.icon !== c.icon) { existing.icon = c.icon; changed = true; }
       if (existing.name_nl !== c.name_nl) { existing.name_nl = c.name_nl; changed = true; }
-      if (existing.name_fr !== c.name_fr) { existing.name_fr = c.name_fr; changed = true; }
+      if (!existing.name_fr && c.name_fr) { existing.name_fr = c.name_fr; changed = true; }
+      if (existing.name_fr !== c.name_fr && c.name_fr) { existing.name_fr = c.name_fr; changed = true; }
       if (changed) await dbPut('categories', existing);
     }
   }
@@ -3889,10 +3888,13 @@ async function saveItem(id) {
   if (!id) state.items.push(item);
   closeModal();
   toast(t('item_added')); markSyncDirty();
-  setMode('material');
-  showView('material');
-  renderShelvesList('material', 'shelvesList');
-  renderBoxesList();
+  // Blijf in huidige view — vernieuw enkel de lijsten
+  if (currentBrowseMode === 'material') {
+    renderBrowseMaterial();
+  } else {
+    renderShelvesList('material', 'shelvesList');
+    renderBoxesList();
+  }
   render();
 }
 
@@ -4272,9 +4274,15 @@ async function saveStock(id) {
   if (!id) state.stockItems.push(item);
   closeModal();
   toast(t('stock_added')); markSyncDirty();
-  setMode('stock');
-  showView('browse');
-  showBrowse('stock');
+  // Blijf in huidige view — vernieuw enkel de lijst
+  if (currentBrowseMode === 'stock') {
+    renderBrowseStock();
+  } else if (currentBrowseMode === 'freezer') {
+    renderBrowseFreezer();
+  } else {
+    showView('browse');
+    showBrowse('stock');
+  }
   render();
 }
 
@@ -6553,7 +6561,30 @@ async function importDataObj(data) {
   for (const b of (data.boxes||[])) { await dbPut('boxes',b); state.boxes.push(b); }
   for (const i of (data.items||[])) { await dbPut('items',i); state.items.push(i); }
   for (const i of (data.stockItems||[])) { await dbPut('stockItems',i); state.stockItems.push(i); }
-  for (const c of (data.categories?.length?data.categories:DEFAULT_CATEGORIES)) { await dbPut('categories',c); state.categories.push(c); }
+
+  // Categorieën: ontdubbelen + FR namen aanvullen vanuit DEFAULT_CATEGORIES
+  const rawCats = data.categories?.length ? data.categories : DEFAULT_CATEGORIES;
+  const seenNames = new Map();
+  for (const c of rawCats) {
+    const key = (c.name_nl || c.name || '').toLowerCase().trim();
+    if (seenNames.has(key)) continue; // duplicaat overslaan
+    seenNames.set(key, true);
+    // FR naam aanvullen vanuit DEFAULT_CATEGORIES als die ontbreekt
+    if (!c.name_fr) {
+      const def = DEFAULT_CATEGORIES.find(d => d.id === c.id ||
+        (d.name_nl||'').toLowerCase() === key);
+      if (def?.name_fr) c.name_fr = def.name_fr;
+    }
+    await dbPut('categories', c);
+    state.categories.push(c);
+  }
+  // Zorg dat alle DEFAULT_CATEGORIES aanwezig zijn
+  for (const def of DEFAULT_CATEGORIES) {
+    const exists = state.categories.find(c => c.id === def.id ||
+      (c.name_nl||'').toLowerCase() === (def.name_nl||'').toLowerCase());
+    if (!exists) { await dbPut('categories', def); state.categories.push(def); }
+  }
+
   for (const u of (data.units?.length?data.units:DEFAULT_UNITS)) { await dbPut('units',u); state.units.push(u); }
   for (const n of (data.stockNames||[])) { await dbPut('stockNames',n); state.stockNames.push(n); }
   for (const s of (data.shops?.length?data.shops:DEFAULT_SHOPS)) { await dbPut('shops',s); state.shops.push(s); }
