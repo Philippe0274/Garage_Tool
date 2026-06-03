@@ -5942,47 +5942,13 @@ async function dbConfirmAdjust() {
   await adjustStock(id, delta);
   dbRender();
 
-  if (!isGTokenValid()) {
-    toast(currentLang==='nl'?'⚠️ Niet verbonden — lokaal opgeslagen':'⚠️ Non connecté — sauvegardé localement');
-    return;
-  }
-
-  // 2. Laad huidige Drive data
-  updateSyncUI('busy', currentLang==='nl'?'Opslaan naar Drive...':'Sauvegarde vers Drive...');
-  try {
-    const driveData = await driveGetData();
-    if (!driveData) throw new Error('Drive niet bereikbaar');
-
-    // 3. Merge: pas enkel het gewijzigde item aan in de Drive data
-    const item = state.stockItems.find(i => i.id === id);
-    if (item && driveData.stockItems) {
-      const idx = driveData.stockItems.findIndex(i => i.id === id);
-      if (idx >= 0) {
-        driveData.stockItems[idx].quantity = item.quantity;
-        driveData.stockItems[idx].lastUpdated = Date.now();
-      }
+  // 2. Push enkel dit item naar Drive
+  const item = state.stockItems.find(i => i.id === id);
+  if (item) {
+    const ok = await dashboardPushQuantity(id, item.quantity);
+    if (ok) {
+      dbUpdateSyncPanel?.();
     }
-
-    // 4. Verhoog versienummer
-    driveData.syncVersion = (driveData.syncVersion || 0) + 1;
-    driveData.lastModified = Date.now();
-    driveData.deviceName = deviceName || 'Dashboard';
-
-    // 5. Upload de gemerged data
-    const json = JSON.stringify(driveData);
-    await fetch(
-      `https://www.googleapis.com/upload/drive/v3/files/${gFileId}?uploadType=media`,
-      { method:'PATCH', headers:{ Authorization:`Bearer ${gAccessToken}`, 'Content-Type':'application/json' }, body:json }
-    );
-
-    gLastSync = Date.now();
-    localStorage.setItem('gdrive_last_sync', String(gLastSync));
-    updateSyncUI('ok', formatLastSync());
-    dbUpdateSyncPanel();
-    toast(currentLang==='nl'?'✓ Opgeslagen naar Drive':'✓ Sauvegardé sur Drive');
-  } catch(e) {
-    updateSyncUI('error', 'Sync fout');
-    toast('❌ ' + (currentLang==='nl'?'Drive sync mislukt':'Sync Drive échoué') + ': ' + (e.message||e));
   }
 }
 
@@ -6135,10 +6101,16 @@ function markSyncDirty() {
 
 function startSyncTimer() {
   if (gSyncTimer) clearInterval(gSyncTimer);
+  const interval = isDashboardDevice() ? 60000 : 30000;
   gSyncTimer = setInterval(async () => {
-    if (isGTokenValid()) updateSyncUI('ok', formatLastSync());
-    if (gSyncDirty && isGTokenValid() && !gSyncing) await driveSync(false);
-  }, 60000);
+    if (!isGTokenValid() || gSyncing) return;
+    if (isDashboardDevice()) {
+      await syncFromDrive();
+    } else {
+      if (gSyncDirty) await syncMaster(false);
+      updateSyncUI('ok', formatLastSync());
+    }
+  }, interval);
 }
 
 // ── Google OAuth ───────────────────────────────────────────
@@ -6255,121 +6227,394 @@ function formatLastSync() {
 }
 
 // ── Eerste sync na connect ─────────────────────────────────
-async function driveSyncOnConnect() {
-  updateSyncUI('busy', currentLang==='nl'?'Zoeken naar backup...':'Recherche de sauvegarde...');
-  const fileId = await driveFindFile();
-  if (!fileId) {
-    // Geen backup → upload lokale data
-    await driveSync(true);
-    startSyncTimer();
-    return;
-  }
-  gFileId = fileId;
-  localStorage.setItem('gdrive_file_id', gFileId);
+// ============================================================================
+// SYNC — Clean architectuur
+// ============================================================================
+//
+// REGELS:
+// 1. Drive = enige bron van waarheid
+// 2. Elk item heeft lastUpdated timestamp
+// 3. Master: laadt Drive, merget item per item op lastUpdated, uploadt resultaat
+// 4. Dashboard: laadt Drive enkel, merget ENKEL gewijzigd aantal, uploadt resultaat
+// 5. Bij externe wijziging: toon melding aan gebruiker
+// ============================================================================
 
-  if (deviceRole === DEVICE_ROLES.DASHBOARD) {
-    // Dashboard laadt altijd van Drive
-    await driveLoadFromDrive();
-    startSyncTimer();
-    return;
-  }
+// ── Hulpfuncties ───────────────────────────────────────────
+async function driveFindFile() {
+  try {
+    const r = await fetch(
+      `https://www.googleapis.com/drive/v3/files?spaces=${GDRIVE_SPACES}&q=name='${GDRIVE_FILE_NAME}'&fields=files(id,modifiedTime)`,
+      { headers: { Authorization:`Bearer ${gAccessToken}` } }
+    );
+    const d = await r.json();
+    return d.files?.[0]?.id || null;
+  } catch(e) { return null; }
+}
 
-  // Master: vergelijk versies
-  const driveData = await driveGetData();
-  if (!driveData) { await driveSync(true); startSyncTimer(); return; }
+async function driveGetData() {
+  try {
+    const r = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${gFileId}?alt=media`,
+      { headers: { Authorization:`Bearer ${gAccessToken}` } }
+    );
+    if (!r.ok) return null;
+    return await r.json();
+  } catch(e) { return null; }
+}
 
-  const driveVersion = driveData.syncVersion || 0;
-  const driveDate = driveData.lastModified
-    ? new Date(driveData.lastModified).toLocaleDateString(currentLang==='fr'?'fr-BE':'nl-BE')
-      + ' ' + new Date(driveData.lastModified).toLocaleTimeString(currentLang==='fr'?'fr-BE':'nl-BE',{hour:'2-digit',minute:'2-digit'})
-    : '?';
-  const localCount = state.stockItems.length + state.items.length;
-  const driveCount = (driveData.stockItems?.length||0) + (driveData.items?.length||0);
-  const driveDevice = driveData.deviceName || '?';
-
-  if (localVersion > driveVersion || localCount > driveCount) {
-    // Lokaal is nieuwer → vraag gebruiker
-    const driveDataStr = encodeURIComponent(JSON.stringify(driveData));
-    openModal(
-      currentLang==='nl' ? '☁️ Synchronisatie' : '☁️ Synchronisation',
-      `<p style="margin-bottom:12px;color:var(--text-dim);font-size:13px;">
-        ${currentLang==='nl'
-          ? `Lokaal: <strong>${localCount} items</strong> (versie ${localVersion})<br>
-             Drive: <strong>${driveCount} items</strong> van ${escapeHtml(driveDevice)} (${driveDate})`
-          : `Local: <strong>${localCount} articles</strong> (version ${localVersion})<br>
-             Drive: <strong>${driveCount} articles</strong> de ${escapeHtml(driveDevice)} (${driveDate})`}
-      </p>
-      <p style="font-weight:600;font-size:13px;margin-bottom:14px;">
-        ${currentLang==='nl'?'Lokale data lijkt nieuwer. Wat wil je doen?':'Les données locales semblent plus récentes. Que faire ?'}
-      </p>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <button class="btn" onclick="drivePushLocal()">
-          📤 ${currentLang==='nl'?'Mijn data uploaden naar Drive':'Envoyer mes données vers Drive'}
-        </button>
-        <button class="btn btn-secondary" onclick="driveLoadFromDrive()">
-          📥 ${currentLang==='nl'?'Drive laden (vervangt lokale data)':'Charger Drive (remplace données locales)'}
-        </button>
-      </div>`
+async function driveUpload(data) {
+  const json = JSON.stringify(data);
+  if (gFileId) {
+    await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files/${gFileId}?uploadType=media`,
+      { method:'PATCH', headers:{ Authorization:`Bearer ${gAccessToken}`, 'Content-Type':'application/json' }, body:json }
     );
   } else {
-    // Drive gelijk of nieuwer → stil laden
-    await importDataObj(driveData);
-    localVersion = driveVersion;
-    localStorage.setItem('local_version', String(localVersion));
-    gLastSync = Date.now();
-    localStorage.setItem('gdrive_last_sync', String(gLastSync));
-    gSyncDirty = false;
-    updateSyncUI('ok', formatLastSync());
-    startSyncTimer();
-    toast(currentLang==='nl'?'✓ Gesynchroniseerd met Drive':'✓ Synchronisé avec Drive');
+    const meta = { name: GDRIVE_FILE_NAME, parents: [GDRIVE_SPACES] };
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
+    form.append('file', new Blob([json], {type:'application/json'}));
+    const r = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+      { method:'POST', headers:{ Authorization:`Bearer ${gAccessToken}` }, body:form }
+    );
+    const created = await r.json();
+    gFileId = created.id;
+    localStorage.setItem('gdrive_file_id', gFileId);
   }
 }
 
-async function driveLoadFromDrive() {
-  closeModal();
-  if (isDashboardDevice()) {
-    dbUpdateSyncDot && dbUpdateSyncDot();
+function buildExportObject() {
+  return {
+    version: 5,
+    syncVersion: localVersion,
+    lastModified: Date.now(),
+    deviceName: deviceName || 'Master',
+    deviceRole: deviceRole || DEVICE_ROLES.MASTER,
+    exportedAt: new Date().toISOString(),
+    shelves: state.shelves,
+    boxes: state.boxes,
+    items: state.items,
+    stockItems: state.stockItems,
+    categories: state.categories,
+    units: state.units,
+    stockNames: state.stockNames,
+    shops: state.shops
+  };
+}
+
+async function importDataObj(data) {
+  await dbClear('shelves'); await dbClear('boxes'); await dbClear('items');
+  await dbClear('stockItems'); await dbClear('categories');
+  await dbClear('units'); await dbClear('stockNames'); await dbClear('shops');
+  state = { shelves:[], boxes:[], items:[], stockItems:[], categories:[], units:[], stockNames:[], shops:[] };
+  for (const s of (data.shelves||[])) { await dbPut('shelves',s); state.shelves.push(s); }
+  for (const b of (data.boxes||[])) { await dbPut('boxes',b); state.boxes.push(b); }
+  for (const i of (data.items||[])) { await dbPut('items',i); state.items.push(i); }
+  for (const i of (data.stockItems||[])) { await dbPut('stockItems',i); state.stockItems.push(i); }
+  for (const c of (data.categories?.length?data.categories:DEFAULT_CATEGORIES)) { await dbPut('categories',c); state.categories.push(c); }
+  for (const u of (data.units?.length?data.units:DEFAULT_UNITS)) { await dbPut('units',u); state.units.push(u); }
+  for (const n of (data.stockNames||[])) { await dbPut('stockNames',n); state.stockNames.push(n); }
+  for (const s of (data.shops?.length?data.shops:DEFAULT_SHOPS)) { await dbPut('shops',s); state.shops.push(s); }
+  state.categories.sort((a,b)=>(a.order||999)-(b.order||999));
+  state.units.sort((a,b)=>a.label.localeCompare(b.label,'nl'));
+  render();
+}
+
+// ── Eerste connect ─────────────────────────────────────────
+async function driveSyncOnConnect() {
+  updateSyncUI('busy', currentLang==='nl'?'Verbinden met Drive...':'Connexion à Drive...');
+  // Zoek bestand
+  if (!gFileId) {
+    const fid = await driveFindFile();
+    if (fid) { gFileId = fid; localStorage.setItem('gdrive_file_id', fid); }
   }
-  updateSyncUI('busy', currentLang==='nl'?'Laden van Drive...':'Chargement depuis Drive...');
-  try {
-    // Zorg dat gFileId bekend is
-    if (!gFileId) {
-      const fileId = await driveFindFile();
-      if (!fileId) throw new Error(currentLang==='nl'?'Geen backup gevonden op Drive':'Aucune sauvegarde sur Drive');
-      gFileId = fileId;
-      localStorage.setItem('gdrive_file_id', gFileId);
-    }
-    const data = await driveGetData();
-    if (!data) throw new Error('Geen data');
-    await importDataObj(data);
-    localVersion = data.syncVersion || 0;
+
+  if (!gFileId) {
+    // Nog geen backup → eerste keer, upload lokale data
+    const data = buildExportObject();
+    await driveUpload(data);
+    localVersion = data.syncVersion;
     localStorage.setItem('local_version', String(localVersion));
     gLastSync = Date.now();
     localStorage.setItem('gdrive_last_sync', String(gLastSync));
+    updateSyncUI('ok', formatLastSync());
+    startSyncTimer();
+    toast(currentLang==='nl'?'✓ Eerste backup aangemaakt op Drive':'✓ Première sauvegarde créée sur Drive');
+    return;
+  }
+
+  // Dashboard laadt altijd van Drive
+  if (isDashboardDevice()) {
+    await syncFromDrive();
+    startSyncTimer();
+    return;
+  }
+
+  // Master: laad Drive, merge, upload
+  await syncMaster(true);
+  startSyncTimer();
+}
+
+// ── MASTER sync: laad Drive → merge → upload ───────────────
+async function syncMaster(showFeedback) {
+  if (gSyncing || !isGTokenValid()) return;
+  gSyncing = true;
+  if (showFeedback) updateSyncUI('busy', currentLang==='nl'?'Synchroniseren...':'Synchronisation...');
+  try {
+    const driveData = await driveGetData();
+
+    if (!driveData) {
+      // Geen Drive data → upload alles
+      const data = buildExportObject();
+      data.syncVersion = localVersion + 1;
+      await driveUpload(data);
+      localVersion++;
+    } else {
+      // Merge item per item op lastUpdated
+      const merged = await mergeWithDrive(driveData);
+      merged.syncVersion = (driveData.syncVersion || 0) + 1;
+      merged.lastModified = Date.now();
+      merged.deviceName = deviceName || 'Master';
+      merged.deviceRole = DEVICE_ROLES.MASTER;
+      await driveUpload(merged);
+      localVersion = merged.syncVersion;
+
+      // Pas lokale state aan met gemergde data
+      await applyMergedData(merged);
+    }
+
+    localStorage.setItem('local_version', String(localVersion));
     gSyncDirty = false;
+    gLastSync = Date.now();
+    localStorage.setItem('gdrive_last_sync', String(gLastSync));
+    updateSyncUI('ok', formatLastSync());
+    render();
+    if (showFeedback) toast(currentLang==='nl'?'✓ Gesynchroniseerd met Google Drive':'✓ Synchronisé avec Google Drive');
+  } catch(e) {
+    updateSyncUI('error', 'Sync fout');
+    if (showFeedback) toast('❌ Sync mislukt: ' + (e.message||e));
+    console.error('syncMaster:', e);
+  } finally { gSyncing = false; }
+}
+
+// ── DASHBOARD sync: laad Drive → toon wijzigingen ──────────
+async function syncFromDrive() {
+  if (gSyncing || !isGTokenValid()) return;
+  gSyncing = true;
+  try {
+    const driveData = await driveGetData();
+    if (!driveData) { gSyncing = false; return; }
+
+    // Detecteer wijzigingen in aantallen tov lokale data
+    const changed = [];
+    for (const di of (driveData.stockItems||[])) {
+      const local = state.stockItems.find(i => i.id === di.id);
+      if (local && local.quantity !== di.quantity) {
+        changed.push({
+          name: di.name,
+          oldQty: local.quantity,
+          newQty: di.quantity,
+          unit: di.unit || '',
+          device: driveData.deviceName || '?',
+          time: driveData.lastModified
+            ? new Date(driveData.lastModified).toLocaleTimeString(currentLang==='fr'?'fr-BE':'nl-BE',{hour:'2-digit',minute:'2-digit'})
+            : '?'
+        });
+      }
+    }
+
+    // Laad de Drive data
+    await importDataObj(driveData);
+    localVersion = driveData.syncVersion || 0;
+    localStorage.setItem('local_version', String(localVersion));
+    gLastSync = Date.now();
+    localStorage.setItem('gdrive_last_sync', String(gLastSync));
+
     updateSyncUI('ok', formatLastSync());
     if (isDashboardDevice()) {
-      // Dashboard: herlaad de grid, geen showView
-      dbUpdateSyncDot();
-      dbUpdateHome();
-      if (dbMode) dbRender();
-      dbUpdateSyncPanel();
-      toast(currentLang==='nl'?'✓ Tablet bijgewerkt vanuit Drive':'✓ Tablette mise à jour depuis Drive');
-    } else {
-      startSyncTimer();
-      toast(currentLang==='nl'?'✓ Data geladen van Google Drive':'✓ Données chargées depuis Google Drive');
-      showView('home');
+      dbUpdateSyncDot?.();
+      dbUpdateHome?.();
+      if (dbMode) dbRender?.();
     }
+
+    // Toon wijzigingsmelding als er gewijzigde aantallen zijn
+    if (changed.length > 0) {
+      showExternalChanges(changed, driveData.deviceName || '?');
+    }
+
   } catch(e) {
-    updateSyncUI('error', 'Fout: ' + (e.message||e));
-    toast('❌ Drive laden mislukt: ' + (e.message||e));
+    console.error('syncFromDrive:', e);
+  } finally { gSyncing = false; }
+}
+
+// ── Toon melding bij externe wijzigingen ───────────────────
+function showExternalChanges(changed, fromDevice) {
+  const nl = currentLang === 'nl';
+  const title = nl
+    ? `📱 Wijzigingen van ${escapeHtml(fromDevice)}`
+    : `📱 Modifications de ${escapeHtml(fromDevice)}`;
+  const rows = changed.map(c =>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #e8e4dc;">
+      <div>
+        <div style="font-weight:700;">${escapeHtml(c.name)}</div>
+        <div style="font-size:11px;color:#aaa;font-family:'JetBrains Mono';">${nl?'om':'à'} ${c.time}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:18px;font-weight:700;color:#888;">${c.oldQty}</span>
+        <span style="color:#aaa;">→</span>
+        <span style="font-size:18px;font-weight:900;color:${c.newQty===0?'#b83030':c.newQty<c.oldQty?'#c47d0e':'#0f8c6b'};">${c.newQty}</span>
+        ${c.unit?`<span style="font-size:11px;color:#aaa;">${escapeHtml(c.unit)}</span>`:''}
+      </div>
+    </div>`
+  ).join('');
+
+  // Op dashboard: gebruik db-modal, op master: gebruik normale modal
+  if (isDashboardDevice()) {
+    openModal(title,
+      `<div style="margin-bottom:16px;">${rows}</div>
+       <button class="btn" onclick="closeModal()">OK</button>`
+    );
+  } else {
+    openModal(title,
+      `<div style="margin-bottom:16px;">${rows}</div>
+       <button class="btn" onclick="closeModal()">OK</button>`
+    );
+  }
+}
+
+// ── Merge helper: combineert lokale + Drive data ───────────
+async function mergeWithDrive(driveData) {
+  // Basis: Drive data (bevat wijzigingen van andere toestellen)
+  const mergedStockItems = [...(driveData.stockItems||[])];
+
+  for (const localItem of state.stockItems) {
+    const driveIdx = mergedStockItems.findIndex(i => i.id === localItem.id);
+    if (driveIdx === -1) {
+      // Nieuw lokaal item → toevoegen
+      mergedStockItems.push(localItem);
+    } else {
+      // Beide hebben item → neem recentste op lastUpdated
+      const localTs = localItem.lastUpdated || localItem.createdAt || 0;
+      const driveTs = mergedStockItems[driveIdx].lastUpdated || mergedStockItems[driveIdx].createdAt || 0;
+      if (localTs > driveTs) {
+        mergedStockItems[driveIdx] = localItem;
+      }
+      // Anders: Drive versie behouden
+    }
+  }
+
+  // Verwijderde items: items die lokaal NIET meer bestaan maar wel in Drive → verwijderd op master → ook uit Drive
+  const finalStockItems = mergedStockItems.filter(di =>
+    state.stockItems.some(li => li.id === di.id) || // bestaat lokaal
+    (di.lastUpdated||0) > (gLastSync||0) // of recent op Drive gewijzigd (dashboard)
+  );
+
+  return {
+    ...driveData,
+    stockItems: finalStockItems,
+    shelves: state.shelves,
+    boxes: state.boxes,
+    items: state.items,
+    categories: state.categories,
+    units: state.units,
+    shops: state.shops,
+    stockNames: state.stockNames,
+  };
+}
+
+async function applyMergedData(merged) {
+  // Update lokale stockItems met gemergde data (bv. dashboard-aanpassingen)
+  const changed = [];
+  for (const mi of merged.stockItems) {
+    const local = state.stockItems.find(i => i.id === mi.id);
+    if (local && local.quantity !== mi.quantity) {
+      changed.push({ name: mi.name, oldQty: local.quantity, newQty: mi.quantity, unit: mi.unit||'' });
+      local.quantity = mi.quantity;
+      await dbPut('stockItems', local);
+    }
+  }
+  if (changed.length > 0) {
+    showExternalChanges(changed, merged.deviceName || '?');
+  }
+}
+
+// ── DASHBOARD: gerichte quantity-update naar Drive ─────────
+async function dashboardPushQuantity(itemId, newQuantity) {
+  if (!isGTokenValid()) {
+    toast(currentLang==='nl'?'⚠️ Niet verbonden met Drive':'⚠️ Non connecté à Drive');
+    return false;
+  }
+  try {
+    const driveData = await driveGetData();
+    if (!driveData) throw new Error('Drive niet bereikbaar');
+
+    // Pas enkel dit item aan in Drive data
+    const idx = driveData.stockItems?.findIndex(i => i.id === itemId);
+    if (idx !== undefined && idx >= 0) {
+      driveData.stockItems[idx].quantity = newQuantity;
+      driveData.stockItems[idx].lastUpdated = Date.now();
+    }
+    driveData.syncVersion = (driveData.syncVersion || 0) + 1;
+    driveData.lastModified = Date.now();
+    driveData.deviceName = deviceName || 'Dashboard';
+
+    await driveUpload(driveData);
+    gLastSync = Date.now();
+    localStorage.setItem('gdrive_last_sync', String(gLastSync));
+    localVersion = driveData.syncVersion;
+    localStorage.setItem('local_version', String(localVersion));
+    updateSyncUI('ok', formatLastSync());
+    dbUpdateSyncDot?.();
+    return true;
+  } catch(e) {
+    toast('❌ Drive sync mislukt: ' + (e.message||e));
+    return false;
+  }
+}
+
+// ── driveSync: publieke functie (achterwaarts compatibel) ──
+async function driveSync(showFeedback) {
+  if (isDashboardDevice()) {
+    await syncFromDrive();
+  } else {
+    await syncMaster(showFeedback);
+  }
+}
+
+// ── driveLoadFromDrive: publieke functie ───────────────────
+async function driveLoadFromDrive() {
+  await syncFromDrive();
+  if (!isDashboardDevice()) {
+    closeModal();
+    showView('home');
   }
 }
 
 async function drivePushLocal() {
   closeModal();
-  await driveSync(true);
+  await syncMaster(true);
   startSyncTimer();
+}
+
+// ── Auto-sync timer ────────────────────────────────────────
+
+
+function updateSyncLabels() {
+  const nl = currentLang === 'nl';
+  const el = (id,txt) => { const e=document.getElementById(id); if(e) e.textContent=txt; };
+  el('lbl-sync-section', nl?'☁️ Cloud Sync':'☁️ Synchronisation Cloud');
+  el('lbl-sync-now', nl?'Nu synchroniseren':'Synchroniser maintenant');
+  el('lbl-device-section', nl?'📱 Dit toestel':'📱 Cet appareil');
+  if (!isGTokenValid()) {
+    el('sync-sub', nl?'Niet verbonden':'Non connecté');
+    const btn = document.getElementById('sync-action-btn');
+    if (btn) btn.textContent = nl?'Verbinden':'Connecter';
+  } else {
+    const sub = document.getElementById('sync-sub');
+    if (sub) sub.textContent = formatLastSync();
+  }
+  updateDeviceUI();
 }
 
 // ── Dashboard: bevestiging bij +/- ────────────────────────
@@ -6401,193 +6646,12 @@ async function confirmDashboardAdjust(id, delta) {
 }
 
 // ── Hoofd sync ─────────────────────────────────────────────
-function buildExportObject() {
-  return {
-    version: 4,
-    exportedAt: new Date().toISOString(),
-    shelves: state.shelves,
-    boxes: state.boxes,
-    items: state.items,
-    stockItems: state.stockItems,
-    categories: state.categories,
-    units: state.units,
-    stockNames: state.stockNames,
-    shops: state.shops
-  };
-}
 
-async function driveSync(showFeedback) {
-  if (gSyncing || !isGTokenValid()) return;
-
-  // Dashboard mag NOOIT de volledige data uploaden — enkel lezen
-  if (isDashboardDevice()) {
-    await driveLoadFromDrive();
-    return;
-  }
-
-  gSyncing = true;
-  if (showFeedback) updateSyncUI('busy', currentLang==='nl'?'Synchroniseren...':'Synchronisation...');
-
-  try {
-    // Stap 1: haal Drive data op VOOR upload
-    const driveData = gFileId ? await driveGetData() : null;
-    const driveVersion = driveData?.syncVersion || 0;
-
-    let uploadData;
-
-    if (driveData && driveVersion > localVersion) {
-      // Drive is nieuwer (dashboard heeft gewijzigd) → slim mergen
-      // Basis = Drive data (bevat dashboard-aanpassingen aan aantallen)
-      // Toevoegen = nieuwe items/rekken/boxen van master die nog niet op Drive staan
-      const mergedStockItems = [...(driveData.stockItems || [])];
-
-      for (const localItem of state.stockItems) {
-        const exists = mergedStockItems.find(i => i.id === localItem.id);
-        if (!exists) {
-          // Nieuw item op master dat nog niet op Drive staat → toevoegen
-          mergedStockItems.push(localItem);
-        } else {
-          // Item bestaat op beide → neem recentste op basis van lastUpdated
-          const localUpdated = localItem.lastUpdated || localItem.createdAt || 0;
-          const driveUpdated = exists.lastUpdated || exists.createdAt || 0;
-          if (localUpdated > driveUpdated) {
-            const idx = mergedStockItems.findIndex(i => i.id === localItem.id);
-            mergedStockItems[idx] = localItem;
-          }
-          // Anders: Drive versie (dashboard aanpassing) behouden
-        }
-      }
-
-      uploadData = {
-        ...driveData,
-        stockItems: mergedStockItems,
-        shelves: state.shelves,
-        boxes: state.boxes,
-        items: state.items,
-        categories: state.categories,
-        units: state.units,
-        shops: state.shops,
-        syncVersion: driveVersion + 1,
-        lastModified: Date.now(),
-        deviceName: deviceName || 'Master',
-        deviceRole: DEVICE_ROLES.MASTER,
-      };
-
-      // Update lokale state met de gemergde aantallen van Drive
-      for (const di of mergedStockItems) {
-        const local = state.stockItems.find(i => i.id === di.id);
-        if (local && local.quantity !== di.quantity) {
-          local.quantity = di.quantity;
-          await dbPut('stockItems', local);
-        }
-      }
-      localVersion = driveVersion + 1;
-
-    } else {
-      // Drive is gelijk of ouder → gewoon uploaden
-      uploadData = {
-        ...buildExportObject(),
-        syncVersion: localVersion + 1,
-        lastModified: Date.now(),
-        deviceName: deviceName || 'Master',
-        deviceRole: DEVICE_ROLES.MASTER,
-      };
-      localVersion++;
-    }
-
-    // Upload
-    const json = JSON.stringify(uploadData);
-    if (gFileId) {
-      await fetch(
-        `https://www.googleapis.com/upload/drive/v3/files/${gFileId}?uploadType=media`,
-        { method:'PATCH', headers:{ Authorization:`Bearer ${gAccessToken}`, 'Content-Type':'application/json' }, body:json }
-      );
-    } else {
-      const meta = { name: GDRIVE_FILE_NAME, parents: [GDRIVE_SPACES] };
-      const form = new FormData();
-      form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
-      form.append('file', new Blob([json], {type:'application/json'}));
-      const r = await fetch(
-        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-        { method:'POST', headers:{ Authorization:`Bearer ${gAccessToken}` }, body:form }
-      );
-      const created = await r.json();
-      gFileId = created.id;
-      localStorage.setItem('gdrive_file_id', gFileId);
-    }
-
-    localStorage.setItem('local_version', String(localVersion));
-    gSyncDirty = false;
-    gLastSync = Date.now();
-    localStorage.setItem('gdrive_last_sync', String(gLastSync));
-    updateSyncUI('ok', formatLastSync());
-    render();
-    if (showFeedback) toast(currentLang==='nl'?'✓ Gesynchroniseerd met Google Drive':'✓ Synchronisé avec Google Drive');
-
-  } catch(e) {
-    updateSyncUI('error', 'Sync fout');
-    if (showFeedback) toast('❌ Sync mislukt: ' + (e.message||e));
-    console.error('Drive sync:', e);
-  } finally { gSyncing = false; }
-}
 
 // ── Drive helpers ──────────────────────────────────────────
-async function driveFindFile() {
-  try {
-    const r = await fetch(
-      `https://www.googleapis.com/drive/v3/files?spaces=${GDRIVE_SPACES}&q=name='${GDRIVE_FILE_NAME}'&fields=files(id,modifiedTime)`,
-      { headers: { Authorization:`Bearer ${gAccessToken}` } }
-    );
-    const d = await r.json();
-    return d.files?.[0]?.id || null;
-  } catch(e) { return null; }
-}
 
-async function driveGetData() {
-  try {
-    const r = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${gFileId}?alt=media`,
-      { headers: { Authorization:`Bearer ${gAccessToken}` } }
-    );
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    return await r.json();
-  } catch(e) { console.error('driveGetData:', e); return null; }
-}
 
-async function importDataObj(data) {
-  await dbClear('shelves'); await dbClear('boxes'); await dbClear('items');
-  await dbClear('stockItems'); await dbClear('categories');
-  await dbClear('units'); await dbClear('stockNames'); await dbClear('shops');
-  state = { shelves:[], boxes:[], items:[], stockItems:[], categories:[], units:[], stockNames:[], shops:[] };
-  for (const s of (data.shelves||[])) { await dbPut('shelves',s); state.shelves.push(s); }
-  for (const b of (data.boxes||[])) { await dbPut('boxes',b); state.boxes.push(b); }
-  for (const i of (data.items||[])) { await dbPut('items',i); state.items.push(i); }
-  for (const i of (data.stockItems||[])) { await dbPut('stockItems',i); state.stockItems.push(i); }
-  for (const c of (data.categories?.length?data.categories:DEFAULT_CATEGORIES)) { await dbPut('categories',c); state.categories.push(c); }
-  for (const u of (data.units?.length?data.units:DEFAULT_UNITS)) { await dbPut('units',u); state.units.push(u); }
-  for (const n of (data.stockNames||[])) { await dbPut('stockNames',n); state.stockNames.push(n); }
-  for (const s of (data.shops?.length?data.shops:DEFAULT_SHOPS)) { await dbPut('shops',s); state.shops.push(s); }
-  state.categories.sort((a,b)=>(a.order||999)-(b.order||999));
-  state.units.sort((a,b)=>a.label.localeCompare(b.label,'nl'));
-  render();
-}
 
-function updateSyncLabels() {
-  const nl = currentLang === 'nl';
-  const el = (id,txt) => { const e=document.getElementById(id); if(e) e.textContent=txt; };
-  el('lbl-sync-section', nl?'☁️ Cloud Sync':'☁️ Synchronisation Cloud');
-  el('lbl-sync-now', nl?'Nu synchroniseren':'Synchroniser maintenant');
-  el('lbl-device-section', nl?'📱 Dit toestel':'📱 Cet appareil');
-  if (!isGTokenValid()) {
-    el('sync-sub', nl?'Niet verbonden':'Non connecté');
-    const btn = document.getElementById('sync-action-btn');
-    if (btn) btn.textContent = nl?'Verbinden':'Connecter';
-  } else {
-    const sub = document.getElementById('sync-sub');
-    if (sub) sub.textContent = formatLastSync();
-  }
-  updateDeviceUI();
-}
 
 (async () => {
   try {
