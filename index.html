@@ -6191,6 +6191,14 @@ function dbCardHTML(it, nl) {
     }
   }
 
+  // Shop logo
+  const shop = findShop(it.shopId);
+  const shopLogoHtml = shop
+    ? (shop.photo
+        ? `<img src="${shop.photo}" style="width:14px;height:14px;border-radius:3px;object-fit:cover;vertical-align:middle;margin-right:4px;" title="${escapeHtml(shop.name)}">`
+        : `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${shop.color||'#737373'};margin-right:4px;vertical-align:middle;"></span>`)
+    : '';
+
   const hasButtons = dbMode === 'stock' || dbMode === 'freezer';
 
   return `<div class="db-card" style="box-shadow:0 4px 0 ${isEmpty?'#d4a0a0':isLow?'#d4b870':isTooLong?'#d4b870':'#c8c4bc'},0 6px 16px ${shadow},0 12px 32px rgba(0,0,0,0.06);">
@@ -6199,7 +6207,7 @@ function dbCardHTML(it, nl) {
       <div class="db-card-top">
         ${photoHtml}
         <div style="flex:1;min-width:0;padding-top:2px;">
-          <div class="db-card-name">${escapeHtml(iName(it))}${it.subtype?` · ${escapeHtml(it.subtype)}`:''}</div>
+          <div class="db-card-name">${shopLogoHtml}${escapeHtml(iName(it))}${it.subtype?` · ${escapeHtml(it.subtype)}`:''}</div>
           <div class="db-card-loc">${loc}</div>
         </div>
       </div>
