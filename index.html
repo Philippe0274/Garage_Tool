@@ -1640,6 +1640,14 @@
         <div id="db-sync-dot" style="width:8px;height:8px;border-radius:50%;background:#c8c4bc;flex-shrink:0;"></div>
         <span id="db-sync-lbl">Niet verbonden</span>
       </button>
+      <!-- Snelle refresh knop -->
+      <button onclick="driveLoadFromDrive().then(()=>{dbUpdateSyncPanel();toast(currentLang==='nl'?'✓ Bijgewerkt':'✓ Mis à jour');})" style="
+        background:#edfaf5; border:1px solid #90d8c0;
+        border-radius:10px; width:36px; height:36px;
+        display:flex; align-items:center; justify-content:center;
+        font-size:16px; cursor:pointer; color:#0f8c6b;
+        box-shadow:0 2px 4px rgba(15,140,107,0.12);
+      " title="Nu vernieuwen">🔄</button>
       <!-- Instellingen knop -->
       <button onclick="dbOpenSettings()" style="
         background:#f5f3ef; border:1px solid #e0dbd4;
@@ -1689,7 +1697,7 @@
           font-size:13px; font-weight:700; cursor:pointer;
           font-family:'Archivo',sans-serif;
         " id="db-panel-sync-action">Verbinden met Google</button>
-        <button id="db-panel-manual-sync" onclick="driveSync(true).then(dbUpdateSyncPanel)" style="
+        <button id="db-panel-manual-sync" onclick="driveLoadFromDrive().then(()=>dbUpdateSyncPanel())" style="
           display:none; width:100%; margin-top:8px; padding:10px; border-radius:8px;
           background:#f5f3ef; border:1px solid #e0dbd4; color:#666;
           font-size:13px; font-weight:700; cursor:pointer;
@@ -5541,13 +5549,13 @@ function initDashboard() {
   // Update labels
   dbUpdateLabels();
   dbUpdateHome();
-  // Auto-refresh van Drive elke 5 minuten
-  setInterval(() => {
+  // Auto-refresh van Drive elke 60 seconden op dashboard
+  setInterval(async () => {
     if (isGTokenValid() && !gSyncing) {
-      driveLoadFromDrive().catch(()=>{});
+      await driveLoadFromDrive();
     }
-  }, 300000);
-  // Update sync indicator
+  }, 60000);
+  // Update sync indicator elke 30 seconden
   setInterval(dbUpdateSyncDot, 30000);
   dbUpdateSyncDot();
 }
@@ -6276,8 +6284,18 @@ async function driveSyncOnConnect() {
 
 async function driveLoadFromDrive() {
   closeModal();
+  if (isDashboardDevice()) {
+    dbUpdateSyncDot && dbUpdateSyncDot();
+  }
   updateSyncUI('busy', currentLang==='nl'?'Laden van Drive...':'Chargement depuis Drive...');
   try {
+    // Zorg dat gFileId bekend is
+    if (!gFileId) {
+      const fileId = await driveFindFile();
+      if (!fileId) throw new Error(currentLang==='nl'?'Geen backup gevonden op Drive':'Aucune sauvegarde sur Drive');
+      gFileId = fileId;
+      localStorage.setItem('gdrive_file_id', gFileId);
+    }
     const data = await driveGetData();
     if (!data) throw new Error('Geen data');
     await importDataObj(data);
@@ -6287,9 +6305,18 @@ async function driveLoadFromDrive() {
     localStorage.setItem('gdrive_last_sync', String(gLastSync));
     gSyncDirty = false;
     updateSyncUI('ok', formatLastSync());
-    startSyncTimer();
-    toast(currentLang==='nl'?'✓ Data geladen van Google Drive':'✓ Données chargées depuis Google Drive');
-    showView('home');
+    if (isDashboardDevice()) {
+      // Dashboard: herlaad de grid, geen showView
+      dbUpdateSyncDot();
+      dbUpdateHome();
+      if (dbMode) dbRender();
+      dbUpdateSyncPanel();
+      toast(currentLang==='nl'?'✓ Tablet bijgewerkt vanuit Drive':'✓ Tablette mise à jour depuis Drive');
+    } else {
+      startSyncTimer();
+      toast(currentLang==='nl'?'✓ Data geladen van Google Drive':'✓ Données chargées depuis Google Drive');
+      showView('home');
+    }
   } catch(e) {
     updateSyncUI('error', 'Fout: ' + (e.message||e));
     toast('❌ Drive laden mislukt: ' + (e.message||e));
