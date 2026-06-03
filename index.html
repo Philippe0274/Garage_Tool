@@ -1575,6 +1575,7 @@
     <button class="btn btn-secondary" onclick="openShopManager()" data-i18n="manage_shops">🏪 Winkels beheren</button>
     <button class="btn btn-secondary" onclick="openStockShelvesManager()">📦 <span id="lbl-stock-shelves">Voorraad-rekken beheren</span></button>
     <button class="btn btn-secondary" onclick="openBoxManager()">📦 <span id="lbl-manage-boxes">Boxen beheren</span></button>
+    <button class="btn btn-secondary" onclick="fixAndPushCategories()" style="border-color:var(--warning);color:var(--warning);">🔧 <span id="lbl-fix-cats">Categorieën herstellen + Drive bijwerken</span></button>
     <div class="section-title" style="margin-top:16px;"><span class="section-title-text">Data</span></div>
     <button class="btn btn-secondary" onclick="exportData()" data-i18n="export">📤 Exporteer alle data</button>
     <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()" data-i18n="import">📥 Importeer data</button>
@@ -2086,6 +2087,7 @@ function updateHomeLabels() {
   el('lbl-nfc-btn', nl ? 'NFC starten' : 'Démarrer NFC');
   el('lbl-stock-shelves', nl ? 'Voorraad-rekken beheren' : 'Gérer les rayons de stock');
   el('lbl-manage-boxes', nl ? 'Boxen beheren' : 'Gérer les boîtes');
+  el('lbl-fix-cats', nl ? 'Categorieën herstellen + Drive bijwerken' : 'Restaurer catégories + mettre à jour Drive');
   el('lbl-settings-manage', nl ? 'Beheer' : 'Gestion');
   el('nav-lbl-home', nl ? 'Start' : 'Accueil');
   el('nav-lbl-material', nl ? 'Materiaal' : 'Matériel');
@@ -2952,6 +2954,31 @@ async function autoTranslateItemName() {
   }
 }
 
+// ── Fix categorieën + push naar Drive ─────────────────────
+async function fixAndPushCategories() {
+  const nl = currentLang === 'nl';
+  // Stap 1: Wis alle categorieën lokaal
+  await dbClear('categories');
+  state.categories = [];
+  // Stap 2: Zet DEFAULT_CATEGORIES terug (clean, met FR namen)
+  for (const c of DEFAULT_CATEGORIES) {
+    await dbPut('categories', c);
+    state.categories.push({...c});
+  }
+  state.categories.sort((a,b) => (a.order||999) - (b.order||999));
+  // Stap 3: Push naar Drive
+  if (isGTokenValid()) {
+    await syncMaster(false);
+    toast(nl ? '✓ Categorieën hersteld en naar Drive gestuurd' : '✓ Catégories restaurées et envoyées sur Drive');
+  } else {
+    toast(nl ? '✓ Categorieën hersteld (Drive niet verbonden)' : '✓ Catégories restaurées (Drive non connecté)');
+  }
+  render();
+  if (currentBrowseMode === 'material') renderBrowseMaterial();
+  else if (currentBrowseMode === 'stock') renderBrowseStock();
+  else if (currentBrowseMode === 'freezer') renderBrowseFreezer();
+}
+
 // ============================================================================
 // BOX MANAGER — in Instellingen
 // ============================================================================
@@ -3247,7 +3274,11 @@ function renderStockRow(it) {
   if (min > 0) metaParts.push(`min ${min}`);
   if (it.price) metaParts.push(`€${it.price.toFixed(2)}`);
 
-  const shopDot = shop ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${shop.color};margin-right:4px;vertical-align:middle;" title="${escapeHtml(shop.name)}"></span>` : '';
+  const shopDot = shop
+    ? (shop.photo
+        ? `<img src="${shop.photo}" style="width:16px;height:16px;border-radius:3px;object-fit:cover;margin-right:5px;vertical-align:middle;" title="${escapeHtml(shop.name)}">`
+        : `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${shop.color};margin-right:4px;vertical-align:middle;" title="${escapeHtml(shop.name)}"></span>`)
+    : '';
 
   return `<div class="${rowClass.join(' ')}">
     ${it.photos?.[0]
@@ -3819,11 +3850,48 @@ function openItemEditor(itemId, preselectBoxId) {
         <label class="form-label">${t('quantity')}</label>
         <input type="number" class="form-input" id="item-qty" value="${item?.quantity || 1}" min="1">
       </div>
-      <div class="form-group" style="flex:2">
+    </div>
+    <div class="form-group">
+      <label class="form-label">${currentLang==='fr'?'Emplacement':'Locatie'}</label>
+      <div class="type-pills">
+        <button type="button" class="type-pill${(!item?.locationType||item?.locationType==='box')?' active':''}" data-itype="box" onclick="selectItemLocType(this,'box')">📦 Box</button>
+        <button type="button" class="type-pill${item?.locationType==='shelf'?' active':''}" data-itype="shelf" onclick="selectItemLocType(this,'shelf')">🗄️ ${currentLang==='fr'?'Étagère':'Schap'}</button>
+        <button type="button" class="type-pill${item?.locationType==='free'?' active':''}" data-itype="free" onclick="selectItemLocType(this,'free')">📍 ${currentLang==='fr'?'Libre':'Vrij'}</button>
+      </div>
+    </div>
+    <div id="item-loc-box" style="display:${(!item?.locationType||item?.locationType==='box')?'block':'none'};">
+      <div class="form-group">
         <label class="form-label">📦 Box</label>
         <select class="form-select" id="item-box">
           <option value="">—</option>${boxOptions}
         </select>
+      </div>
+    </div>
+    <div id="item-loc-shelf" style="display:${item?.locationType==='shelf'?'block':'none'};">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">${t('shelf')}</label>
+          <select class="form-select" id="item-shelf">
+            <option value="">—</option>
+            ${state.shelves.map(s => `<option value="${s.id}" ${item?.shelfId===s.id?'selected':''}>${escapeHtml(s.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('level')}</label>
+          <select class="form-select" id="item-level-sel">
+            <option value="">—</option>
+            ${[1,2,3,4,5,6,7,8].map(l => `<option value="${l}" ${item?.level===l?'selected':''}>${t('level')} ${l}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('position')}</label>
+          <select class="form-select" id="item-position">
+            <option value="">—</option>
+            <option value="left" ${item?.position==='left'?'selected':''}>${t('left')}</option>
+            <option value="center" ${item?.position==='center'?'selected':''}>${t('center')}</option>
+            <option value="right" ${item?.position==='right'?'selected':''}>${t('right')}</option>
+          </select>
+        </div>
       </div>
     </div>
     <div class="form-group">
@@ -3880,7 +3948,20 @@ async function saveItem(id) {
   item.name = name;
   item.name_fr = document.getElementById('item-name-fr')?.value.trim() || item.name_fr || '';
   item.quantity = parseInt(document.getElementById('item-qty').value) || 1;
-  item.boxId = document.getElementById('item-box').value || null;
+  // Locatie
+  const locPill = document.querySelector('.type-pill[data-itype].active');
+  item.locationType = locPill ? locPill.dataset.itype : 'box';
+  if (item.locationType === 'box') {
+    item.boxId = document.getElementById('item-box')?.value || null;
+    item.shelfId = null; item.level = null; item.position = null;
+  } else if (item.locationType === 'shelf') {
+    item.shelfId = document.getElementById('item-shelf')?.value || null;
+    item.level = parseInt(document.getElementById('item-level-sel')?.value) || null;
+    item.position = document.getElementById('item-position')?.value || null;
+    item.boxId = null;
+  } else {
+    item.boxId = null; item.shelfId = null; item.level = null; item.position = null;
+  }
   item.description = document.getElementById('item-desc').value;
   item.tags = document.getElementById('item-tags').value.split(',').map(t => t.trim()).filter(Boolean);
   item.photos = editingItemPhotos;
@@ -4161,6 +4242,13 @@ function selectType(btn, typeVal) {
   btn.dataset.type = typeVal;
 }
 
+function selectItemLocType(btn, type) {
+  document.querySelectorAll('.type-pill[data-itype]').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('item-loc-box').style.display = type === 'box' ? 'block' : 'none';
+  document.getElementById('item-loc-shelf').style.display = type === 'shelf' ? 'block' : 'none';
+}
+
 function selectStorageLoc(btn, loc) {
   document.querySelectorAll('.type-pill[data-loc]').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
@@ -4404,10 +4492,14 @@ async function deleteUnit(id) {
 // SHOP MANAGER
 // ============================================================================
 function openShopManager() {
+  const nl = currentLang === 'nl';
   const rows = state.shops.map(s => {
     const useCount = state.stockItems.filter(i => i.shopId === s.id).length;
+    const logoHtml = s.photo
+      ? `<img src="${s.photo}" style="width:28px;height:28px;border-radius:6px;object-fit:cover;flex-shrink:0;">`
+      : `<span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${s.color || '#737373'};flex-shrink:0;margin:6px;"></span>`;
     return `<div class="cat-row">
-      <span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${s.color || '#737373'};flex-shrink:0;"></span>
+      ${logoHtml}
       <span class="cat-name">${escapeHtml(s.name)}</span>
       <span style="font-family:'JetBrains Mono';font-size:10px;color:var(--text-dim);">${useCount}</span>
       <div class="cat-actions">
@@ -4424,13 +4516,21 @@ function openShopManager() {
 
 const SHOP_COLORS = ['#e30613','#0050aa','#00549f','#004e9f','#ed1c24','#22c55e','#f59e0b','#a855f7','#ec4899','#06b6d4','#737373'];
 
+let editingShopPhoto = '';
+
 function editShop(shopId) {
   const shop = shopId ? state.shops.find(s => s.id === shopId) : null;
   const currentColor = shop?.color || SHOP_COLORS[0];
+  editingShopPhoto = shop?.photo || '';
+  const nl = currentLang === 'nl';
   openModal(shop ? `🏪 ${escapeHtml(shop.name)}` : t('add_shop'), `
     <div class="form-group">
       <label class="form-label">${t('shop_name')}</label>
-      <input type="text" class="form-input" id="shop-name-input" value="${shop?.name || ''}" placeholder="Bv. Albert Heijn">
+      <input type="text" class="form-input" id="shop-name-input" value="${shop?.name || ''}" placeholder="${nl?'Bv. Albert Heijn':'P.ex. Carrefour'}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">${nl?'Logo / Foto':'Logo / Photo'}</label>
+      <div class="photo-upload" id="shop-photo-area"></div>
     </div>
     <div class="form-group">
       <label class="form-label">${t('shop_color')}</label>
@@ -4444,6 +4544,7 @@ function editShop(shopId) {
     </div>
   `);
   window._editingShopColor = currentColor;
+  refreshShopPhotoArea();
 }
 
 function selectShopColor(c) {
@@ -4452,6 +4553,31 @@ function selectShopColor(c) {
     el.classList.toggle('selected', el.dataset.color === c);
   });
 }
+
+function refreshShopPhotoArea() {
+  const area = document.getElementById('shop-photo-area');
+  if (!area) return;
+  const nl = currentLang === 'nl';
+  area.innerHTML = (editingShopPhoto
+    ? `<div class="photo-thumb"><img src="${editingShopPhoto}"><button class="photo-remove" onclick="removeShopPhoto()">×</button></div>`
+    : '') +
+  `<button type="button" class="photo-add-btn" onclick="document.getElementById('ph-shop-cam').click()">
+    <span>📷</span><span>${nl?'Camera':'Caméra'}</span>
+  </button>
+  <button type="button" class="photo-add-btn" onclick="document.getElementById('ph-shop-gal').click()">
+    <span>🖼️</span><span>${nl?'Galerij':'Galerie'}</span>
+  </button>
+  <input type="file" id="ph-shop-cam" accept="image/*" capture="environment" style="display:none" onchange="addShopPhoto(event)">
+  <input type="file" id="ph-shop-gal" accept="image/*" style="display:none" onchange="addShopPhoto(event)">`;
+}
+
+async function addShopPhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  editingShopPhoto = await fileToCompressedDataURL(file);
+  refreshShopPhotoArea();
+}
+
+function removeShopPhoto() { editingShopPhoto = ''; refreshShopPhotoArea(); }
 
 async function saveShop(id) {
   const name = document.getElementById('shop-name-input').value.trim();
@@ -4467,6 +4593,7 @@ async function saveShop(id) {
     if (!shop) return;
     shop.name = name;
     shop.color = window._editingShopColor || '#737373';
+    shop.photo = editingShopPhoto || null;
     await dbPut('shops', shop);
     if (isNew) state.shops.push(shop);
     state.shops.sort((a,b) => (a.order||999) - (b.order||999));
