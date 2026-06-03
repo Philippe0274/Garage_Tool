@@ -5761,7 +5761,24 @@ function dbCardHTML(it, nl) {
   const shadow = isEmpty?'rgba(184,48,48,0.14)':isLow?'rgba(196,125,14,0.12)':isTooLong?'rgba(196,125,14,0.12)':'rgba(0,0,0,0.09)';
 
   const cat = findCat(it.categoryId);
-  const icon = (dbMode==='material') ? (it.tags?.[0]||'📦') : (cat?.icon||'📦');
+
+  // Foto: item foto > box foto (materiaal) > categorie icoon
+  let photoHtml = '';
+  const photo = it.photos?.[0] || null;
+  const boxPhoto = (dbMode==='material') ? (state.boxes.find(b => b.id === it.boxId)?.photo || null) : null;
+  const fallbackIcon = (dbMode==='material') ? '📦' : (cat?.icon || '📦');
+
+  if (photo || boxPhoto) {
+    const src = photo || boxPhoto;
+    photoHtml = `<img src="${src}" style="
+      width:46px; height:46px; border-radius:13px;
+      object-fit:cover; flex-shrink:0;
+      box-shadow:0 2px 6px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.9) inset;
+      border:1px solid rgba(0,0,0,0.08);
+    ">`;
+  } else {
+    photoHtml = `<div class="db-card-icon" style="background:linear-gradient(135deg,${iconBg},#f5f3ef);">${fallbackIcon}</div>`;
+  }
 
   // Location
   let loc = '';
@@ -5796,7 +5813,7 @@ function dbCardHTML(it, nl) {
     <div class="db-card-bar ${barClass}"></div>
     <div class="db-card-body">
       <div class="db-card-top">
-        <div class="db-card-icon" style="background:linear-gradient(135deg,${iconBg},#f5f3ef);">${icon}</div>
+        ${photoHtml}
         <div style="flex:1;min-width:0;padding-top:2px;">
           <div class="db-card-name">${escapeHtml(it.name)}${it.subtype?` · ${escapeHtml(it.subtype)}`:''}</div>
           <div class="db-card-loc">${loc}</div>
