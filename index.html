@@ -2044,6 +2044,10 @@ function setLang(lang) {
   document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
   updateHomeLabels();
   render();
+  // Herrender actieve browse lijsten met nieuwe taal
+  if (currentBrowseMode === 'material') renderBrowseMaterial();
+  else if (currentBrowseMode === 'stock') renderBrowseStock();
+  else if (currentBrowseMode === 'freezer') renderBrowseFreezer();
 }
 
 function updateHomeLabels() {
@@ -2213,7 +2217,7 @@ function renderBrowseFreezer() {
     return `<div class="stock-row" style="${rowBorder}" onclick="openStockEditor('${it.id}')">
       <div class="stock-thumb">${cat?.icon || '🧊'}</div>
       <div class="stock-info">
-        <div class="stock-name">🧊 ${escapeHtml(it.name)}${it.subtype?` <span style="font-size:11px;color:var(--mode-accent);">· ${escapeHtml(it.subtype)}</span>`:''}
+        <div class="stock-name">🧊 ${escapeHtml(iName(it))}${it.subtype?` <span style="font-size:11px;color:var(--mode-accent);">· ${escapeHtml(it.subtype)}</span>`:''}
           <span style="color:var(--text-dim);font-weight:400;font-size:12px;"> ×${qty}${it.unit?' '+escapeHtml(it.unit):''}</span>
         </div>
         <div class="stock-meta">${freezeLabel}</div>
@@ -2245,7 +2249,7 @@ function checkFreezerOnLoad() {
         const days = isUnknown ? null : Math.floor((Date.now()-new Date(it.freezeDate).getTime())/86400000);
         return `<div class="shopping-item">
           <span style="font-size:18px;">🧊</span>
-          <div class="name">${escapeHtml(it.name)}</div>
+          <div class="name">${escapeHtml(iName(it))}</div>
           <div class="unit" style="color:var(--warning);">
             ${isUnknown
               ? (currentLang==='nl'?'Datum onbekend':'Date inconnue')
@@ -2793,6 +2797,8 @@ async function forgetStockName(name) {
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const catName = (cat) => cat ? (cat[`name_${currentLang}`] || cat.name_nl || cat.name || '?') : '?';
+// Taalafhankelijke naam voor items en stockItems
+const iName = (it) => it ? (currentLang==='fr' && it.name_fr ? it.name_fr : it.name || '?') : '?';
 const findCat = (id) => state.categories.find(c => c.id === id);
 
 // ============================================================================
@@ -3097,7 +3103,7 @@ function showLowStockPopup(lowItems) {
       return `<div class="shopping-item">
         <span style="font-size:18px;">${cat?.icon || '📦'}</span>
         <div class="qty">${it.quantity}/${it.minQuantity}</div>
-        <div class="name">${escapeHtml(it.name)}</div>
+        <div class="name">${escapeHtml(iName(it))}</div>
         <div class="unit">${escapeHtml(it.unit || '')}</div>
       </div>`;
     }).join('')}
@@ -3121,7 +3127,7 @@ function renderResultItem(item, type) {
     return `<div class="result-item" onclick="openStockEditor('${item.id}')">
       ${item.photos?.[0] ? `<img class="result-thumb" src="${item.photos[0]}">` : `<div class="result-thumb">${cat?.icon || '🥫'}</div>`}
       <div class="result-info">
-        <div class="result-name">${escapeHtml(item.name)} <span style="font-family:'JetBrains Mono';color:${isLow?'var(--warning)':'var(--text-dim)'};font-weight:400;">${item.quantity || 0}${item.unit ? ' '+escapeHtml(item.unit) : ''}</span></div>
+        <div class="result-name">${escapeHtml(iName(item))} <span style="font-family:'JetBrains Mono';color:${isLow?'var(--warning)':'var(--text-dim)'};font-weight:400;">${item.quantity || 0}${item.unit ? ' '+escapeHtml(item.unit) : ''}</span></div>
         <div class="result-loc">${loc}</div>
       </div>
     </div>`;
@@ -3134,7 +3140,7 @@ function renderResultItem(item, type) {
   return `<div class="result-item" onclick="openItemEditor('${item.id}')">
     ${thumb ? `<img class="result-thumb" src="${thumb}">` : `<div class="result-thumb">📦</div>`}
     <div class="result-info">
-      <div class="result-name">${escapeHtml(item.name)}${item.quantity > 1 ? ` <span style="color:var(--text-dim);font-weight:400;">×${item.quantity}</span>` : ''}</div>
+      <div class="result-name">${escapeHtml(iName(item))}${item.quantity > 1 ? ` <span style="color:var(--text-dim);font-weight:400;">×${item.quantity}</span>` : ''}</div>
       <div class="result-loc">${loc}</div>
     </div>
   </div>`;
@@ -3249,7 +3255,7 @@ function renderStockRow(it) {
       ? `<img class="stock-thumb" src="${it.photos[0]}" onclick="openStockEditor('${it.id}')">`
       : `<div class="stock-thumb" onclick="openStockEditor('${it.id}')">${cat?.icon || '🥫'}</div>`}
     <div class="stock-info" onclick="openStockEditor('${it.id}')">
-      <div class="stock-name">${shopDot}${escapeHtml(it.name)}${it.subtype ? ` <span style="font-size:11px;color:var(--mode-accent);font-family:'JetBrains Mono';">· ${escapeHtml(it.subtype)}</span>` : ''}</div>
+      <div class="stock-name">${shopDot}${escapeHtml(iName(it))}${it.subtype ? ` <span style="font-size:11px;color:var(--mode-accent);font-family:'JetBrains Mono';">· ${escapeHtml(it.subtype)}</span>` : ''}</div>
       <div class="stock-meta">${metaParts.join(' · ')}</div>
       ${expHtml ? `<div class="stock-warnings">${expHtml}</div>` : ''}
     </div>
@@ -3727,7 +3733,7 @@ function openBoxView(boxId) {
     : items.map(it => `<div class="item-row" onclick="openItemEditor('${it.id}')">
         ${(it.photos && it.photos[0]) ? `<img class="item-thumb" src="${it.photos[0]}">` : `<div class="item-thumb">📦</div>`}
         <div class="item-info">
-          <div class="item-name">${escapeHtml(it.name)}${it.quantity > 1 ? ` ×${it.quantity}` : ''}</div>
+          <div class="item-name">${escapeHtml(iName(it))}${it.quantity > 1 ? ` ×${it.quantity}` : ''}</div>
           ${it.tags?.length ? `<div class="item-meta">${it.tags.map(escapeHtml).join(' · ')}</div>` : ''}
         </div>
       </div>`).join('');
@@ -4996,7 +5002,7 @@ function openShoppingList() {
         const linePrice = (it.price && need > 0) ? (it.price * need) : null;
         html += `<div class="shopping-item">
           <div class="qty">${need > 0 ? '+' + need : '—'}</div>
-          <div class="name">${escapeHtml(it.name)}</div>
+          <div class="name">${escapeHtml(iName(it))}</div>
           <div class="unit">${escapeHtml(it.unit || '')}</div>
           ${linePrice !== null ? `<div style="font-family:'JetBrains Mono';font-size:11px;color:var(--mode-accent);margin-left:8px;">€${linePrice.toFixed(2)}</div>` : ''}
         </div>`;
@@ -5021,7 +5027,7 @@ function openShoppingList() {
         const shop = findShop(it.shopId);
         html += `<div class="shopping-item">
           <div class="qty">${need > 0 ? '+' + need : '—'}</div>
-          <div class="name">${escapeHtml(it.name)}${shop ? ` <span style="font-family:'JetBrains Mono';font-size:10px;color:${shop.color};">${escapeHtml(shop.name)}</span>` : ''}</div>
+          <div class="name">${escapeHtml(iName(it))}${shop ? ` <span style="font-family:'JetBrains Mono';font-size:10px;color:${shop.color};">${escapeHtml(shop.name)}</span>` : ''}</div>
           <div class="unit">${escapeHtml(it.unit || '')}</div>
           ${linePrice !== null ? `<div style="font-family:'JetBrains Mono';font-size:11px;color:var(--mode-accent);margin-left:8px;">€${linePrice.toFixed(2)}</div>` : ''}
         </div>`;
@@ -5120,7 +5126,7 @@ function openRestockMode() {
     return `<div class="restock-row" data-id="${it.id}">
       ${it.photos?.[0] ? `<img class="stock-thumb" src="${it.photos[0]}">` : `<div class="stock-thumb">${cat?.icon||'🥫'}</div>`}
       <div class="restock-info">
-        <div class="restock-name">${escapeHtml(it.name)}</div>
+        <div class="restock-name">${escapeHtml(iName(it))}</div>
         <div class="restock-meta">${it.unit ? escapeHtml(it.unit) + ' · ' : ''}min ${it.minQuantity || 0}${it.targetQuantity ? ' · ' + (currentLang==='fr'?'plein':'vol') + ' ' + it.targetQuantity : ''}</div>
       </div>
       <input type="number" class="restock-input" min="0" value="${it.quantity || 0}" data-restock-id="${it.id}">
@@ -5380,7 +5386,7 @@ function renderBulkMatQueue() {
       return `<div class="queue-item">
         <div class="queue-item-icon">🔧</div>
         <div class="queue-item-info">
-          <div class="queue-item-name">${escapeHtml(it.name)} <span style="color:var(--text-dim);font-weight:400;">×${it.qty}</span></div>
+          <div class="queue-item-name">${escapeHtml(iName(it))} <span style="color:var(--text-dim);font-weight:400;">×${it.qty}</span></div>
           ${box ? `<div class="queue-item-meta">📦 ${escapeHtml(box.name)}</div>` : ''}
         </div>
         <button class="queue-item-del" onclick="bulkMatRemove(${i})">×</button>
@@ -5449,7 +5455,7 @@ function renderBulkStkQueue() {
       return `<div class="queue-item">
         <div class="queue-item-icon">${cat?.icon || '🥫'}</div>
         <div class="queue-item-info">
-          <div class="queue-item-name">${escapeHtml(it.name)}${it.subtype ? ` <span style="font-size:11px;color:var(--mode-accent);">· ${it.subtype}</span>` : ''} <span style="color:var(--text-dim);font-weight:400;">×${it.qty}</span></div>
+          <div class="queue-item-name">${escapeHtml(iName(it))}${it.subtype ? ` <span style="font-size:11px;color:var(--mode-accent);">· ${it.subtype}</span>` : ''} <span style="color:var(--text-dim);font-weight:400;">×${it.qty}</span></div>
           <div class="queue-item-meta">${[it.unit, cat ? catName(cat) : '', it.min > 0 ? 'min '+it.min : ''].filter(Boolean).join(' · ')}</div>
         </div>
         <button class="queue-item-del" onclick="bulkStkRemove(${i})">×</button>
@@ -6058,7 +6064,7 @@ function dbCardHTML(it, nl) {
       <div class="db-card-top">
         ${photoHtml}
         <div style="flex:1;min-width:0;padding-top:2px;">
-          <div class="db-card-name">${escapeHtml(it.name)}${it.subtype?` · ${escapeHtml(it.subtype)}`:''}</div>
+          <div class="db-card-name">${escapeHtml(iName(it))}${it.subtype?` · ${escapeHtml(it.subtype)}`:''}</div>
           <div class="db-card-loc">${loc}</div>
         </div>
       </div>
@@ -6861,7 +6867,7 @@ function dashboardAdjustStock(id, delta) {
   openModal(
     currentLang==='nl'?'Voorraad aanpassen':'Ajuster le stock',
     `<p style="margin-bottom:14px;font-size:15px;text-align:center;">
-      <strong>${escapeHtml(item.name)}</strong><br>
+      <strong>${escapeHtml(iName(item))}</strong><br>
       <span style="font-size:24px;font-weight:900;">${item.quantity||0}</span>
       <span style="color:var(--text-dim);"> → </span>
       <span style="font-size:24px;font-weight:900;color:${delta>0?'var(--success)':'var(--danger)'};">${newQty}</span>
