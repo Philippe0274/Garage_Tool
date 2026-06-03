@@ -5937,10 +5937,53 @@ async function dbConfirmAdjust() {
   const {id, delta} = dbPendingAdjust;
   dbPendingAdjust = null;
   dbCloseModal();
+
+  // 1. Pas lokaal aan
   await adjustStock(id, delta);
   dbRender();
-  // Sync meteen naar Drive
-  if (isGTokenValid()) await driveSync(false);
+
+  if (!isGTokenValid()) {
+    toast(currentLang==='nl'?'⚠️ Niet verbonden — lokaal opgeslagen':'⚠️ Non connecté — sauvegardé localement');
+    return;
+  }
+
+  // 2. Laad huidige Drive data
+  updateSyncUI('busy', currentLang==='nl'?'Opslaan naar Drive...':'Sauvegarde vers Drive...');
+  try {
+    const driveData = await driveGetData();
+    if (!driveData) throw new Error('Drive niet bereikbaar');
+
+    // 3. Merge: pas enkel het gewijzigde item aan in de Drive data
+    const item = state.stockItems.find(i => i.id === id);
+    if (item && driveData.stockItems) {
+      const idx = driveData.stockItems.findIndex(i => i.id === id);
+      if (idx >= 0) {
+        driveData.stockItems[idx].quantity = item.quantity;
+        driveData.stockItems[idx].lastUpdated = Date.now();
+      }
+    }
+
+    // 4. Verhoog versienummer
+    driveData.syncVersion = (driveData.syncVersion || 0) + 1;
+    driveData.lastModified = Date.now();
+    driveData.deviceName = deviceName || 'Dashboard';
+
+    // 5. Upload de gemerged data
+    const json = JSON.stringify(driveData);
+    await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files/${gFileId}?uploadType=media`,
+      { method:'PATCH', headers:{ Authorization:`Bearer ${gAccessToken}`, 'Content-Type':'application/json' }, body:json }
+    );
+
+    gLastSync = Date.now();
+    localStorage.setItem('gdrive_last_sync', String(gLastSync));
+    updateSyncUI('ok', formatLastSync());
+    dbUpdateSyncPanel();
+    toast(currentLang==='nl'?'✓ Opgeslagen naar Drive':'✓ Sauvegardé sur Drive');
+  } catch(e) {
+    updateSyncUI('error', 'Sync fout');
+    toast('❌ ' + (currentLang==='nl'?'Drive sync mislukt':'Sync Drive échoué') + ': ' + (e.message||e));
+  }
 }
 
 function dbCloseModal() {
@@ -6375,6 +6418,14 @@ function buildExportObject() {
 
 async function driveSync(showFeedback) {
   if (gSyncing || !isGTokenValid()) return;
+
+  // Dashboard mag NOOIT de volledige data uploaden naar Drive
+  // — alleen lezen, nooit overschrijven
+  if (isDashboardDevice()) {
+    await driveLoadFromDrive();
+    return;
+  }
+
   gSyncing = true;
   if (showFeedback) updateSyncUI('busy', currentLang==='nl'?'Synchroniseren...':'Synchronisation...');
   try {
