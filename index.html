@@ -2608,7 +2608,7 @@ function buildMatCategoryFilter() {
   let html = `<button class="fchip ${currentMatCatFilter==='all'?'active':''}" onclick="filterMatCat('all',this)">${nl?'Alles':'Tout'}</button>`;
   state.materialCategories.forEach(c => {
     const iconHtml = c.customIcon
-      ? `<img src="${c.customIcon}" style="width:14px;height:14px;border-radius:3px;object-fit:cover;vertical-align:middle;margin-right:3px;">`
+      ? `<img src="${c.customIcon}" style="width:18px;height:18px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;">`
       : (c.icon || '📦');
     html += `<button class="fchip ${currentMatCatFilter===c.id?'active':''}" onclick="filterMatCat('${c.id}',this)">${iconHtml} ${escapeHtml(matCatName(c))}</button>`;
   });
@@ -8002,7 +8002,8 @@ function buildExportObject() {
     categories: state.categories,
     units: state.units,
     stockNames: state.stockNames,
-    shops: state.shops
+    shops: state.shops,
+    materialCategories: state.materialCategories
   };
 }
 
