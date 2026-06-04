@@ -7697,14 +7697,85 @@ async function doEditorPush() {
   closeModal();
   updateSyncUI('busy', nl?'Sturen naar Drive...':'Envoi vers Drive...');
   try {
-    await syncMaster(false);
+    // Stap 1: Laad ALTIJD eerst de huidige Drive data
+    if (!gFileId) {
+      const fid = await driveFindFile();
+      if (!fid) throw new Error(nl?'Geen Drive bestand gevonden':'Fichier Drive introuvable');
+      gFileId = fid;
+      localStorage.setItem('gdrive_file_id', fid);
+    }
+    const driveData = await driveGetData();
+    if (!driveData) throw new Error(nl?'Drive niet bereikbaar':'Drive inaccessible');
+
+    // Stap 2: Merge — basis is ALTIJD Drive data
+    // Editor mag enkel: nieuwe items toevoegen + bestaande items bewerken
+    // Editor mag NOOIT: items verwijderen, aantallen wijzigen
+
+    const mergedStockItems = [...(driveData.stockItems||[])];
+    const mergedItems = [...(driveData.items||[])];
+
+    // Verwerk enkel de getrackede wijzigingen
+    for (const change of editorChanges) {
+      if (change.itemType === 'stock') {
+        const localItem = state.stockItems.find(i => i.id === change.id);
+        if (!localItem) continue;
+        const driveIdx = mergedStockItems.findIndex(i => i.id === change.id);
+        if (change.type === 'add' && driveIdx === -1) {
+          // Nieuw item — toevoegen
+          mergedStockItems.push(localItem);
+        } else if (change.type === 'edit' && driveIdx >= 0) {
+          // Bestaand item — enkel naam/foto/locatie/categorie updaten, NIET het aantal
+          const driveItem = mergedStockItems[driveIdx];
+          mergedStockItems[driveIdx] = {
+            ...localItem,
+            quantity: driveItem.quantity, // Bewaar Drive-aantal altijd
+            lastUpdated: Date.now()
+          };
+        }
+      } else if (change.itemType === 'material') {
+        const localItem = state.items.find(i => i.id === change.id);
+        if (!localItem) continue;
+        const driveIdx = mergedItems.findIndex(i => i.id === change.id);
+        if (change.type === 'add' && driveIdx === -1) {
+          mergedItems.push(localItem);
+        } else if (change.type === 'edit' && driveIdx >= 0) {
+          mergedItems[driveIdx] = { ...localItem, lastUpdated: Date.now() };
+        }
+      }
+    }
+
+    // Stap 3: Upload — Drive data als basis + editor wijzigingen
+    const uploadData = {
+      ...driveData,
+      stockItems: mergedStockItems,
+      items: mergedItems,
+      // Alle andere data (shelves, boxes, categories...) van Drive bewaren
+      syncVersion: (driveData.syncVersion || 0) + 1,
+      lastModified: Date.now(),
+      deviceName: deviceName || 'Editor PC',
+      deviceRole: DEVICE_ROLES.EDITOR
+    };
+
+    await driveUpload(uploadData);
+
+    localVersion = uploadData.syncVersion;
+    localStorage.setItem('local_version', String(localVersion));
+    gLastSync = Date.now();
+    localStorage.setItem('gdrive_last_sync', String(gLastSync));
+    updateSyncUI('ok', formatLastSync());
+
+    const n = editorChanges.length;
     editorChanges = [];
     updateEditorBanner();
-    updateSyncUI('ok', formatLastSync());
-    toast(nl?'✓ Wijzigingen gestuurd naar Drive':'✓ Modifications envoyées vers Drive');
+
+    toast(nl
+      ? `✓ ${n} wijziging(en) veilig naar Drive gestuurd`
+      : `✓ ${n} modification(s) envoyée(s) vers Drive`);
+
   } catch(e) {
     updateSyncUI('error', 'Fout');
     toast('❌ ' + (nl?'Verzenden mislukt':'Envoi échoué') + ': ' + (e.message||e));
+    console.error('doEditorPush:', e);
   }
 }
 
