@@ -7550,29 +7550,28 @@ function editorTrackChange(type, itemType, item, changedFields) {
 }
 
 function updateEditorBanner() {
-  const banner = document.getElementById('editor-banner');
-  if (!banner) return;
   const nl = currentLang === 'nl';
   const n = editorChanges.length;
-  if (n === 0) {
-    banner.style.display = 'none';
-    return;
+  const countEl = document.getElementById('editor-banner-count');
+  const pushBtn = document.getElementById('editor-push-banner-btn');
+  if (countEl) {
+    countEl.textContent = n > 0
+      ? `${n} ${nl?(n===1?'wijziging':'wijzigingen'):(n===1?'modification':'modifications')}`
+      : (nl?'Editor modus — PC':'Mode Éditeur — PC');
+    countEl.style.color = n > 0 ? '#f0b429' : '#aaa';
   }
-  banner.style.display = 'flex';
-  document.getElementById('editor-banner-count').textContent =
-    n + ' ' + (nl ? (n===1?'wijziging':'wijzigingen') : (n===1?'modification':'modifications'));
+  if (pushBtn) pushBtn.style.display = n > 0 ? 'block' : 'none';
 }
 
 function initEditorMode() {
   const nl = currentLang === 'nl';
-  // Voeg editor banner toe bovenaan de app
-  const app = document.getElementById('app') || document.body;
+  // Editor banner bovenaan
   let banner = document.getElementById('editor-banner');
   if (!banner) {
     banner = document.createElement('div');
     banner.id = 'editor-banner';
     banner.style.cssText = `
-      display:none; position:fixed; top:0; left:0; right:0; z-index:999;
+      display:flex; position:fixed; top:0; left:0; right:0; z-index:999;
       background:#1a1a1a; color:#fff; padding:10px 16px;
       align-items:center; justify-content:space-between; gap:12px;
       font-family:'JetBrains Mono'; font-size:12px;
@@ -7580,32 +7579,67 @@ function initEditorMode() {
     `;
     banner.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;">
-        <span style="color:#f0b429;">✏️</span>
-        <span id="editor-banner-count">0 wijzigingen</span>
-        <span style="color:#888;">${nl?'— nog niet gestuurd naar Drive':'— pas encore envoyé vers Drive'}</span>
+        <span style="color:#f0b429;">💻</span>
+        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC':'Mode Éditeur — PC'}</span>
       </div>
-      <button onclick="showEditorPushModal()" style="
-        background:#e05a2b; color:#fff; border:none; border-radius:8px;
-        padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer;
-        font-family:'JetBrains Mono'; white-space:nowrap;
-      ">📤 ${nl?'Stuur naar Drive':'Envoyer vers Drive'}</button>
+      <div style="display:flex;gap:8px;">
+        <button onclick="editorLoadFromDrive()" style="
+          background:#3b82f6; color:#fff; border:none; border-radius:8px;
+          padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer;
+          font-family:'JetBrains Mono'; white-space:nowrap;
+        ">📥 ${nl?'Laad van Drive':'Charger depuis Drive'}</button>
+        <button onclick="showEditorPushModal()" id="editor-push-banner-btn" style="
+          display:none; background:#e05a2b; color:#fff; border:none; border-radius:8px;
+          padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer;
+          font-family:'JetBrains Mono'; white-space:nowrap;
+        ">📤 ${nl?'Stuur naar Drive':'Envoyer vers Drive'}</button>
+      </div>
     `;
     document.body.insertBefore(banner, document.body.firstChild);
-    // Verschuif de app content naar beneden
-    const mainApp = document.getElementById('app-root') || document.querySelector('.app-wrapper');
-    if (mainApp) mainApp.style.paddingTop = '44px';
   }
-
-  // Laad Drive data bij opstart (read-only basis)
-  if (isGTokenValid()) {
-    syncFromDrive().then(() => {
-      toast(nl?'✓ Data geladen van Drive — Editor modus':'✓ Données chargées — Mode Éditeur');
-    });
-  }
-
-  // Verberg aantallen aanpassen — Editor mag enkel bewerken
   document.querySelectorAll('.nav-btn[data-view="add"]').forEach(b => b.style.display = '');
   document.querySelectorAll('.nav-btn[data-view="material"]').forEach(b => b.style.display = '');
+}
+
+async function editorLoadFromDrive() {
+  const nl = currentLang === 'nl';
+  if (!isGTokenValid()) {
+    toast(nl?'Verbind eerst met Google Drive via Instellingen':'Connectez-vous d\'abord à Google Drive');
+    showView('settings');
+    return;
+  }
+  const btn = document.querySelector('button[onclick="editorLoadFromDrive()"]');
+  if (btn) { btn.textContent = '⏳ ' + (nl?'Laden...':'Chargement...'); btn.disabled = true; }
+  try {
+    // Zorg dat gFileId bekend is
+    if (!gFileId) {
+      const fid = await driveFindFile();
+      if (!fid) throw new Error(nl?'Geen backup gevonden op Drive':'Aucune sauvegarde sur Drive');
+      gFileId = fid;
+      localStorage.setItem('gdrive_file_id', fid);
+    }
+    const driveData = await driveGetData();
+    if (!driveData) throw new Error(nl?'Drive niet bereikbaar':'Drive inaccessible');
+    await importDataObj(driveData);
+    localVersion = driveData.syncVersion || 0;
+    localStorage.setItem('local_version', String(localVersion));
+    gLastSync = Date.now();
+    localStorage.setItem('gdrive_last_sync', String(gLastSync));
+    updateSyncUI('ok', formatLastSync());
+    render();
+    showView('home');
+    // Toon push knop
+    const pushBtn = document.getElementById('editor-push-banner-btn');
+    if (pushBtn) pushBtn.style.display = 'block';
+    if (btn) { btn.textContent = '🔄 ' + (nl?'Herlaad':'Recharger'); btn.disabled = false; }
+    toast(nl
+      ? `✓ ${driveData.stockItems?.length||0} voorraad + ${driveData.items?.length||0} materiaal geladen`
+      : `✓ ${driveData.stockItems?.length||0} stock + ${driveData.items?.length||0} matériel chargés`);
+  } catch(e) {
+    if (btn) { btn.textContent = '📥 ' + (nl?'Laad van Drive':'Charger depuis Drive'); btn.disabled = false; }
+    toast('❌ ' + (e.message||e));
+    console.error('editorLoadFromDrive:', e);
+  }
 }
 
 function showEditorPushModal() {
