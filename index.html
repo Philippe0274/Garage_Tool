@@ -744,7 +744,34 @@
   }
   .device-role-card:active { border-color:var(--accent); }
 
-  /* ── DASHBOARD LANDSCAPE LOCK ────────────────────────── */
+  /* ── HELP VIEW ────────────────────────────────────────── */
+  .help-section {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-lg); padding:16px; margin-bottom:12px;
+  }
+  .help-section-title {
+    font-size:13px; font-weight:700; color:var(--text-primary);
+    margin-bottom:12px; padding-bottom:8px;
+    border-bottom:1px solid var(--border);
+  }
+  .help-text {
+    font-size:13px; color:var(--text-dim); line-height:1.6;
+  }
+  .help-step {
+    display:flex; align-items:flex-start; gap:10px;
+    margin-bottom:8px; font-size:13px; color:var(--text-dim); line-height:1.5;
+  }
+  .help-num {
+    background:var(--accent); color:#fff;
+    border-radius:50%; width:20px; height:20px; min-width:20px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; flex-shrink:0; margin-top:1px;
+  }
+  .help-tip {
+    background:var(--accent-bg,#fff5f0); border:1px solid var(--accent-border,#fcd0b0);
+    border-radius:var(--radius-sm); padding:8px 12px;
+    font-size:12px; color:var(--accent,#e05a2b); margin-top:8px; line-height:1.5;
+  }
   #db-rotate-warning {
     display:none;
     position:fixed; inset:0; z-index:9999;
@@ -990,6 +1017,22 @@
     box-shadow:0 2px 4px rgba(0,0,0,0.06); transition:all .12s;
   }
   .db-back-btn:active { transform:scale(0.95); }
+  /* ── PDM LOGO ROTATIE ─────────────────────────────────── */
+  @keyframes pdm-spin {
+    0%   { transform: rotateY(0deg); }
+    40%  { transform: rotateY(360deg); }
+    100% { transform: rotateY(360deg); }
+  }
+  .pdm-logo-wrap {
+    width:32px; height:32px; border-radius:9px; overflow:hidden;
+    flex-shrink:0; perspective:160px;
+  }
+  .pdm-logo-wrap img {
+    width:100%; height:100%; object-fit:cover; display:block;
+    animation: pdm-spin 4s ease-in-out infinite;
+    transform-origin: center;
+  }
+
   .sync-status-bar {
     display:flex; align-items:center; gap:8px;
     background:var(--surface); border:1px solid var(--border);
@@ -1192,7 +1235,7 @@
      ═══════════════════════════════════════════════════════ -->
 <header>
   <div class="logo">
-    <img class="logo-icon" src="icon-192.png" alt="Garage Organizer">
+    <div class="pdm-logo-wrap"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAd6ElEQVR42nWbWYxlx3nff1V1zt2X7tv7Nj09O4fLkJzhIoqULNISFdtRnMAInKfETwkc5CFRgOQhi4DkKUACJICBIEAgWFDsOLYVCYwU2ZAlUqSGy5AcckjOwtm3nunu6f323c6pqjxUneUOnRkMevp233OrvvqW//f//iW+/93/ZqUUgAAsAEIIhACBAAFhECKlRCqFUgqBBSEQkPt9951UkiAIUFIhhEAphVQSAGMMUkqwIKRA+Wcm7wXc50iJtdatQWTfJz/P/3HPswgps3UL4d/vXrPGIJUCAVJILGCNcd8PogFxrAGLlBLhFwoCIYV/g/trjMEY7Yxlwa8p27wUCATWWLdgAcYarLVY49/gXxfOjO5n1rpnuRfS51rrNmKMSQ3gnptsFEhWZ41fN37z/lAEiIeM5k7AfQlE8ghrieN46DRBDJ1O8nBtNAJB6jmpN7jXhBTpKWDBCotNDCXE0IKcV7jnuJMRyPSkc6eYWAWw1mAt3jP8c60/F5ssKfv8zCNEanAhBBaDVN6tkx8YYx+2lV9Etmj3ZpsZyP2Sc2epSM7FRxTamHQzQOoh1hhvYDEUSslm84eR/D/5PPfFe21iWEG66WTjyVqT9xlrkk0ghCAwFqzWKH8qUsn0BNOHJ0/Moh7pPzA1ijNHGqMPv1+QuGwud6Q/dwGRLDh5RhIiwofmUNynoZf3DjFkRGudgWRyeAIkLgckoRYILM7pnPtKIbIlJrGU/M0lmtQ7/KallN4FrTOmIPe7+STnNyzInW6W7PIhJ/JuKF1uyb8vCYf/7590ndbtKc0f2f4kqWuRuSjugxAiPXttjDOId2EpVWpZa4c9xFj3gak7AlKqoRBL8oDLiz7Bpgkxl/ByOSpZuEvGJk2I6R6kTNfrY8QnVJF9VvahAAQuVA3GCJQSWCsQPlNba5E5axlrkf55xmhX5qRC5MqoyxeZ1S1pdaUQhiglXSn15QgByru99Z+htfHJUWUHaQHhnpp4ZrJJn3HAG0XkyiYYrM6FmwVD3gBiOMMLXzac1yVu70pSLtmmm8pvVD5cf304FAohsTasbe6wtbPHXrdPrz9Ik1GoFMVCSLlUZGy0weTYCPVamSiOGQwil1z9J1mtU49KDiozRuYlrtRKn4ytX7NNTJV6RJCAkjQre+ulJ2KMAzNJLCcblNInwiTeXWggfZYXgiBQdHsDbi6v0u70UEpSr5SZGW9SCAMC5d6rjWXQj9hud7h0+RqfXjA06lUO7J9nbnocHWt6gwEqzfhJWOTwmzdGVuYFSIbymf1r0kSQL23utN3GUtSWJBqRbNiXQGswFlTi/t5FXbKEOI64t7LGINKMtZosLUxTKhYQQmBsDon5BCqlJFAKKQV7nR537t7n408u8vGniqeeOMr89Dh7na7zMA/ScpnYrdHmKoi1YLQry95DrDFDGVIIQZCgMAdx3ea0NuBh7MOAyALKu7jxCE+jUcpVEmMt/W6fvU6XZqNGs1FHSokxlk63n5Y5qSTC4hGcRQhDFMVYawnDkKNHDnDsyAFu3l7mvffP8fnoKC89dwKjI6JY+1w0DNpIkqWH284IZgioWWvSpG+tQXzvv/9Xm9ZnAYFSScH2ru8WKxOg4zeglExPNIHAUsk001cqJWckbdKeIMEXwi8+ijVaW/f+nHdJqVKwUywWkcJy5ux57tx7wK9/9Tnq1RLdXn/omVLILwAoO9Qj+APMJUqBIBBDxda7fr5BSdBVDoxIKel2+5z//AaVWp1AydSL0rKUgBLpGyIpUdJ9DQshjVqF0UaVVqNArDV7e93E1zBao1SAkIL+YIBA8KVnn+T27bv8xc9P89Uvn2Ki1aDXj1AJ6JFfjPDE2CKXA/IYwGIJ3N58MvNNgjXGZ3WZJsbE5R2CMqxvbPCj1/4vH3x2jUpjjEKhiJCKsdE6Zvc+WsdD+EL6/KKRWFUiKFYYaU1w8sRxvvb8Yxw/vEC3s0d/EKV9ANYifbi123vMzs7w6q9V+dkv3+MrXz5Fq1ljEOtcT/AFCzjjDL0kc+FsCVw9V4AZbipwuDlpH43W6Sd0Oj06nQ4HF2e5d/cWD/Z2qZRL9Po9Di4e49Sxp9jdabv3+T4g1oZoEDEYDGjvddja3uHWrU/5k0vnef1X7/O1F57i7//db1KrhnS6PR/PwnefFqUCer0e9Uadr714ktdPf8irL79AqGQKxIw/THw4WH9gSYJ3p+5yghQuTwRfaB8T5Jn02f5140GRMYY4jgiDgPGJcQ4cWGLrk8tEUYyONaVSiWefeYb19Y00FFwrbYnjiH5/wG67zdqDdcbG7nL+/EU2127zszc1N26v8G++/Q8ol4v0egP3fjvs2p1Ol9GREZ5+/DBvvXOWV1/+Ev1eH6QHOQYEPtsbm4aztRbhgZYQAu0PXH3rt37jOyByJERWXvJta77BsNY1TUoF7O21ub28QkyBQRRx5NASX3vhSYwxlEtlSqUCpVKJUqlItVKmWq1SrVRo1GtUymWMMdy+eY1yY5y1zV3urWzyykun6A96ubaJNH6lzwuTE2NsbGyyvrXL3MwEUaRd8hR5ase6aoNIw9rtIwsFOdTc5Doocm1pHtMLD3DCMKRUKlGv1QiCEGMdWWKMoVgsUiwWHdgJAsIwoBCGhGGBSqVMo9FgrNVibm6Go0cPs39hho3VO9RqVU6f+YiPz9+gWimjtRly5Twr1O31OfH4MVZW1tjZ7aCUzJJe7quOY7SOU/hvU2zu/knr4VT+9FPA4F9z9FZWAZLuUElJsRCipMR4/I43YBAoavU6o60WrdYo4xNjtFojhKEzSKVSptloMDszzdL+fShiBv0BURTz5rsfEQSBJz5sltDSBsmtNwwCDh/Yx+dXblEqlthtt4l1/IWWMKPXMsxgjEO5gcrFiAt+1/lJaRFKpTRTUsqiKEYFCd8nUUGQcmxaG4QUXLh4ib/82S/o7nUYaENQKDE+NsbTTz3B008+Rr/bYXe3TblcotGoMzExTiFU9HpdrDHcXl4lik12INZgTYL5JS4ypQ+FFs1mneWVVZSUhEH4BWosA3OkSDIxZpBYJ+1vrGtq8LECrkewUhLHmkEUUQ1VatF8khRY4ihmYnwcYWJOPfUYb77zIT/56Y+JY4NUAd/4xiv8y2//PvValc2tHcIgoFwqIaViMBgQxzGDOCaKoqHWOG8MY7JOsFwus7Wzi5SCsdYYURS59RjzBSrPeYOD7IlRAldmhhlVErjqCVHhsXp7r+PQH/ILddUa7RenscDa+ha9Xp+vvfwyxVKNjc1Nrly5wg9/9BrGGP7dv/42QdD2aFHTjwFliAYDapWy9yid23i+UjlypFgscPP2HYyOkYNd4tGRHNtj0/Xh+Y2hMLeunwkSQiJF0yl56MJBeG4tISHCMMyY4SRxmixZRVHM7m4bpQL6vR5L4xM89ugj7LbbjLVGKZVK/Pznv+DVX/8qzz39GO12m9X1TXY6MfXA4fxDi1NgYoyxeFjvPDO1u6FQKHDpynUCpZidncbGIxhjh+gxsB6QyVyiN2krnHWDOfAjHnKZhNOPoogwdPSB8SjKfaBJgYjwbFC5XKJQCKiUS0xMzdAdxPR6PYrlKv3Ycu3mHX7x5jt85cvPsHxvhTfOXCIIC7TbHWZnxnn28SU63b7vK0gpe3w5K5bKfHLhMoFSNEdGWV++weTs/FCSTAuhtY4UseIh3kNinQcYDAKFShOB+4Vkcw4flMpltNae4U1M6ICFqxyuI7x/f5Vfnn6f+6ubmCN97l0+y/ryMmEY0rQDTiw2CL76BIfmmyzfvsWf/eRXrG/36ff7VIrw937zS4w2GwyiKGttjUVbl5hLpRIfnPuMIFAUqlVWr59nfGoGFZbQntZPGTGbo+mM8Zv2tVCaJAkmRKWvk4KU8bXWuZAKi1z96B3m9x8kbExgdJRhBO8F2hiUVHT22vzR977Hxvo6Lx1u8n8+Osvla7coFQsJt0khUHS23mL1+kV+84mD/JPfPsWF2xv0UTzx2DF6vR5BGKYLt74nKBSKnPnwE1SgUEHI2vXzTM/tY3JukTiK0vUkFN3DMZ8wnNbx4yAEQb4VzYYOnhv0lLY1GlEZJRYhgdGOHzQGo3PxZAyRNjSbTQ4+8iLvf/AhI7USv/V3XuXyjbv0ez02tra5v7LK1avXaIgub39+gR+8/hFPHprhn//et3jmSy+wqSZY3djB6NhRlsahuWKxyHsfnktDYePW5yzsP8i+g0eIBv2MAlfCleN8S5xAcmvSxiih8NIcYPyQIqXCfAYWQmDimKWDB7BCpU2RIzDNkCe45AgHlha5cuUygbBMTbSIDMTRgOm9FrVqhXoQM9Oq0Vre4/79e5y5cpPf/Rd/wH/8p2v89rdepbHvCDeXH9Dr9pAqIAhC3n7vLFIpjInZXbnJwaPHmVtcot/rEoYhofeY9l4HJcXQ1MjmuMA8o2SMrwIGAwkrlFSAbJKBMYZue5diteFyhOfj0gmPJZeAoFwqEgQBcRyn0x+lFKWSw/7zrTLVyQWONzSjTccaffzpRf7VH/yA6dEap56PWJx7jKs374MQvPX2GYIwpN/vE++ucvTRE8zOL9DvdgjCkEufX2G3O2D9wQalguSlLz/vU1TCAeSOPUn4PrRyhIjwnL32jE+Q0kjGGqyOPW9vvFG0s6J/zeEA5zkqCLwBNP0o8obQdAeaUrRJsVJjbHqOcrtNEEikCoiimPc+PMcfvvYmc5MjzJbqjI/P8qMf/yVCKnZ3dyjoDsdPnGRicorBoI+UirW1B/zyV+8yMTlFo1bh8UePYf2MQUrpiNpk6pROYbIZQZCkTOlPPpvMOrdR/iEmjpBCoHNl5GH6yWpNHPv6LQRax65HsA66dleusbe1zvSpX6NaLmJNzIhtoLWhs9dh38Icb318ncvX71KuNwlmSwSFIutrK4yWFY+cOMnY+DhRNAAL2sR8fO4zCsUySirGx8doNhpEcew8VWZkjmOqHa6xZDBb5tnkzEeSCuDRmJTEcZTWfONdy+RbLJuf3riw6A1iBIZob4sLZ97g7EfnGD/8NM16jd32HiMjo0xMjFOrVZmYGGNmaoJ2BOc+v8n66iqyfY9QaCYaFR578hSjrRZxHKdeubr2gNvLK0yMj9Ef9P0cQ+RG8/kQtdkEKjduD1J+PTfrSxNiSpAIoijC6NiTrFlu0CarBEIIup0utVodBLQ7Pf7nH/0xn1+/y8jYBM88/wILc9NorTn9zvsgAn7/H/0e/X7E9tYOUxPjlCoVrty6z9bWDt3zn/Do/seJC00q5TJxHCGE9KSM5vbtO9z6/FO63R4LCwuOXUZkI/HcgDAhZnwcZK11snjXymZcWtJ+JoORKIqx2llfG43WOhU9WJ8HKuUSFy5d5t0PL/HI0UP0OntMzC1y6oWX+OY3v87SwixaG/Y6XaSAS5ev8N3v/QnjExNUqmXK5TKt0VHWtzs8eLDJlSvXqVcrVCpV4jhybh/HGK3Z3u1w9+oFVu/epNMfEGud0m8JnZeUcKNjl8dMMiXye9OGwJGeKu2StNYEQqWIyVhLIQjQSKJ+F1UuYLX1QgnjqG3vUtpoSoWQP/3fP+Fbr36Fv/HoYcpHTrDdiQmUJ0W1Zntnl3sra8zOzPDLN3+FwPDKV19gbW2dUrlMt7vF+sYma5vbzN5bYd8js2yud9K5g9GGu3dusXXvBoXRGYqBYjCI0gA2xviO1qaDUuG5CicBIA1V6eJCZyhKZA1OngAplKrs7Ww5+KsN1hiUlERRRHuvTxAEYIXvHAU//OkbfLhWZm5uH4v75qlWK0iZNFWOHwzDgNZogx/96DX63S5BoJC6S6Wg2Nhus7PX57W/eJ3+ICIIArTRGK3Z6/W5dfEcxWqD0Ylp+v0+g8EgY46MSWM+3+QlOcpojY61B09KpSEgvsAre1pJx5SrdXbbeyiHGkDAyuoD3nrnQ7Z3drFxj2jQYdDrEA+6KCL+83f/nH/4z/49P/2r02zvdgiCwMdvnDYsIyNNdtttvv8//piXnjzMiSP7adZKtPc6dPsDzl24wsVLV2g06sSeI7h/b5md+zeZO/QoxcCFZ6fbQ/vBacJhJMnO2Ie7RIcDjDbIRKMjpXSW0W6BWmtnGGuJBgPK5RJaBPTbWwgp6XS6XL95k3Ix4KnH9nP8yCzHD89y/NA0R5YmmGgG/O2TYzSLfd5443VuXL/u2lNjUnBkrWFmZobpqQnOfvQx7Qf3ePGZpyiLmHanx70H21y8vswbb55OZ5O9/oCbF8/RbI0xOjWL1jHat+FxHOd0WFmiTmLfGONKs3ElXhtDYI3FSi94UtKPsmS6QKtBqgCsoTk2xdrKHWaXmmxpzdLiAtOTE5mqzIfPIIr59LPzHJsLeP7oc2hVZHpynL4fiSdnEceaXrdDa3SUfq/H9/70Nf7tP/5dLjYqXF3eoCdrGGJOv/sBX3/5JQ4vLXDu/EXWb1/hxJdfJvBETbc3oN/vu9D0DJfLBQmJ4oUZXrAl/FRbSJBC+oGo0c4lcjIVkxKSTkE2MjJCN4LB7jq1Wp2pyQnm52bZtzDH4sIc+xcX2L9vgfm5GerVCu1un5mZKSbGx5C+fOlYEyhFvV6j0+2xtLjA4YNLjIyOcvHGfS5f+JRXXjzJ5k6bA4+fZGlhijvLK7z2k59hhWLj9lWq1SqT80sYHTvEGUVorYl1nA5bra8CJgFn2rjK4HGB8flEuoSWYYHkfLRPdHlVl9ExUwtL3Lp1i2Y5oFwu02zUaNTr1OtV6rUq1VqFaqVM6EURNZ/8tHY8n1SCza0drl2+hDCasVaLqalJpiYnEcUKP/7FGSbHG7z8t36Ho488wuED+1AS3j7zMW+9/QG011g49iRhEIKAIFDEWtPv99GxO0Tn5sbLbnLAJ1XC+RIOSJtCnWwQKnJz+3xijOOYer1KoTnJ6u2rjDTqKBVQKhUplUoUCgXP/4eUCgX22m1ajTqNWo0ojimEIdeu3+LyZ2cJ+9toC4ViganJcfYtzNIYbXFpeYdfvXma3/mNl5ifm+Xg0n6mJ1ps7ezw5z/4IQ+299h/5DhxNCDwCtY4iun1Bxhr/lqC15qkc3U7zdBqWgaz1jabBmXQMakGSikGvR6L+5dY2emxs3KTaq2W9uIJCtPG0N3d4uLV2/yv7/8h/b1tqpUyH338CTfPnyXe22LTlLEWSoUCzUad8fEJ9k822R1EvP7JHW6/8xMOzrWYmJzk6KFFojhmd/UW84ceoVKtpv28FMKBIJ3oDGQqxROpIm2YDrPGJUAdx040Z72b41tck2ZMZzWtHfIzxhlIxxGHj5/g0tWb9DaWKZbK6DhOLT/o9ynUmowcOcnV9QEXLt/g7ffOcvPSJ8TRgNrcEfbt24cxDkQVSyWIu4QipjmzxPVdyem3P0Dd/ZCl/Qvsm59jtBIwPznCoeNPEA0GrtMDpJ9XJDqBBAE6wsatm5Td0p690ildFrj6DyIvaMaJITLll/CJJU7HZoVAcPzp5/n4/dM8eiymMb3IXnsPpSTVSoVnTz1NGIS0O10ufH6F3tpNqrU6+449QalQ4N0zH9AbuIVsPVhz0+ZHT1JZWeXs2Y/47H6PQ6f/isf+5n6uLR3k6OElXnjxOcJiGd3tph4JgmKphJQSbSz1Wo29diedbOcnWsY4EJdIcxCgvvmNV76Tl5VKOcz5ZzLWYaWF1ppCGNCamuPTT84how6Ts/PE2qKEoDU6wv31TT797Dxi5x6N1gRPPPsik2OjxHHMysoaA2145uSTlIoFJqZmGB1pEscxa5u7bG1v0VQRpcEWYxNjNFvjPPL4Uwg/BgdYXXvA22c+Ymtrm163y9VrN2g06kxOjA2BuUz+KzLRpDeM+uY3XvmOkImig3QoklcLJxRyXqqadGWBkkzPL3Lt2g3W7lxnenqaar3BmXMX+OyTTyjHO0wuHOTkl16iUaugtWG33ebcZxe5u3yf7Z1dnnjsEcqlYuqWnU6Xm8urFNBcvbnMxet3eeTUizSbDZ/RDd1ul3fPfMitW7cRaKQEYTWVcpGjhw9l0yGbI7H95lP5ryNFpW8cMqJQDHFIIuX7ybXIWWgYBIYTJ5/hzu3bvPfuu2y2e8RxzNxoifG5Yxw6chTlKfQgDNnrdCgXC8xMtgikIYoiarUqhdglxLmZKT6/3ODK2jIT+w7y/PNfZ2x8PJ0UWWvpDwbsX1xgbKzlkplSjI+1OHLoQKZwkV7hkpf65Kg7hCXIxMpeDap1ThhB2oGRGzklErpMdi4wccTc3Bx3VtYxtkd/+wHVAwd59NgRwkIBg2QQDZBRzFirxfPPnUJJyfzcLPV6HXCCqCiKaLVGOLB/H0Is8sypkxzcv5B2cgmtVSqWmJ2eck0QEAQhtVrFlcU4JvHqJAkk+SCZYCfCKvFf/tN/sCIni80uP2QCaJFTYSfEaTpHtBCEAXudLldv3GJxfpbRkSbL91fZWFuhs7NJo16j1Rqj3mwSFIpEsSNSAiUpFgoo5foQYw0WxYONTXZ23ShtcmKcUrGY9ivJDRDtq1SsY1cOpbupUiiE2R68oNNJ42RKksqcEiZwse3cSnsjuIyp07G4tZluNykxCZ4OAsXWzi4PHmxw/MhByuUSg0HE/MwUC/Oz9Hp91tfX2Vh/wN37K4409cqxMAwolytUa3XqjQalag1joV6v0Ww0qFYqFAphBspkRmwGQYBSltAGKQWnEq/0lBkShPGHK3MTAR9GOtaOFM2DHWOMvyqTTVQyjj3bvPMY2Ot06Xa7LC3OEQQhscf6CKfrLRVCFhcWWPR13xhDzzcuxaJTmUh/v8hoTRQNqJRKBEFIoVhI7zHk9b2ZFG9Y9iaTix+JftlYDDFSBrmLGH5w4uMpGJaN+Bsescb6KQvWIKxy7Eo6qHReEmun4BpvjQ5xCgbcpNHTam7OB3t7PVbWt5ifHqdcLXJ/bYtSMWKi1WCn3WEQO+9o1CoIIdN7BySKNTOs9U/mfcmlk1TD5IXTeV3gUD+Qv3yRujO5+zQ5va01SReVsG2Z0EBKl4ySEbtOeTnSsdlgELG5tYMSgo3tNvdWN5ECOt0+91bXubW8RhTHxNrw3kcXuXLjHoVCyE57j15/kN5JSLs6YzIOM5eYkw7PeoibDnE9L6jj2PGJNqPGcDrBrIfGggpUpsiwFpN0TLkbG0nMuYTqXN4hL5FrpQ02NoRhwOhIHW0tY6N1xltNypUKahAxPzNJpVSgUChQtZZnTxwF4ZquZr2KUsrfSxi+OmfypS13NympEsbL47WvaGpIKieykmgtQRzHqShaytxNLyVS/b/xym5HL6U3T1J0qH2l6A0iIMYYTaHgMrcduJJULIRUyiWs0eztbhOGBabH6m5+0GkThgXGWw0A9rp9wkDRjyIf5/46n3UMdbEQonPXZ4YHu5mIOq8VSi5nGGsQuOdpox0OeFg95QQFBoLAW95gjb+DJ4Zb5EQoIaWPMy9iiLVGxJYgUGjPIkdxjBLukpaWccZD+vG6iWI/tNRo7YeXQUCsdepdURQTei91SY5c2y7SuZ/O33lIrvrYbGKlAoU1xhkgXwXy9d/kmGFjtL8aJxOaNe25LQatBYUw8O8vZi2yz9YJeDJWUKjU0zBKuAfS9hUq5VJaZq01FAiGdMDah8DD1+ySi18mnxuMcaIEn7e0NWmFEEIS2Dx78FACHNINCoHwrbG0Mu22pL8n4E7OYq0m1holpJPbJTJ7siqhtU05x7TPsGBzwMu5sRlSqQoyYXdyZ8nlB5FmeWtFOt3SyRzAZlrBZEZojc60wi72SYcdKtUN5mcD/s6OH4ImnuAAlEYYPFjybIvwchORGZBEdu/vEeRuQ4G1xNrnI5HMKERqKOXbcHdxy6YdqRBONpeVO6cmIWe0xNXS/JB2hn4yZB8CGwleNlI6gXFKnYvc5WOLUHntfTaUTCZKSsp0BCU9+tNGD19L9XV7+IRsenc4vY+cKNYBh2qHZXNJiKW30TzNlxbuXMiSkwSkV2aSqySZvi6r7Q4Oi7SfTmuwyW6KJfcCrfbZ2ZOPiU4vqd3JCC259pqo0hO2VludtuQidzHK9Qp5/jKJYzt0T2hYXEkOoA3fH0xySJDcwnKBYf3CgiF9TTJuMjm8GHjYafyts0SP52S00vNzFqlyJ5gotbwRrTEQqKxHT8uUP1ULQueuznr31TrrRq21Q/IeFxYMXfPNXwl0FUumA93/B9j/SwkEZuzIAAAAAElFTkSuQmCC" alt="PDM"></div>
     <span class="logo-text">GARAGE<span>/</span>ORG</span>
   </div>
   <div class="top-controls">
@@ -1351,6 +1394,9 @@
     <div class="filter-row" id="fridge-filter-row">
       <button class="fchip active" id="fchip-fri-all" onclick="filterFridgeStatus('all',this)">Alles</button>
       <button class="fchip" id="fchip-fri-old" onclick="filterFridgeStatus('old',this)">⚠️ Te lang</button>
+    </div>
+    <div class="stock-action-row">
+      <button class="btn btn-small btn-secondary" onclick="suggestRecipes()">🍳 <span id="lbl-suggest-recipes">Wat kan ik maken?</span></button>
     </div>
     <div id="browse-fridge-count" class="browse-count"></div>
     <div id="browse-fridge-list"></div>
@@ -1644,7 +1690,7 @@
   <div class="db-header">
     <div style="display:flex;align-items:center;gap:12px;">
       <div id="db-back-btn" class="db-back-btn" onclick="dbGoHome()" style="display:none;">‹</div>
-      <img class="logo-icon" src="icon-192.png" alt="Garage Organizer">
+      <div class="pdm-logo-wrap"><img src="data:image/png;base64,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" alt="PDM"></div>
       <div>
         <div class="logo-text" style="font-family:'Archivo';font-weight:900;font-size:15px;letter-spacing:-.5px;text-transform:uppercase;">
           GARAGE<span style="color:var(--accent);">/</span>ORG
@@ -1705,6 +1751,7 @@
       <div class="db-clock">
         <div class="db-clock-time" id="db-clock">00:00</div>
         <div class="db-clock-date" id="db-date"></div>
+        <div style="font-size:8px;color:#e05a2b;font-family:'JetBrains Mono';letter-spacing:.06em;text-align:right;opacity:0.7;margin-top:2px;">Made by Philippe</div>
       </div>
     </div>
   </div>
@@ -1851,6 +1898,155 @@
 
 </div>
 
+<!-- ─── HELP VIEW ─────────────────────────────────────────── -->
+<div class="view" id="view-help">
+  <div class="view-header">
+    <div class="view-title" id="lbl-help-title">❓ How to use</div>
+    <div class="hdr-icons">
+      <div class="db-lang-switch" style="display:flex;">
+        <button class="db-lang-btn active" id="help-lang-nl" onclick="setHelpLang('nl')">NL</button>
+        <button class="db-lang-btn" id="help-lang-fr" onclick="setHelpLang('fr')">FR</button>
+      </div>
+    </div>
+  </div>
+  <div style="overflow-y:auto;flex:1;padding:16px;">
+    <div id="help-content-nl">
+
+      <div class="help-section">
+        <div class="help-section-title">🚀 Aan de slag</div>
+        <div class="help-text">
+          Garage/Org helpt je je voorraad, materiaal en koelkast/vriezers bijhouden — thuis of in de garage. Alles wordt automatisch gesynchroniseerd via Google Drive zodat al je toestellen up-to-date zijn.
+        </div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">📱 Toestel instellen</div>
+        <div class="help-step"><span class="help-num">1</span><div>Ga naar <strong>Instellingen → Dit toestel</strong></div></div>
+        <div class="help-step"><span class="help-num">2</span><div>Geef je toestel een naam (bv. "GSM Philippe")</div></div>
+        <div class="help-step"><span class="help-num">3</span><div>Kies een rol: <strong>Master</strong> (telefoon/hoofdtablet) voor volledige toegang, of <strong>Dashboard</strong> (muur-tablet) voor enkel aantallen aanpassen</div></div>
+        <div class="help-step"><span class="help-num">4</span><div>Verbind met <strong>Google Drive</strong> via de Cloud Sync knop — dit zorgt voor automatische backup en synchronisatie</div></div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">🥫 Voorraad beheren</div>
+        <div class="help-step"><span class="help-num">1</span><div>Tik <strong>+</strong> om een item toe te voegen</div></div>
+        <div class="help-step"><span class="help-num">2</span><div>Geef naam (NL + FR), eenheid, minimum hoeveelheid en winkel in</div></div>
+        <div class="help-step"><span class="help-num">3</span><div>Kies bewaarplaats: Schap, Vriezer, Ijskast, Vriezer keuken of Box</div></div>
+        <div class="help-step"><span class="help-num">4</span><div>Gebruik <strong>+</strong> en <strong>−</strong> in de lijst om aantallen aan te passen</div></div>
+        <div class="help-tip">💡 Items met een rood bolletje zitten onder het minimum. Items met een oranje bolletje zijn bijna op.</div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">🧊 Vriezers & Ijskast</div>
+        <div class="help-step"><span class="help-num">1</span><div>Voeg items toe via Voorraad → kies bewaarplaats <strong>Vriezer</strong>, <strong>Vriezer keuken</strong> of <strong>Ijskast</strong></div></div>
+        <div class="help-step"><span class="help-num">2</span><div>Geef de invriesdatum of plaatsingsdatum in (of kies "Datum onbekend")</div></div>
+        <div class="help-step"><span class="help-num">3</span><div>Items die te lang bewaard zijn worden automatisch gemarkeerd met ⚠️</div></div>
+        <div class="help-step"><span class="help-num">4</span><div>In de <strong>Ijskast-tab</strong>: tik op <strong>"🍳 Wat kan ik maken?"</strong> voor receptideeën op basis van je inhoud</div></div>
+        <div class="help-tip">💡 Stel bewaartermijnen in via Instellingen → Categorieën → bewerkpotloodje per categorie</div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">🔧 Materiaal beheren</div>
+        <div class="help-step"><span class="help-num">1</span><div>Voeg materiaal toe via de <strong>+</strong> knop</div></div>
+        <div class="help-step"><span class="help-num">2</span><div>Koppel aan een <strong>Box</strong> (bv. gereedschapskist), een <strong>Schap</strong> (rek + niveau + positie) of laat vrij</div></div>
+        <div class="help-step"><span class="help-num">3</span><div>Boxen beheer je via <strong>Instellingen → Boxen beheren</strong></div></div>
+        <div class="help-step"><span class="help-num">4</span><div>QR-codes per box printen kan via de box-editor</div></div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">☁️ Synchronisatie</div>
+        <div class="help-step"><span class="help-num">1</span><div>Na elke wijziging synct de app automatisch naar Google Drive (na 30 sec)</div></div>
+        <div class="help-step"><span class="help-num">2</span><div>Andere Master-toestellen ontvangen een melding als er iets gewijzigd is</div></div>
+        <div class="help-step"><span class="help-num">3</span><div>Dashboard-tablets verversen automatisch elke 60 seconden</div></div>
+        <div class="help-step"><span class="help-num">4</span><div>Handmatig syncen: <strong>Instellingen → Nu synchroniseren</strong></div></div>
+        <div class="help-tip">💡 Maak regelmatig een export via Instellingen → Exporteer alle data als extra backup</div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">🌐 Tweetaligheid</div>
+        <div class="help-text">
+          Schakel bovenaan tussen <strong>NL</strong> en <strong>FR</strong>. Artikelnamen en categorieën tonen dan automatisch de Franse versie. Geef bij elk item een Franse naam in via het FR-veld, of gebruik de <strong>🌐 auto-vertaal</strong> knop.
+        </div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">📦 Excel import/export</div>
+        <div class="help-text">
+          Download een template via de <strong>📥 Template</strong> knop in elk tabblad. Vul in en importeer via de <strong>📤 Importeer</strong> knop. Handig om snel veel items toe te voegen.
+        </div>
+      </div>
+
+      <div style="text-align:center;padding:20px 0 8px;font-size:11px;color:var(--text-faint);font-family:'JetBrains Mono';">
+        Garage/Org v7 · Made by Philippe
+      </div>
+
+    </div>
+
+    <div id="help-content-fr" style="display:none;">
+
+      <div class="help-section">
+        <div class="help-section-title">🚀 Pour commencer</div>
+        <div class="help-text">
+          Garage/Org vous aide à gérer votre stock, matériel et réfrigérateur/congélateurs — à la maison ou au garage. Tout est synchronisé automatiquement via Google Drive sur tous vos appareils.
+        </div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">📱 Configurer l'appareil</div>
+        <div class="help-step"><span class="help-num">1</span><div>Allez dans <strong>Paramètres → Cet appareil</strong></div></div>
+        <div class="help-step"><span class="help-num">2</span><div>Donnez un nom à votre appareil (p.ex. "GSM Philippe")</div></div>
+        <div class="help-step"><span class="help-num">3</span><div>Choisissez un rôle : <strong>Maître</strong> (téléphone/tablette principale) pour accès complet, ou <strong>Dashboard</strong> (tablette murale) pour gérer uniquement les quantités</div></div>
+        <div class="help-step"><span class="help-num">4</span><div>Connectez <strong>Google Drive</strong> via le bouton Cloud Sync pour la sauvegarde automatique</div></div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">🥫 Gérer le stock</div>
+        <div class="help-step"><span class="help-num">1</span><div>Tapez <strong>+</strong> pour ajouter un article</div></div>
+        <div class="help-step"><span class="help-num">2</span><div>Saisissez le nom (NL + FR), l'unité, la quantité minimale et le magasin</div></div>
+        <div class="help-step"><span class="help-num">3</span><div>Choisissez l'emplacement : Étagère, Congélateur, Réfrigérateur, Congél. cuisine ou Boîte</div></div>
+        <div class="help-step"><span class="help-num">4</span><div>Utilisez <strong>+</strong> et <strong>−</strong> dans la liste pour ajuster les quantités</div></div>
+        <div class="help-tip">💡 Un point rouge = sous le minimum. Un point orange = presque épuisé.</div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">🧊 Congélateurs & Réfrigérateur</div>
+        <div class="help-step"><span class="help-num">1</span><div>Ajoutez des articles via Stock → choisissez <strong>Congélateur</strong>, <strong>Congél. cuisine</strong> ou <strong>Réfrigérateur</strong></div></div>
+        <div class="help-step"><span class="help-num">2</span><div>Saisissez la date de congélation ou de mise au réfrigérateur (ou "Date inconnue")</div></div>
+        <div class="help-step"><span class="help-num">3</span><div>Les articles conservés trop longtemps sont signalés automatiquement avec ⚠️</div></div>
+        <div class="help-step"><span class="help-num">4</span><div>Dans l'onglet <strong>Réfrigérateur</strong> : tapez <strong>"🍳 Que puis-je cuisiner ?"</strong> pour des idées de recettes</div></div>
+        <div class="help-tip">💡 Configurez les durées de conservation via Paramètres → Catégories → crayon par catégorie</div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">🔧 Gérer le matériel</div>
+        <div class="help-step"><span class="help-num">1</span><div>Ajoutez du matériel via le bouton <strong>+</strong></div></div>
+        <div class="help-step"><span class="help-num">2</span><div>Liez à une <strong>Boîte</strong>, une <strong>Étagère</strong> (rayon + niveau + position) ou laissez libre</div></div>
+        <div class="help-step"><span class="help-num">3</span><div>Gérez les boîtes via <strong>Paramètres → Gérer les boîtes</strong></div></div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">☁️ Synchronisation</div>
+        <div class="help-step"><span class="help-num">1</span><div>Après chaque modification, l'app synchronise automatiquement vers Google Drive (après 30 sec)</div></div>
+        <div class="help-step"><span class="help-num">2</span><div>Les autres appareils Maître reçoivent une notification en cas de modification</div></div>
+        <div class="help-step"><span class="help-num">3</span><div>Les tablettes Dashboard se rafraîchissent automatiquement toutes les 60 secondes</div></div>
+        <div class="help-tip">💡 Exportez régulièrement vos données via Paramètres → Exporter toutes les données</div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">🌐 Bilinguisme</div>
+        <div class="help-text">
+          Basculez entre <strong>NL</strong> et <strong>FR</strong> en haut. Les noms d'articles et catégories s'affichent alors en français. Saisissez un nom français pour chaque article, ou utilisez le bouton <strong>🌐 traduction auto</strong>.
+        </div>
+      </div>
+
+      <div style="text-align:center;padding:20px 0 8px;font-size:11px;color:var(--text-faint);font-family:'JetBrains Mono';">
+        Garage/Org v7 · Made by Philippe
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <!-- ─── BOTTOM NAV ────────────────────────────────────────── -->
 <nav class="bottom-nav">
   <button class="nav-btn active" data-view="home" onclick="showView('home')">
@@ -1869,7 +2065,11 @@
   <button class="nav-btn" data-view="settings" onclick="showView('settings')">
     <span class="nav-icon">⚙️</span><span id="nav-lbl-settings">Instel.</span>
   </button>
+  <button class="nav-btn" data-view="help" onclick="showView('help')">
+    <span class="nav-icon">❓</span><span id="nav-lbl-help">Help</span>
+  </button>
 </nav>
+<div style="text-align:center;padding:4px 0 6px;font-size:9px;color:#e05a2b;font-family:'JetBrains Mono';letter-spacing:.08em;opacity:0.7;">Made by Philippe</div>
 
 <!-- ─── MODAL (bottom sheet) ────────────────────────────── -->
 <div class="modal-overlay" id="modal">
@@ -2127,6 +2327,7 @@ function updateHomeLabels() {
   el('lbl-material', nl ? 'Materiaal' : 'Matériel');
   el('lbl-stock', nl ? 'Voorraad' : 'Stock');
   el('lbl-freezer', nl ? 'Vriezer' : 'Congélateur');
+  el('lbl-suggest-recipes', nl ? '🍳 Wat kan ik maken?' : '🍳 Que puis-je cuisiner ?');
   el('lbl-fridge', nl ? 'Ijskast' : 'Réfrigérateur');
   el('lbl-freezer-kitchen', nl ? 'Vriezer keuken' : 'Congélateur cuisine');
   el('fchip-frz-all', nl ? 'Alles' : 'Tout');
@@ -2156,7 +2357,7 @@ function updateHomeLabels() {
   el('nav-lbl-material', nl ? 'Materiaal' : 'Matériel');
   el('nav-lbl-stock', nl ? 'Voorraad' : 'Stock');
   el('nav-lbl-scan', nl ? 'Scan' : 'Scan');
-  el('nav-lbl-settings', nl ? 'Instel.' : 'Param.');
+  el('nav-lbl-help', nl ? 'Help' : 'Aide');
   el('fchip-all', nl ? 'Alles' : 'Tout');
   el('fchip-low', nl ? 'Laag' : 'Bas');
   el('fchip-empty', nl ? 'Op' : 'Épuisé');
@@ -2194,6 +2395,9 @@ function showView(name) {
   }
   if (name === 'add') {
     showAddSubchoice();
+  }
+  if (name === 'help') {
+    setHelpLang(currentLang);
   }
   if (name === 'browse') {
     document.getElementById('browse-subchoice').style.display = '';
@@ -2365,24 +2569,24 @@ function render() {
   if (bb) { bb.style.display = total > 0 ? 'inline-block' : 'none'; bb.textContent = total; }
 
   // vriezer badge
-  const limit = Date.now() - 90 * 86400000;
   const oldFreezer = state.stockItems.filter(i =>
-    i.storageLocation === 'freezer' && (i.freezeDate === 'unknown' || (i.freezeDate && new Date(i.freezeDate).getTime() < limit))
+    i.storageLocation === 'freezer' && (i.freezeDate === 'unknown' ||
+    (i.freezeDate && (Date.now()-new Date(i.freezeDate).getTime()) > getFreezerlimit(i)))
   ).length;
   const fb = document.getElementById('browse-freezer-badge');
   if (fb) { fb.style.display = oldFreezer > 0 ? 'inline-block' : 'none'; fb.textContent = oldFreezer; }
 
   // ijskast badge
-  const fridgeLimit = Date.now() - FRIDGE_WARN_DAYS * 86400000;
   const oldFridge = state.stockItems.filter(i =>
-    i.storageLocation === 'fridge' && (!i.fridgeDate || new Date(i.fridgeDate).getTime() < fridgeLimit)
+    i.storageLocation === 'fridge' && (!i.fridgeDate || (Date.now()-new Date(i.fridgeDate).getTime()) > getFridgeLimit(i))
   ).length;
   const ffb = document.getElementById('browse-fridge-badge');
   if (ffb) { ffb.style.display = oldFridge > 0 ? 'inline-block' : 'none'; ffb.textContent = oldFridge; }
 
   // vriezer keuken badge
   const oldFzk = state.stockItems.filter(i =>
-    i.storageLocation === 'freezer_kitchen' && (i.freezeDate === 'unknown' || (i.freezeDate && new Date(i.freezeDate).getTime() < limit))
+    i.storageLocation === 'freezer_kitchen' && (i.freezeDate === 'unknown' ||
+    (i.freezeDate && (Date.now()-new Date(i.freezeDate).getTime()) > getFreezerlimit(i)))
   ).length;
   const fzkb = document.getElementById('browse-fzk-badge');
   if (fzkb) { fzkb.style.display = oldFzk > 0 ? 'inline-block' : 'none'; fzkb.textContent = oldFzk; }
@@ -2520,7 +2724,19 @@ function performBrowseSearch(mode) {
 }
 
 // ── IJSKAST BROWSE ─────────────────────────────────────────
-const FRIDGE_WARN_DAYS = 7;
+const FRIDGE_WARN_DAYS = 7; // fallback als geen categorie-terminus ingesteld
+
+function getFridgeLimit(item) {
+  const cat = findCat(item.categoryId);
+  const days = cat?.fridge_days ?? FRIDGE_WARN_DAYS;
+  return days * 86400000;
+}
+
+function getFreezerlimit(item) {
+  const cat = findCat(item.categoryId);
+  const months = cat?.freezer_months ?? 3;
+  return months * 30 * 86400000;
+}
 let currentFridgeStatusFilter = 'all';
 
 function filterFridgeStatus(status, btn) {
@@ -2535,9 +2751,11 @@ function renderBrowseFridge() {
   const q = (document.getElementById('searchFridgeInput')?.value || '').trim().toLowerCase();
   let list = state.stockItems.filter(i => i.storageLocation === 'fridge');
   if (q) list = list.filter(i => iName(i).toLowerCase().includes(q));
-  const limit = Date.now() - FRIDGE_WARN_DAYS * 86400000;
   if (currentFridgeStatusFilter === 'old') {
-    list = list.filter(i => !i.fridgeDate || new Date(i.fridgeDate).getTime() < limit);
+    list = list.filter(i => {
+      if (!i.fridgeDate) return true;
+      return (Date.now() - new Date(i.fridgeDate).getTime()) > getFridgeLimit(i);
+    });
   }
   list.sort((a,b) => {
     const ad = a.fridgeDate ? new Date(a.fridgeDate).getTime() : 0;
@@ -2560,10 +2778,12 @@ function renderBrowseFridge() {
     const qty = it.quantity || 0;
     const fridgeMs = it.fridgeDate ? new Date(it.fridgeDate).getTime() : null;
     const daysIn = fridgeMs ? Math.floor((Date.now() - fridgeMs) / 86400000) : null;
-    const isTooLong = !fridgeMs || (daysIn !== null && daysIn > FRIDGE_WARN_DAYS);
+    const limitMs = getFridgeLimit(it);
+    const maxDays = Math.round(limitMs / 86400000);
+    const isTooLong = !fridgeMs || (Date.now() - (fridgeMs||0)) > limitMs;
     const rowBorder = isTooLong ? 'border-color:#e8c07a;background:linear-gradient(90deg,var(--warning-bg),var(--surface));' : '';
     const dateLabel = fridgeMs
-      ? `🌡️ ${new Date(it.fridgeDate).toLocaleDateString(nl?'nl-BE':'fr-BE')}${daysIn!==null?' ('+daysIn+(nl?' d)':' j)'):''}`
+      ? `🌡️ ${new Date(it.fridgeDate).toLocaleDateString(nl?'nl-BE':'fr-BE')} (${daysIn}d · max ${maxDays}d)`
       : `<span style="color:var(--warning);">❓ ${nl?'Datum onbekend':'Date inconnue'}</span>`;
     return `<div class="stock-row" style="${rowBorder}" onclick="openStockEditor('${it.id}')">
       <div class="stock-thumb">${cat?.icon || '🌡️'}</div>
@@ -2579,25 +2799,28 @@ function renderBrowseFridge() {
 }
 
 function checkFridgeOnLoad() {
-  const limit = Date.now() - FRIDGE_WARN_DAYS * 86400000;
-  const old = state.stockItems.filter(i =>
-    i.storageLocation === 'fridge' && (!i.fridgeDate || new Date(i.fridgeDate).getTime() < limit)
-  );
+  const old = state.stockItems.filter(i => {
+    if (i.storageLocation !== 'fridge') return false;
+    if (!i.fridgeDate) return true;
+    return (Date.now() - new Date(i.fridgeDate).getTime()) > getFridgeLimit(i);
+  });
   if (old.length === 0) return;
+  const nl = currentLang === 'nl';
   setTimeout(() => {
     openModal(
-      currentLang==='fr' ? '🌡️ Réfrigérateur — attention' : '🌡️ Ijskast — opgelet',
+      nl ? '🌡️ Ijskast — opgelet' : '🌡️ Réfrigérateur — attention',
       `<p style="margin-bottom:12px;color:var(--text-dim);font-size:13px;">
         <strong style="color:var(--warning);">${old.length}</strong>
-        ${currentLang==='nl' ? ` item(s) zitten meer dan ${FRIDGE_WARN_DAYS} dagen in de ijskast:` : ` article(s) sont dans le réfrigérateur depuis plus de ${FRIDGE_WARN_DAYS} jours :`}
+        ${nl ? ' item(s) zitten te lang in de ijskast:' : ' article(s) sont trop longtemps au réfrigérateur :'}
       </p>
       ${old.map(it => {
         const days = it.fridgeDate ? Math.floor((Date.now()-new Date(it.fridgeDate).getTime())/86400000) : null;
+        const maxDays = Math.round(getFridgeLimit(it)/86400000);
         return `<div class="shopping-item">
           <span style="font-size:18px;">🌡️</span>
           <div class="name">${escapeHtml(iName(it))}</div>
           <div class="unit" style="color:var(--warning);">
-            ${days !== null ? days + (currentLang==='nl'?' dagen':' jours') : (currentLang==='nl'?'Datum onbekend':'Date inconnue')}
+            ${days !== null ? `${days}d / max ${maxDays}d` : (nl?'Datum onbekend':'Date inconnue')}
           </div>
         </div>`;
       }).join('')}
@@ -2772,21 +2995,21 @@ function performSearch() {}  // legacy search bar gone
 // DEFAULT CATEGORIES (used if none in DB yet)
 // ============================================================================
 const DEFAULT_CATEGORIES = [
-  { id: 'cat_hygiene',    name_nl: 'Hygiëne',            name_fr: 'Hygiène',              icon: '🧴', order: 1 },
-  { id: 'cat_food',       name_nl: 'Voeding',             name_fr: 'Alimentation',         icon: '🥫', order: 2 },
-  { id: 'cat_drink',      name_nl: 'Drank',               name_fr: 'Boissons',             icon: '🥤', order: 3 },
-  { id: 'cat_cleaning',   name_nl: 'Schoonmaak',          name_fr: 'Nettoyage',            icon: '🧽', order: 4 },
-  { id: 'cat_dairy',      name_nl: 'Zuivel',              name_fr: 'Produits laitiers',    icon: '🥛', order: 5 },
-  { id: 'cat_bread',      name_nl: 'Brood en granen',     name_fr: 'Pain et céréales',     icon: '🍞', order: 6 },
-  { id: 'cat_meat',       name_nl: 'Vlees en vis',        name_fr: 'Viande et poisson',    icon: '🥩', order: 7 },
-  { id: 'cat_veg',        name_nl: 'Groenten en fruit',   name_fr: 'Légumes et fruits',    icon: '🥬', order: 8 },
-  { id: 'cat_pharmacy',   name_nl: 'Apotheek',            name_fr: 'Pharmacie',            icon: '💊', order: 9 },
-  { id: 'cat_pasta',      name_nl: 'Pasta en rijst',      name_fr: 'Pâtes et riz',         icon: '🍝', order: 10 },
-  { id: 'cat_snacks',     name_nl: 'Snacks en gebak',     name_fr: 'Snacks et pâtisseries',icon: '🍪', order: 11 },
-  { id: 'cat_frozen',     name_nl: 'Diepvries',           name_fr: 'Surgelés',             icon: '🧊', order: 12 },
-  { id: 'cat_spices',     name_nl: 'Kruiden',             name_fr: 'Épices et herbes',     icon: '🧂', order: 13 },
-  { id: 'cat_coffee',     name_nl: 'Koffie en thee',      name_fr: 'Café et thé',          icon: '☕', order: 14 },
-  { id: 'cat_dishes',     name_nl: 'Vaatwasmiddelen',     name_fr: 'Produits vaisselle',   icon: '🫧', order: 15 },
+  { id: 'cat_hygiene',    name_nl: 'Hygiëne',            name_fr: 'Hygiène',              icon: '🧴', order: 1,  fridge_days: null, freezer_months: null },
+  { id: 'cat_food',       name_nl: 'Voeding',             name_fr: 'Alimentation',         icon: '🥫', order: 2,  fridge_days: 7,    freezer_months: 6  },
+  { id: 'cat_drink',      name_nl: 'Drank',               name_fr: 'Boissons',             icon: '🥤', order: 3,  fridge_days: 5,    freezer_months: 3  },
+  { id: 'cat_cleaning',   name_nl: 'Schoonmaak',          name_fr: 'Nettoyage',            icon: '🧽', order: 4,  fridge_days: null, freezer_months: null },
+  { id: 'cat_dairy',      name_nl: 'Zuivel',              name_fr: 'Produits laitiers',    icon: '🥛', order: 5,  fridge_days: 7,    freezer_months: 3  },
+  { id: 'cat_bread',      name_nl: 'Brood en granen',     name_fr: 'Pain et céréales',     icon: '🍞', order: 6,  fridge_days: 5,    freezer_months: 3  },
+  { id: 'cat_meat',       name_nl: 'Vlees en vis',        name_fr: 'Viande et poisson',    icon: '🥩', order: 7,  fridge_days: 3,    freezer_months: 6  },
+  { id: 'cat_veg',        name_nl: 'Groenten en fruit',   name_fr: 'Légumes et fruits',    icon: '🥬', order: 8,  fridge_days: 5,    freezer_months: 12 },
+  { id: 'cat_pharmacy',   name_nl: 'Apotheek',            name_fr: 'Pharmacie',            icon: '💊', order: 9,  fridge_days: null, freezer_months: null },
+  { id: 'cat_pasta',      name_nl: 'Pasta en rijst',      name_fr: 'Pâtes et riz',         icon: '🍝', order: 10, fridge_days: null, freezer_months: 12 },
+  { id: 'cat_snacks',     name_nl: 'Snacks en gebak',     name_fr: 'Snacks et pâtisseries',icon: '🍪', order: 11, fridge_days: 5,    freezer_months: 3  },
+  { id: 'cat_frozen',     name_nl: 'Diepvries',           name_fr: 'Surgelés',             icon: '🧊', order: 12, fridge_days: null, freezer_months: 12 },
+  { id: 'cat_spices',     name_nl: 'Kruiden',             name_fr: 'Épices et herbes',     icon: '🧂', order: 13, fridge_days: 14,   freezer_months: 6  },
+  { id: 'cat_coffee',     name_nl: 'Koffie en thee',      name_fr: 'Café et thé',          icon: '☕', order: 14, fridge_days: null, freezer_months: null },
+  { id: 'cat_dishes',     name_nl: 'Vaatwasmiddelen',     name_fr: 'Produits vaisselle',   icon: '🫧', order: 15, fridge_days: null, freezer_months: null },
 ];
 
 const DEFAULT_UNITS = [
@@ -3198,7 +3421,212 @@ async function autoTranslateItemName() {
   }
 }
 
-// ── Fix categorieën + push naar Drive ─────────────────────
+// ============================================================================
+// KOOKASSISTENT — Wat kan ik maken met de ijskastinhoud?
+// ============================================================================
+function suggestRecipes() {
+  const nl = currentLang === 'nl';
+  const fridgeItems = state.stockItems.filter(i => i.storageLocation === 'fridge' && (i.quantity||0) > 0);
+  const frzItems = state.stockItems.filter(i => (i.storageLocation === 'freezer' || i.storageLocation === 'freezer_kitchen') && (i.quantity||0) > 0);
+  const stockItems = state.stockItems.filter(i => (!i.storageLocation || i.storageLocation === 'shelf') && (i.quantity||0) > 0);
+
+  if (fridgeItems.length === 0 && frzItems.length === 0 && stockItems.length === 0) {
+    toast(nl ? 'Geen items gevonden' : 'Aucun article trouvé');
+    return;
+  }
+
+  // Toon voorkeur-modal
+  openModal(
+    nl ? '🍳 Kookassistent' : '🍳 Assistant cuisine',
+    `<div class="form-group">
+      <label class="form-label">${nl?'Aantal personen':'Nombre de personnes'}</label>
+      <div class="type-pills">
+        <button type="button" class="type-pill active" data-persons="2" onclick="selectRecipePill(this,'persons')">2</button>
+        <button type="button" class="type-pill" data-persons="3" onclick="selectRecipePill(this,'persons')">3</button>
+        <button type="button" class="type-pill" data-persons="4" onclick="selectRecipePill(this,'persons')">4</button>
+        <button type="button" class="type-pill" data-persons="6" onclick="selectRecipePill(this,'persons')">6</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">${nl?'Beschikbare tijd':'Temps disponible'}</label>
+      <div class="type-pills">
+        <button type="button" class="type-pill active" data-time="30" onclick="selectRecipePill(this,'time')">⚡ ${nl?'< 30 min':'< 30 min'}</button>
+        <button type="button" class="type-pill" data-time="60" onclick="selectRecipePill(this,'time')">🕐 ${nl?'< 1 uur':'< 1h'}</button>
+        <button type="button" class="type-pill" data-time="999" onclick="selectRecipePill(this,'time')">👨‍🍳 ${nl?'Geen limiet':'Sans limite'}</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">${nl?'Voorkeur':'Préférence'}</label>
+      <div class="type-pills">
+        <button type="button" class="type-pill active" data-pref="all" onclick="selectRecipePill(this,'pref')">🍽️ ${nl?'Alles':'Tout'}</button>
+        <button type="button" class="type-pill" data-pref="veg" onclick="selectRecipePill(this,'pref')">🥦 ${nl?'Vegetarisch':'Végétarien'}</button>
+        <button type="button" class="type-pill" data-pref="quick" onclick="selectRecipePill(this,'pref')">⚡ ${nl?'Makkelijk':'Facile'}</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">${nl?'Gebruik ook':'Utiliser aussi'}</label>
+      <div class="type-pills">
+        <button type="button" class="type-pill active" data-src="fridge" onclick="toggleRecipeSource(this)">🌡️ ${nl?'Ijskast':'Réfrigérateur'} (${fridgeItems.length})</button>
+        <button type="button" class="type-pill active" data-src="freezer" onclick="toggleRecipeSource(this)">❄️ ${nl?'Vriezers':'Congélateurs'} (${frzItems.length})</button>
+        <button type="button" class="type-pill active" data-src="stock" onclick="toggleRecipeSource(this)">📦 ${nl?'Voorraad':'Stock'} (${stockItems.length})</button>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-secondary" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn" onclick="doSuggestRecipes()">🍳 ${nl?'Stel gerechten voor':'Proposer des plats'}</button>
+    </div>`
+  );
+}
+
+function selectRecipePill(btn, group) {
+  btn.closest('.type-pills').querySelectorAll(`.type-pill[data-${group}]`).forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function toggleRecipeSource(btn) {
+  btn.classList.toggle('active');
+}
+
+async function doSuggestRecipes() {
+  const nl = currentLang === 'nl';
+
+  // Lees voorkeuren
+  const personsPill = document.querySelector('.type-pill[data-persons].active');
+  const timePill = document.querySelector('.type-pill[data-time].active');
+  const prefPill = document.querySelector('.type-pill[data-pref].active');
+  const persons = personsPill ? parseInt(personsPill.dataset.persons) : 2;
+  const time = timePill ? parseInt(timePill.dataset.time) : 30;
+  const pref = prefPill ? prefPill.dataset.pref : 'all';
+
+  // Bronnen
+  const useFridge = !!document.querySelector('.type-pill[data-src="fridge"].active');
+  const useFreezer = !!document.querySelector('.type-pill[data-src="freezer"].active');
+  const useStock = !!document.querySelector('.type-pill[data-src="stock"].active');
+
+  // Bouw itemlijsten
+  const fridgeItems = useFridge ? state.stockItems.filter(i => i.storageLocation === 'fridge' && (i.quantity||0) > 0) : [];
+  const frzItems = useFreezer ? state.stockItems.filter(i => (i.storageLocation === 'freezer' || i.storageLocation === 'freezer_kitchen') && (i.quantity||0) > 0) : [];
+  const stockItems = useStock ? state.stockItems.filter(i => (!i.storageLocation || i.storageLocation === 'shelf') && (i.quantity||0) > 0) : [];
+
+  if (fridgeItems.length === 0 && frzItems.length === 0 && stockItems.length === 0) {
+    toast(nl ? 'Geen items geselecteerd' : 'Aucun article sélectionné');
+    return;
+  }
+
+  // Urgente items (bijna verlopen)
+  const limit = Date.now() - 90*86400000;
+  const urgentFridge = fridgeItems.filter(i => i.fridgeDate && (Date.now()-new Date(i.fridgeDate).getTime()) > getFridgeLimit(i));
+  const urgentFreezer = frzItems.filter(i => i.freezeDate === 'unknown' || (i.freezeDate && new Date(i.freezeDate).getTime() < limit-(60*86400000)));
+
+  // Toon loading
+  openModal(
+    nl ? '🍳 Kookassistent' : '🍳 Assistant cuisine',
+    `<div style="text-align:center;padding:24px;">
+      <div style="font-size:36px;margin-bottom:12px;">🍳</div>
+      <div style="font-size:14px;color:var(--text-dim);">${nl?'Even kijken wat ik kan voorstellen...':'Je cherche des idées...'}</div>
+      <div style="margin-top:16px;"><div style="width:40px;height:4px;background:var(--accent);border-radius:2px;margin:0 auto;animation:pulse 1s infinite;"></div></div>
+    </div>`
+  );
+
+  // Bouw prompt
+  const formatItems = (items, label) => {
+    if (!items.length) return '';
+    const lines = items.map(it => {
+      const name = nl ? it.name : (it.name_fr || it.name);
+      const qty = it.quantity || 0;
+      const unit = it.unit || '';
+      return `  - ${name}${qty ? ` (${qty}${unit?' '+unit:''})` : ''}`;
+    }).join('\n');
+    return `\n${label}:\n${lines}`;
+  };
+
+  const urgentNote = [...urgentFridge, ...urgentFreezer].length > 0
+    ? (nl
+        ? `\nLET OP — gebruik bij voorkeur eerst: ${[...urgentFridge,...urgentFreezer].map(i => nl?i.name:(i.name_fr||i.name)).join(', ')} (al te lang bewaard)`
+        : `\nATTENTION — utiliser en priorité: ${[...urgentFridge,...urgentFreezer].map(i => nl?i.name:(i.name_fr||i.name)).join(', ')} (conservé trop longtemps)`)
+    : '';
+
+  const prefText = pref === 'veg' ? (nl?'Vegetarische gerechten':'Plats végétariens') :
+                   pref === 'quick' ? (nl?'Eenvoudige, makkelijke gerechten':'Plats simples et faciles') :
+                   (nl?'Alle soorten gerechten':'Tous types de plats');
+
+  const timeText = time === 999 ? (nl?'geen tijdslimiet':'sans limite de temps') :
+                   (nl?`max ${time} minuten bereidingstijd`:`max ${time} minutes de préparation`);
+
+  let prompt = nl
+    ? `Ik wil koken voor ${persons} personen. ${prefText}, ${timeText}.${urgentNote}
+
+Beschikbare ingrediënten:${formatItems(fridgeItems, '🌡️ Ijskast')}${formatItems(frzItems, '❄️ Vriezer')}${formatItems(stockItems, '📦 Voorraad')}
+
+Stel 3 tot 5 concrete gerechten voor. Per gerecht:
+**Naam van het gerecht**
+- Ingrediënten uit de lijst die je gebruikt
+- Wat eventueel nog ontbreekt (max 2 dingen)
+- Bereidingstijd en moeilijkheidsgraad
+- Korte bereiding (2-3 zinnen)
+
+Antwoord in het Nederlands. Wees praktisch.`
+    : `Je veux cuisiner pour ${persons} personnes. ${prefText}, ${timeText}.${urgentNote}
+
+Ingrédients disponibles:${formatItems(fridgeItems, '🌡️ Réfrigérateur')}${formatItems(frzItems, '❄️ Congélateur')}${formatItems(stockItems, '📦 Stock')}
+
+Propose 3 à 5 plats concrets. Pour chaque plat:
+**Nom du plat**
+- Ingrédients de la liste utilisés
+- Ce qui manque éventuellement (max 2 choses)
+- Temps de préparation et difficulté
+- Préparation courte (2-3 phrases)
+
+Réponds en français. Sois pratique.`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await resp.json();
+    const text = data.content?.[0]?.text || (nl ? 'Geen suggesties gevonden.' : 'Aucune suggestion trouvée.');
+
+    const formatted = text
+      .replace(/\*\*(.*?)\*\*/g, '<strong style="font-size:14px;color:var(--text-primary);display:block;margin:14px 0 6px;">🍽️ $1</strong>')
+      .replace(/^- (.+)$/gm, '<div style="padding:2px 0 2px 14px;color:var(--text-dim);font-size:13px;">• $1</div>')
+      .replace(/\n\n/g, '<br>')
+      .replace(/\n/g, '');
+
+    const totalItems = fridgeItems.length + frzItems.length + stockItems.length;
+    openModal(
+      nl ? '🍳 Wat kan ik maken?' : '🍳 Que puis-je cuisiner ?',
+      `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <span style="font-size:11px;background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-family:'JetBrains Mono';">
+          👥 ${persons} ${nl?'personen':'personnes'}
+        </span>
+        <span style="font-size:11px;background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-family:'JetBrains Mono';">
+          ⏱ ${time === 999 ? (nl?'Geen limiet':'Sans limite') : 'max '+time+'min'}
+        </span>
+        <span style="font-size:11px;background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-family:'JetBrains Mono';">
+          📦 ${totalItems} ${nl?'items':'articles'}
+        </span>
+        ${urgentFridge.length+urgentFreezer.length > 0 ? `<span style="font-size:11px;background:#fef3d0;border:1px solid #f0d890;border-radius:20px;padding:3px 10px;font-family:'JetBrains Mono';color:#c47d0e;">⚠️ ${urgentFridge.length+urgentFreezer.length} ${nl?'urgent':'urgent'}</span>` : ''}
+      </div>
+      <div style="max-height:420px;overflow-y:auto;font-size:13px;line-height:1.6;">${formatted}</div>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn btn-secondary" onclick="suggestRecipes()">${nl?'↩ Opnieuw':'↩ Recommencer'}</button>
+        <button class="btn" onclick="closeModal()">${nl?'Sluiten':'Fermer'}</button>
+      </div>`
+    );
+  } catch(e) {
+    openModal(
+      nl ? '🍳 Kookassistent' : '🍳 Assistant cuisine',
+      `<p style="color:var(--danger);">${nl?'Niet beschikbaar — controleer je verbinding.':'Non disponible — vérifiez votre connexion.'}</p>
+       <button class="btn btn-secondary" style="margin-top:14px;" onclick="closeModal()">OK</button>`
+    );
+  }
+}
 async function fixAndPushCategories() {
   const nl = currentLang === 'nl';
   // Stap 1: Wis alle categorieën lokaal
@@ -4497,6 +4925,13 @@ function selectType(btn, typeVal) {
   btn.dataset.type = typeVal;
 }
 
+function setHelpLang(lang) {
+  document.getElementById('help-content-nl').style.display = lang === 'nl' ? 'block' : 'none';
+  document.getElementById('help-content-fr').style.display = lang === 'fr' ? 'block' : 'none';
+  document.getElementById('help-lang-nl')?.classList.toggle('active', lang === 'nl');
+  document.getElementById('help-lang-fr')?.classList.toggle('active', lang === 'fr');
+}
+
 function selectItemLocType(btn, type) {
   document.querySelectorAll('.type-pill[data-itype]').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
@@ -5126,24 +5561,45 @@ async function addSuggestedCategory(index) {
 function editCategory(catId) {
   const cat = catId ? state.categories.find(c => c.id === catId) : null;
   const isNew = !cat;
-  // Track if user manually changed icon (don't override their choice)
+  const nl = currentLang === 'nl';
   window._catIconManuallySet = !isNew && cat?.icon && cat.icon !== '📦';
   openModal(cat ? `✏️ ${escapeHtml(catName(cat))}` : t('add_category'), `
     <div class="form-group">
       <label class="form-label">${t('cat_icon')}</label>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="text" class="form-input" id="cat-icon-input" value="${cat?.icon || '📦'}" maxlength="4" style="font-size:24px;text-align:center;width:80px;flex:0 0 80px;" oninput="window._catIconManuallySet=true">
-        <button class="btn btn-secondary btn-small" style="margin:0;flex:1;" onclick="autoPickIcon()">🪄 ${currentLang === 'fr' ? 'Icône auto' : 'Auto-icoon'}</button>
+        <button class="btn btn-secondary btn-small" style="margin:0;flex:1;" onclick="autoPickIcon()">🪄 ${nl ? 'Auto-icoon' : 'Icône auto'}</button>
       </div>
-      <div class="form-hint">${currentLang === 'fr' ? 'Détecté automatiquement pendant que vous tapez' : 'Wordt automatisch gekozen terwijl je typt'}</div>
     </div>
     <div class="form-group">
       <label class="form-label">${t('cat_name')} (NL)</label>
-      <input type="text" class="form-input" id="cat-name-nl" value="${cat?.name_nl || cat?.name || ''}" oninput="autoSuggestIcon(this.value)" placeholder="${currentLang === 'fr' ? 'p.ex. Nettoyage' : 'bv. Schoonmaak'}">
+      <input type="text" class="form-input" id="cat-name-nl" value="${cat?.name_nl || cat?.name || ''}" oninput="autoSuggestIcon(this.value)" placeholder="${nl ? 'bv. Schoonmaak' : 'p.ex. Nettoyage'}">
     </div>
     <div class="form-group">
       <label class="form-label">${t('cat_name')} (FR)</label>
       <input type="text" class="form-input" id="cat-name-fr" value="${cat?.name_fr || ''}" oninput="autoSuggestIcon(this.value)">
+    </div>
+    <div style="background:var(--surface-2);border-radius:var(--radius);padding:12px;margin-bottom:12px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;font-family:'JetBrains Mono';">
+        ⏱ ${nl?'Bewaartermijnen':'Durées de conservation'}
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">🌡️ ${nl?'Max. dagen in ijskast':'Max. jours au réfrigérateur'}</label>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="number" class="form-input" id="cat-fridge-days" value="${cat?.fridge_days ?? ''}" min="1" max="365" placeholder="${nl?'bv. 7':'ex. 7'}" style="width:80px;">
+            <span style="font-size:12px;color:var(--text-dim);">${nl?'dagen':'jours'}</span>
+            <span style="font-size:11px;color:var(--text-faint);">(${nl?'leeg = niet van toepassing':'vide = non applicable'})</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">❄️ ${nl?'Max. maanden in vriezer':'Max. mois au congélateur'}</label>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="number" class="form-input" id="cat-freezer-months" value="${cat?.freezer_months ?? ''}" min="1" max="36" placeholder="${nl?'bv. 6':'ex. 6'}" style="width:80px;">
+            <span style="font-size:12px;color:var(--text-dim);">${nl?'maanden':'mois'}</span>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="openCategoryManager()">${t('cancel')}</button>
@@ -5236,6 +5692,10 @@ async function _doSaveCategory(id, nlName, frName, icon) {
     cat.icon = icon || '📦';
     cat.name_nl = nlName || frName;
     cat.name_fr = frName || nlName;
+    const fd = document.getElementById('cat-fridge-days')?.value;
+    const fm = document.getElementById('cat-freezer-months')?.value;
+    cat.fridge_days = fd ? parseInt(fd) : null;
+    cat.freezer_months = fm ? parseInt(fm) : null;
     await dbPut('categories', cat);
     if (isNew) state.categories.push(cat);
     state.categories.sort((a,b) => (a.order||999) - (b.order||999));
