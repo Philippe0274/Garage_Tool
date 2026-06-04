@@ -1654,6 +1654,9 @@
     <button class="btn btn-secondary" id="sync-manual-btn" onclick="driveSync(true)" style="display:none;margin-bottom:6px;">
       🔄 <span id="lbl-sync-now">Nu synchroniseren</span>
     </button>
+    <button class="btn" id="editor-push-btn" onclick="showEditorPushModal()" style="display:none;margin-bottom:6px;background:#e05a2b;">
+      📤 <span id="lbl-editor-push">Stuur naar Google Drive</span>
+    </button>
     <div class="section-title" style="margin-top:8px;"><span class="section-title-text" id="lbl-settings-manage">Beheer</span></div>
     <button class="btn btn-secondary" onclick="openCategoryManager()" data-i18n="manage_cats">🏷️ Categorieën beheren</button>
     <button class="btn btn-secondary" onclick="openUnitManager()" data-i18n="manage_units">📏 Eenheden beheren</button>
@@ -3955,17 +3958,7 @@ async function autoTranslate(nlName, targetInputId, btnEl) {
   }
 }
 
-function autoTranslateStockName() {
-  const nlName = document.getElementById('stock-name')?.value.trim();
-  const btn = document.querySelector('button[onclick="autoTranslateStockName()"]');
-  autoTranslate(nlName, 'stock-name-fr', btn);
-}
 
-function autoTranslateItemName() {
-  const nlName = document.getElementById('item-name')?.value.trim();
-  const btn = document.querySelector('button[onclick="autoTranslateItemName()"]');
-  autoTranslate(nlName, 'item-name-fr', btn);
-}
 
 // ============================================================================
 function getLowStockItems() {
@@ -4172,6 +4165,12 @@ function renderStockRow(it) {
 }
 
 async function adjustStock(id, delta) {
+  // Editor mag geen aantallen aanpassen
+  if (isEditorDevice()) {
+    const nl = currentLang === 'nl';
+    toast(nl?'Editor: aantallen aanpassen niet toegestaan — gebruik de telefoon':'Éditeur: ajuster les quantités non autorisé');
+    return;
+  }
   const item = state.stockItems.find(i => i.id === id);
   if (!item) return;
   const newQty = Math.max(0, (item.quantity || 0) + delta);
@@ -4867,6 +4866,10 @@ async function saveItem(id) {
   if (!id) state.items.push(item);
   closeModal();
   toast(t('item_added')); markSyncDirty();
+  // Editor: track wijziging
+  if (isEditorDevice()) {
+    editorTrackChange(id ? 'edit' : 'add', 'material', item, id ? ['bijgewerkt'] : []);
+  }
   // Blijf in huidige view — vernieuw enkel de lijsten
   if (currentBrowseMode === 'material') {
     renderBrowseMaterial();
@@ -5310,6 +5313,10 @@ async function saveStock(id) {
   if (!id) state.stockItems.push(item);
   closeModal();
   toast(t('stock_added')); markSyncDirty();
+  // Editor: track wijziging
+  if (isEditorDevice()) {
+    editorTrackChange(id ? 'edit' : 'add', 'stock', item, id ? ['bijgewerkt'] : []);
+  }
   // Blijf in huidige view — vernieuw enkel de lijst
   if (currentBrowseMode === 'stock') {
     renderBrowseStock();
@@ -7379,7 +7386,7 @@ const GDRIVE_FILE_NAME = 'garageorg-backup.json';
 const GDRIVE_SPACES = 'appDataFolder';
 
 // ── Toestelrollen ──────────────────────────────────────────
-const DEVICE_ROLES = { MASTER: 'master', DASHBOARD: 'dashboard' };
+const DEVICE_ROLES = { MASTER: 'master', DASHBOARD: 'dashboard', EDITOR: 'editor' };
 let deviceRole = localStorage.getItem('device_role') || null;
 let deviceName = localStorage.getItem('device_name') || null;
 
@@ -7401,6 +7408,9 @@ function isGTokenValid() {
 }
 function isMaster() {
   return !deviceRole || deviceRole === DEVICE_ROLES.MASTER;
+}
+function isEditorDevice() {
+  return deviceRole === DEVICE_ROLES.EDITOR;
 }
 
 // ── Toestel setup bij eerste gebruik ──────────────────────
@@ -7442,6 +7452,16 @@ function showDeviceSetup() {
             ${currentLang==='nl'?'Muur-tablet — enkel aantallen beheren':'Tablette murale — gestion des quantités uniquement'}
           </div>
         </div>
+        <div class="device-role-card ${deviceRole===DEVICE_ROLES.EDITOR?'active':''}"
+          onclick="selectDeviceRole('${DEVICE_ROLES.EDITOR}',this)">
+          <div style="font-size:22px;margin-bottom:4px;">💻</div>
+          <div style="font-weight:700;font-size:14px;">Editor (PC)</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:3px;">
+            ${currentLang==='nl'
+              ? 'PC — items toevoegen & bewerken, manueel naar Drive sturen'
+              : 'PC — ajouter & modifier des articles, envoyer manuellement vers Drive'}
+          </div>
+        </div>
       </div>
     </div>
     <button class="btn" onclick="saveDeviceSetup()" style="margin-top:8px;">
@@ -7468,14 +7488,22 @@ function saveDeviceSetup() {
   applyRoleUI();
   updateDeviceUI();
   const roleLabel = deviceRole === DEVICE_ROLES.MASTER
-    ? (currentLang==='nl'?'Master':'Maître') : 'Dashboard';
+    ? (currentLang==='nl'?'Master':'Maître')
+    : deviceRole === DEVICE_ROLES.EDITOR
+    ? 'Editor (PC)'
+    : 'Dashboard';
   toast(`✓ ${escapeHtml(deviceName)} — ${roleLabel}`);
 }
 
 function applyRoleUI() {
   const isDashboard = deviceRole === DEVICE_ROLES.DASHBOARD;
+  const isEditor = deviceRole === DEVICE_ROLES.EDITOR;
   if (isDashboard) {
     initDashboard();
+    return;
+  }
+  if (isEditor) {
+    initEditorMode();
     return;
   }
   // Master: alles zichtbaar
@@ -7488,7 +7516,10 @@ function updateDeviceUI() {
   if (!el) return;
   if (deviceName && deviceRole) {
     const roleLabel = deviceRole === DEVICE_ROLES.MASTER
-      ? (currentLang==='nl'?'Master':'Maître') : 'Dashboard';
+      ? (currentLang==='nl'?'Master':'Maître')
+      : deviceRole === DEVICE_ROLES.EDITOR
+      ? 'Editor (PC)'
+      : 'Dashboard';
     el.innerHTML = `<span style="font-weight:600;">${escapeHtml(deviceName)}</span>
       <span style="color:var(--text-dim);font-size:11px;font-family:'JetBrains Mono';"> · ${roleLabel}</span>
       <button onclick="showDeviceSetup()" style="background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;margin-left:8px;">✏️</button>`;
@@ -7496,6 +7527,150 @@ function updateDeviceUI() {
     el.innerHTML = `<button onclick="showDeviceSetup()" class="btn btn-secondary btn-small">
       ${currentLang==='nl'?'Toestel configureren':'Configurer l\'appareil'}
     </button>`;
+  }
+}
+
+// ============================================================================
+// EDITOR MODUS — PC invoer met manuele push naar Drive
+// ============================================================================
+let editorChanges = []; // { type: 'add'|'edit'|'delete', itemType: 'stock'|'material', id, name, changes }
+
+function editorTrackChange(type, itemType, item, changedFields) {
+  if (!isEditorDevice()) return;
+  // Verwijder vorige entry voor dit item
+  editorChanges = editorChanges.filter(c => c.id !== item.id);
+  editorChanges.push({
+    type,
+    itemType,
+    id: item.id,
+    name: iName(item) || item.name || '?',
+    changes: changedFields || []
+  });
+  updateEditorBanner();
+}
+
+function updateEditorBanner() {
+  const banner = document.getElementById('editor-banner');
+  if (!banner) return;
+  const nl = currentLang === 'nl';
+  const n = editorChanges.length;
+  if (n === 0) {
+    banner.style.display = 'none';
+    return;
+  }
+  banner.style.display = 'flex';
+  document.getElementById('editor-banner-count').textContent =
+    n + ' ' + (nl ? (n===1?'wijziging':'wijzigingen') : (n===1?'modification':'modifications'));
+}
+
+function initEditorMode() {
+  const nl = currentLang === 'nl';
+  // Voeg editor banner toe bovenaan de app
+  const app = document.getElementById('app') || document.body;
+  let banner = document.getElementById('editor-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'editor-banner';
+    banner.style.cssText = `
+      display:none; position:fixed; top:0; left:0; right:0; z-index:999;
+      background:#1a1a1a; color:#fff; padding:10px 16px;
+      align-items:center; justify-content:space-between; gap:12px;
+      font-family:'JetBrains Mono'; font-size:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.3);
+    `;
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="color:#f0b429;">✏️</span>
+        <span id="editor-banner-count">0 wijzigingen</span>
+        <span style="color:#888;">${nl?'— nog niet gestuurd naar Drive':'— pas encore envoyé vers Drive'}</span>
+      </div>
+      <button onclick="showEditorPushModal()" style="
+        background:#e05a2b; color:#fff; border:none; border-radius:8px;
+        padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer;
+        font-family:'JetBrains Mono'; white-space:nowrap;
+      ">📤 ${nl?'Stuur naar Drive':'Envoyer vers Drive'}</button>
+    `;
+    document.body.insertBefore(banner, document.body.firstChild);
+    // Verschuif de app content naar beneden
+    const mainApp = document.getElementById('app-root') || document.querySelector('.app-wrapper');
+    if (mainApp) mainApp.style.paddingTop = '44px';
+  }
+
+  // Laad Drive data bij opstart (read-only basis)
+  if (isGTokenValid()) {
+    syncFromDrive().then(() => {
+      toast(nl?'✓ Data geladen van Drive — Editor modus':'✓ Données chargées — Mode Éditeur');
+    });
+  }
+
+  // Verberg aantallen aanpassen — Editor mag enkel bewerken
+  document.querySelectorAll('.nav-btn[data-view="add"]').forEach(b => b.style.display = '');
+  document.querySelectorAll('.nav-btn[data-view="material"]').forEach(b => b.style.display = '');
+}
+
+function showEditorPushModal() {
+  const nl = currentLang === 'nl';
+  if (editorChanges.length === 0) {
+    toast(nl?'Geen wijzigingen om te sturen':'Aucune modification à envoyer');
+    return;
+  }
+  const adds = editorChanges.filter(c => c.type === 'add');
+  const edits = editorChanges.filter(c => c.type === 'edit');
+  const dels = editorChanges.filter(c => c.type === 'delete');
+
+  const renderGroup = (items, icon, label) => {
+    if (!items.length) return '';
+    return `<div style="margin-bottom:12px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;font-family:'JetBrains Mono';margin-bottom:6px;">${icon} ${label} (${items.length})</div>
+      ${items.map(c => `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:13px;">${c.itemType==='stock'?'🥫':'🔧'}</span>
+        <div>
+          <div style="font-size:13px;font-weight:500;">${escapeHtml(c.name)}</div>
+          ${c.changes.length ? `<div style="font-size:11px;color:var(--text-faint);">${c.changes.map(escapeHtml).join(', ')}</div>` : ''}
+        </div>
+      </div>`).join('')}
+    </div>`;
+  };
+
+  openModal(
+    nl ? '📤 Stuur naar Google Drive' : '📤 Envoyer vers Google Drive',
+    `<p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;">
+      ${nl
+        ? `Je hebt <strong>${editorChanges.length} wijziging(en)</strong> klaar om te sturen.`
+        : `Vous avez <strong>${editorChanges.length} modification(s)</strong> prêtes à envoyer.`}
+    </p>
+    <div style="max-height:320px;overflow-y:auto;">
+      ${renderGroup(adds, '➕', nl?'Nieuw toegevoegd':'Ajoutés')}
+      ${renderGroup(edits, '✏️', nl?'Aangepast':'Modifiés')}
+      ${renderGroup(dels, '🗑️', nl?'Verwijderd':'Supprimés')}
+    </div>
+    <div style="background:#fff5f0;border:1px solid #fcd0b0;border-radius:8px;padding:10px 12px;margin:12px 0;font-size:12px;color:#c04a20;">
+      ⚠️ ${nl
+        ? 'Na bevestiging worden deze wijzigingen naar Google Drive gestuurd. Telefoon en tablet laden ze bij de volgende sync.'
+        : 'Après confirmation, ces modifications seront envoyées à Google Drive. Téléphone et tablette les chargeront à la prochaine sync.'}
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn" onclick="doEditorPush()" style="background:#e05a2b;">
+        📤 ${nl?'Bevestigen & sturen':'Confirmer & envoyer'}
+      </button>
+    </div>`
+  );
+}
+
+async function doEditorPush() {
+  const nl = currentLang === 'nl';
+  closeModal();
+  updateSyncUI('busy', nl?'Sturen naar Drive...':'Envoi vers Drive...');
+  try {
+    await syncMaster(false);
+    editorChanges = [];
+    updateEditorBanner();
+    updateSyncUI('ok', formatLastSync());
+    toast(nl?'✓ Wijzigingen gestuurd naar Drive':'✓ Modifications envoyées vers Drive');
+  } catch(e) {
+    updateSyncUI('error', 'Fout');
+    toast('❌ ' + (nl?'Verzenden mislukt':'Envoi échoué') + ': ' + (e.message||e));
   }
 }
 
@@ -7518,6 +7693,8 @@ function markSyncDirty() {
 
 function startSyncTimer() {
   if (gSyncTimer) clearInterval(gSyncTimer);
+  // Editor: geen auto-sync — enkel manuele push
+  if (isEditorDevice()) return;
   const interval = isDashboardDevice() ? 60000 : 30000;
   gSyncTimer = setInterval(async () => {
     if (!isGTokenValid() || gSyncing) return;
@@ -7625,11 +7802,15 @@ function updateSyncUI(st, subtitle) {
     const pic = gUserPic ? `<img class="google-avatar" src="${escapeHtml(gUserPic)}" onerror="this.style.display='none'"> ` : '';
     if (titleEl) titleEl.innerHTML = pic + escapeHtml(gUserName || 'Google Drive');
     if (btn) { btn.textContent = currentLang==='nl'?'Ontkoppelen':'Déconnecter'; btn.className = 'sync-btn'; }
-    if (manualBtn) manualBtn.style.display = 'block';
+    if (manualBtn) manualBtn.style.display = isEditorDevice() ? 'none' : 'block';
+    const editorBtn = document.getElementById('editor-push-btn');
+    if (editorBtn) editorBtn.style.display = isEditorDevice() ? 'block' : 'none';
   } else {
     if (titleEl) titleEl.textContent = 'Google Drive';
     if (btn) { btn.textContent = currentLang==='nl'?'Verbinden':'Connecter'; btn.className = 'sync-btn primary'; }
     if (manualBtn) manualBtn.style.display = 'none';
+    const editorBtn = document.getElementById('editor-push-btn');
+    if (editorBtn) editorBtn.style.display = 'none';
   }
   if (sub && subtitle) sub.textContent = subtitle;
 }
@@ -7787,8 +7968,8 @@ async function driveSyncOnConnect() {
     return;
   }
 
-  // Dashboard laadt altijd van Drive
-  if (isDashboardDevice()) {
+  // Dashboard of Editor laadt altijd van Drive
+  if (isDashboardDevice() || isEditorDevice()) {
     await syncFromDrive();
     startSyncTimer();
     return;
@@ -8018,6 +8199,11 @@ async function dashboardPushQuantity(itemId, newQuantity) {
 
 // ── driveSync: publieke functie (achterwaarts compatibel) ──
 async function driveSync(showFeedback) {
+  // Editor: nooit automatisch syncen — enkel via expliciete "Stuur naar Drive" knop
+  if (isEditorDevice()) {
+    if (showFeedback) toast(currentLang==='nl'?'Editor: gebruik "Stuur naar Drive" knop':'Éditeur: utilisez le bouton "Envoyer vers Drive"');
+    return;
+  }
   if (isDashboardDevice()) {
     await syncFromDrive();
   } else {
@@ -8047,6 +8233,7 @@ function updateSyncLabels() {
   const nl = currentLang === 'nl';
   const el = (id,txt) => { const e=document.getElementById(id); if(e) e.textContent=txt; };
   el('lbl-sync-section', nl?'☁️ Cloud Sync':'☁️ Synchronisation Cloud');
+  el('lbl-editor-push', nl ? 'Stuur naar Google Drive' : 'Envoyer vers Google Drive');
   el('lbl-sync-now', nl?'Nu synchroniseren':'Synchroniser maintenant');
   el('lbl-device-section', nl?'📱 Dit toestel':'📱 Cet appareil');
   if (!isGTokenValid()) {
