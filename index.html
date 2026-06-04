@@ -7972,6 +7972,11 @@ async function driveSyncOnConnect() {
   if (isDashboardDevice() || isEditorDevice()) {
     await syncFromDrive();
     startSyncTimer();
+    if (isEditorDevice()) {
+      render();
+      showView('home');
+      toast(currentLang==='nl'?'✓ Data geladen van Drive':'✓ Données chargées depuis Drive');
+    }
     return;
   }
 
@@ -8060,6 +8065,9 @@ async function syncFromDrive() {
       dbUpdateSyncDot?.();
       dbUpdateHome?.();
       if (dbMode) dbRender?.();
+    } else if (isEditorDevice()) {
+      render();
+      showView('home');
     }
 
     // Toon wijzigingsmelding als er gewijzigde aantallen zijn
