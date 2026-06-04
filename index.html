@@ -1660,6 +1660,7 @@
     <button class="btn btn-secondary" onclick="openShopManager()" data-i18n="manage_shops">🏪 Winkels beheren</button>
     <button class="btn btn-secondary" onclick="openStockShelvesManager()">📦 <span id="lbl-stock-shelves">Voorraad-rekken beheren</span></button>
     <button class="btn btn-secondary" onclick="openBoxManager()">📦 <span id="lbl-manage-boxes">Boxen beheren</span></button>
+    <button class="btn btn-secondary" onclick="openMaterialCategoryManager()">🔧 <span id="lbl-manage-matcats">Materiaal categorieën</span></button>
     <button class="btn btn-secondary" onclick="fixAndPushCategories()" style="border-color:var(--warning);color:var(--warning);">🔧 <span id="lbl-fix-cats">Categorieën herstellen + Drive bijwerken</span></button>
     <div class="section-title" style="margin-top:16px;"><span class="section-title-text">Data</span></div>
     <button class="btn btn-secondary" onclick="exportData()" data-i18n="export">📤 Exporteer alle data</button>
@@ -2350,6 +2351,7 @@ function updateHomeLabels() {
     : 'Approchez votre téléphone d\'un tag NFC.\nFonctionne sur Android avec Chrome.');
   el('lbl-nfc-btn', nl ? 'NFC starten' : 'Démarrer NFC');
   el('lbl-stock-shelves', nl ? 'Voorraad-rekken beheren' : 'Gérer les rayons de stock');
+  el('lbl-manage-matcats', nl ? 'Materiaal categorieën' : 'Catégories matériel');
   el('lbl-manage-boxes', nl ? 'Boxen beheren' : 'Gérer les boîtes');
   el('lbl-fix-cats', nl ? 'Categorieën herstellen + Drive bijwerken' : 'Restaurer catégories + mettre à jour Drive');
   el('lbl-settings-manage', nl ? 'Beheer' : 'Gestion');
@@ -2601,8 +2603,11 @@ function buildMatCategoryFilter() {
   if (!row) return;
   const nl = currentLang === 'nl';
   let html = `<button class="fchip ${currentMatCatFilter==='all'?'active':''}" onclick="filterMatCat('all',this)">${nl?'Alles':'Tout'}</button>`;
-  state.categories.forEach(c => {
-    html += `<button class="fchip ${currentMatCatFilter===c.id?'active':''}" onclick="filterMatCat('${c.id}',this)">${c.icon||''} ${escapeHtml(catName(c))}</button>`;
+  state.materialCategories.forEach(c => {
+    const iconHtml = c.customIcon
+      ? `<img src="${c.customIcon}" style="width:14px;height:14px;border-radius:3px;object-fit:cover;vertical-align:middle;margin-right:3px;">`
+      : (c.icon || '📦');
+    html += `<button class="fchip ${currentMatCatFilter===c.id?'active':''}" onclick="filterMatCat('${c.id}',this)">${iconHtml} ${escapeHtml(matCatName(c))}</button>`;
   });
   row.innerHTML = html;
 }
@@ -2620,11 +2625,15 @@ function renderBrowseMaterial() {
   if (q) {
     list = list.filter(i => {
       const box = state.boxes.find(b => b.id === i.boxId);
-      const hay = [i.name, i.description, (i.tags||[]).join(' '), box?.name||''].join(' ').toLowerCase();
+      const matCat = findMatCat(i.materialCategoryId);
+      const hay = [iName(i), i.description, (i.tags||[]).join(' '), box?.name||'', matCatName(matCat)].join(' ').toLowerCase();
       return hay.includes(q);
     });
   }
-  list.sort((a,b) => a.name.localeCompare(b.name, currentLang));
+  if (currentMatCatFilter && currentMatCatFilter !== 'all') {
+    list = list.filter(i => i.materialCategoryId === currentMatCatFilter);
+  }
+  list.sort((a,b) => iName(a).localeCompare(iName(b), currentLang));
   const cnt = document.getElementById('browse-mat-count');
   if (cnt) cnt.textContent = list.length + (currentLang==='nl' ? ' items' : ' articles');
   const c = document.getElementById('browse-mat-list');
@@ -2635,14 +2644,24 @@ function renderBrowseMaterial() {
   }
   c.innerHTML = '<div style="padding:0 12px;">' + list.map(it => {
     const box = state.boxes.find(b => b.id === it.boxId);
-    const shelf = box ? state.shelves.find(s => s.id === box.shelfId) : null;
-    const loc = box ? formatLocation(box, shelf) : '—';
+    const shelf = box ? state.shelves.find(s => s.id === box.shelfId) : (it.shelfId ? state.shelves.find(s => s.id === it.shelfId) : null);
+    const loc = it.locationType === 'shelf' && shelf
+      ? `${shelf.name}${it.level?' · L'+it.level:''}${it.position?' · '+{left:currentLang==='fr'?'G':'L',center:'M',right:currentLang==='fr'?'D':'R'}[it.position]:''}`
+      : box ? (box.name + (shelf?' · '+shelf.name:'')) : '—';
     const thumb = (it.photos && it.photos[0]) || (box && box.photo) || '';
+    const matCat = findMatCat(it.materialCategoryId);
+    const catIconHtml = matCat
+      ? (matCat.customIcon
+          ? `<img src="${matCat.customIcon}" style="width:14px;height:14px;border-radius:3px;object-fit:cover;vertical-align:middle;margin-right:3px;">`
+          : `<span style="margin-right:3px;">${matCat.icon||''}</span>`)
+      : '';
+    const catLabel = matCat ? `<span style="font-size:10px;color:var(--text-faint);">${catIconHtml}${escapeHtml(matCatName(matCat))}</span>` : '';
+    const placedBadge = it.placed ? `<span style="font-size:10px;background:#edfaf5;color:#0f8c6b;border:0.5px solid #b0e0d0;border-radius:8px;padding:1px 6px;margin-left:4px;">✅ ${currentLang==='fr'?'Placé':'Geplaatst'}</span>` : '';
     return `<div class="browse-item-card" onclick="openItemEditor('${it.id}')">
       ${thumb ? `<img class="browse-thumb" src="${thumb}">` : `<div class="browse-thumb">📦</div>`}
       <div class="browse-info">
-        <div class="browse-name">${escapeHtml(currentLang==='fr'&&it.name_fr ? it.name_fr : it.name)}${it.quantity > 1 ? ` <span style="color:var(--text-dim);font-weight:400;font-size:12px;">×${it.quantity}</span>` : ''}</div>
-        <div class="browse-loc">${loc}</div>
+        <div class="browse-name">${escapeHtml(iName(it))}${it.quantity > 1 ? ` <span style="color:var(--text-dim);font-weight:400;font-size:12px;">×${it.quantity}</span>` : ''}${placedBadge}</div>
+        <div class="browse-loc">${catLabel}${matCat&&loc?' · ':''} ${loc}</div>
       </div>
       <div class="browse-right">›</div>
     </div>`;
@@ -2994,6 +3013,25 @@ function performSearch() {}  // legacy search bar gone
 // ============================================================================
 // DEFAULT CATEGORIES (used if none in DB yet)
 // ============================================================================
+const DEFAULT_MATERIAL_CATEGORIES = [
+  { id: 'mcat_tools',     name_nl: 'Gereedschap',          name_fr: 'Outillage',            icon: '🔧', order: 1,  security: false },
+  { id: 'mcat_elec',      name_nl: 'Elektriciteit',        name_fr: 'Électricité',          icon: '🪛', order: 2,  security: false },
+  { id: 'mcat_wood',      name_nl: 'Hout & Bouw',          name_fr: 'Bois & Construction',  icon: '🪚', order: 3,  security: false },
+  { id: 'mcat_paint',     name_nl: 'Verf & Afwerking',     name_fr: 'Peinture & Finition',  icon: '🎨', order: 4,  security: false },
+  { id: 'mcat_garden',    name_nl: 'Tuin',                 name_fr: 'Jardin',               icon: '🌱', order: 5,  security: false },
+  { id: 'mcat_plumb',     name_nl: 'Loodgieterij',         name_fr: 'Plomberie',            icon: '💧', order: 6,  security: false },
+  { id: 'mcat_clean',     name_nl: 'Reiniging',            name_fr: 'Nettoyage',            icon: '🧹', order: 7,  security: false },
+  { id: 'mcat_storage',   name_nl: 'Opslag & Organisatie', name_fr: 'Rangement',            icon: '📦', order: 8,  security: false },
+  { id: 'mcat_security',  name_nl: 'Veiligheid',           name_fr: 'Sécurité',             icon: '🔒', order: 9,  security: true  },
+  { id: 'mcat_pool',      name_nl: 'Zwembad',              name_fr: 'Piscine',              icon: '🏊', order: 10, security: false },
+  { id: 'mcat_elecdev',   name_nl: 'Elektronica',          name_fr: 'Électronique',         icon: '🎮', order: 11, security: false },
+  { id: 'mcat_auto',      name_nl: 'Auto onderhoud',       name_fr: 'Entretien auto',       icon: '🚗', order: 12, security: false },
+  { id: 'mcat_domotica',  name_nl: 'Domotica',             name_fr: 'Domotique',            icon: '🏠', order: 13, security: false },
+  { id: 'mcat_sport',     name_nl: 'Fietsen & Sport',      name_fr: 'Vélos & Sport',        icon: '🚲', order: 14, security: false },
+  { id: 'mcat_seasonal',  name_nl: 'Seizoensgebonden',     name_fr: 'Saisonnier',           icon: '✈️', order: 15, security: false },
+  { id: 'mcat_ladder',    name_nl: 'Ladders & Steigers',   name_fr: 'Échelles & Échafaudages', icon: '🪜', order: 16, security: false },
+];
+
 const DEFAULT_CATEGORIES = [
   { id: 'cat_hygiene',    name_nl: 'Hygiëne',            name_fr: 'Hygiène',              icon: '🧴', order: 1,  fridge_days: null, freezer_months: null },
   { id: 'cat_food',       name_nl: 'Voeding',             name_fr: 'Alimentation',         icon: '🥫', order: 2,  fridge_days: 7,    freezer_months: 6  },
@@ -3056,7 +3094,7 @@ const DEFAULT_SHOPS = [
 // INDEXEDDB
 // ============================================================================
 const DB_NAME = 'GarageOrgDB';
-const DB_VERSION = 7;
+const DB_VERSION = 8;
 let db = null;
 
 function openDB() {
@@ -3077,8 +3115,7 @@ function openDB() {
       db.onerror = (e) => {
         console.error('IndexedDB runtime error:', e.target.error);
       };
-      // Verify all required stores exist
-      const required = ['shelves','boxes','items','stockItems','categories','units','stockNames','shops'];
+      const required = ['shelves','boxes','items','stockItems','categories','units','stockNames','shops','materialCategories'];
       const missing = required.filter(s => !db.objectStoreNames.contains(s));
       if (missing.length > 0) {
         console.error('Missing stores:', missing);
@@ -3098,6 +3135,7 @@ function openDB() {
         if (!d.objectStoreNames.contains('units')) d.createObjectStore('units', { keyPath: 'id' });
         if (!d.objectStoreNames.contains('stockNames')) d.createObjectStore('stockNames', { keyPath: 'name' });
         if (!d.objectStoreNames.contains('shops')) d.createObjectStore('shops', { keyPath: 'id' });
+        if (!d.objectStoreNames.contains('materialCategories')) d.createObjectStore('materialCategories', { keyPath: 'id' });
       } catch (err) {
         console.error('Upgrade error:', err);
       }
@@ -3159,7 +3197,7 @@ function dbClear(store) {
 }
 
 // State
-let state = { shelves: [], boxes: [], items: [], stockItems: [], categories: [], units: [], stockNames: [], shops: [] };
+let state = { shelves: [], boxes: [], items: [], stockItems: [], categories: [], units: [], stockNames: [], shops: [], materialCategories: [] };
 
 async function loadState() {
   state.shelves = await dbAll('shelves');
@@ -3170,6 +3208,24 @@ async function loadState() {
   state.units = await dbAll('units');
   state.stockNames = await dbAll('stockNames');
   state.shops = await dbAll('shops');
+  state.materialCategories = await dbAll('materialCategories');
+
+  // ── Seed material categories if missing ─────────────────
+  for (const c of DEFAULT_MATERIAL_CATEGORIES) {
+    const existing = state.materialCategories.find(x => x.id === c.id);
+    if (!existing) {
+      await dbPut('materialCategories', c);
+      state.materialCategories.push(c);
+    } else {
+      // Update names/icon if changed in defaults (but keep custom icon if set)
+      let changed = false;
+      if (existing.name_nl !== c.name_nl) { existing.name_nl = c.name_nl; changed = true; }
+      if (!existing.name_fr && c.name_fr) { existing.name_fr = c.name_fr; changed = true; }
+      if (existing.security === undefined) { existing.security = c.security; changed = true; }
+      if (changed) await dbPut('materialCategories', existing);
+    }
+  }
+  state.materialCategories.sort((a,b) => (a.order||999) - (b.order||999));
 
   // ── Migratie: subtype wissen bij niet-melk items ────────
   let subtypeFixed = 0;
@@ -3627,6 +3683,150 @@ Réponds en français. Sois pratique.`;
     );
   }
 }
+// ============================================================================
+// MATERIAAL CATEGORIE MANAGER
+// ============================================================================
+function openMaterialCategoryManager() {
+  const nl = currentLang === 'nl';
+  const rows = state.materialCategories.map(c => {
+    const name = matCatName(c);
+    const iconHtml = c.customIcon
+      ? `<img src="${c.customIcon}" style="width:24px;height:24px;border-radius:6px;object-fit:cover;">`
+      : `<span style="font-size:20px;">${c.icon||'📦'}</span>`;
+    return `<div class="cat-row">
+      <div style="width:32px;text-align:center;flex-shrink:0;">${iconHtml}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:13px;">${escapeHtml(name)}</div>
+        ${c.security ? `<div style="font-size:10px;color:#e05a2b;font-family:'JetBrains Mono';">🔒 ${nl?'Veiligheid — Geplaatst veld actief':'Sécurité — Champ Placé actif'}</div>` : ''}
+      </div>
+      <div class="cat-actions">
+        <button class="cat-action-btn" onclick="editMaterialCategory('${c.id}')">✏️</button>
+        ${!DEFAULT_MATERIAL_CATEGORIES.find(d=>d.id===c.id) ? `<button class="cat-action-btn" onclick="deleteMaterialCategory('${c.id}')">🗑️</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  openModal(
+    nl ? '🔧 Materiaal categorieën' : '🔧 Catégories matériel',
+    `${rows || `<div class="empty"><div class="empty-text">—</div></div>`}
+     <button class="btn" style="margin-top:14px;" onclick="editMaterialCategory(null)">
+       ＋ ${nl?'Nieuwe categorie':'Nouvelle catégorie'}
+     </button>`
+  );
+}
+
+let editingMatCatIcon = '';
+let editingMatCatIsCustomIcon = false;
+
+function editMaterialCategory(catId) {
+  const cat = catId ? state.materialCategories.find(c => c.id === catId) : null;
+  const nl = currentLang === 'nl';
+  editingMatCatIcon = cat?.customIcon || '';
+  editingMatCatIsCustomIcon = !!cat?.customIcon;
+  openModal(
+    cat ? `✏️ ${escapeHtml(matCatName(cat))}` : (nl?'➕ Nieuwe categorie':'➕ Nouvelle catégorie'),
+    `<div class="form-group">
+      <label class="form-label">${nl?'Naam NL':'Nom NL'}</label>
+      <input type="text" class="form-input" id="mcat-name-nl" value="${escapeHtml(cat?.name_nl||'')}" placeholder="${nl?'bv. Gereedschap':'p.ex. Outillage'}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">${nl?'Naam FR':'Nom FR'}</label>
+      <input type="text" class="form-input" id="mcat-name-fr" value="${escapeHtml(cat?.name_fr||'')}" placeholder="p.ex. Outillage">
+    </div>
+    <div class="form-group">
+      <label class="form-label">${nl?'Icoon':'Icône'}</label>
+      <div style="background:var(--surface-2);border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div style="font-size:11px;font-weight:600;color:var(--text-dim);">Emoji:</div>
+          <input type="text" class="form-input" id="mcat-icon-emoji" value="${cat?.customIcon?'':(cat?.icon||'📦')}" maxlength="4" style="width:60px;font-size:20px;text-align:center;" placeholder="📦">
+        </div>
+        <div style="font-size:11px;color:var(--text-faint);text-align:center;">— ${nl?'of':'ou'} —</div>
+        <div style="font-size:11px;font-weight:600;color:var(--text-dim);">${nl?'Eigen afbeelding:':'Image personnalisée :'}</div>
+        <div id="mcat-icon-preview" style="display:flex;align-items:center;gap:8px;">
+          ${cat?.customIcon ? `<img src="${cat.customIcon}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">` : ''}
+          <button type="button" class="btn btn-secondary btn-small" onclick="document.getElementById('mcat-icon-file').click()">
+            📁 ${nl?'Afbeelding kiezen':'Choisir image'}
+          </button>
+          ${cat?.customIcon ? `<button type="button" class="btn btn-secondary btn-small" onclick="clearMatCatCustomIcon()">✕ ${nl?'Verwijder':'Supprimer'}</button>` : ''}
+          <input type="file" id="mcat-icon-file" accept="image/*" style="display:none;" onchange="loadMatCatCustomIcon(event)">
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="mcat-security" ${cat?.security?'checked':''} style="width:18px;height:18px;accent-color:var(--accent);">
+        <span>🔒 ${nl?'"Geplaatst" veld activeren':'"Placé" activer pour cette catégorie'}</span>
+      </label>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="openMaterialCategoryManager()">${t('cancel')}</button>
+      <button class="btn" onclick="saveMaterialCategory('${cat?.id||''}')">${t('save')}</button>
+    </div>`
+  );
+}
+
+async function loadMatCatCustomIcon(e) {
+  const file = e.target.files[0]; if (!file) return;
+  editingMatCatIcon = await fileToCompressedDataURL(file);
+  editingMatCatIsCustomIcon = true;
+  const nl = currentLang === 'nl';
+  const preview = document.getElementById('mcat-icon-preview');
+  if (preview) preview.innerHTML = `
+    <img src="${editingMatCatIcon}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">
+    <button type="button" class="btn btn-secondary btn-small" onclick="document.getElementById('mcat-icon-file').click()">📁 ${nl?'Wijzigen':'Changer'}</button>
+    <button type="button" class="btn btn-secondary btn-small" onclick="clearMatCatCustomIcon()">✕</button>
+    <input type="file" id="mcat-icon-file" accept="image/*" style="display:none;" onchange="loadMatCatCustomIcon(event)">`;
+}
+
+function clearMatCatCustomIcon() {
+  editingMatCatIcon = ''; editingMatCatIsCustomIcon = false;
+  const nl = currentLang === 'nl';
+  const preview = document.getElementById('mcat-icon-preview');
+  if (preview) preview.innerHTML = `
+    <button type="button" class="btn btn-secondary btn-small" onclick="document.getElementById('mcat-icon-file').click()">📁 ${nl?'Afbeelding kiezen':'Choisir image'}</button>
+    <input type="file" id="mcat-icon-file" accept="image/*" style="display:none;" onchange="loadMatCatCustomIcon(event)">`;
+}
+
+async function saveMaterialCategory(id) {
+  const nl = currentLang === 'nl';
+  const nameNl = document.getElementById('mcat-name-nl')?.value.trim();
+  const nameFr = document.getElementById('mcat-name-fr')?.value.trim();
+  if (!nameNl) { toast(nl?'Geef een NL naam in':'Saisissez un nom NL'); return; }
+  const emojiVal = document.getElementById('mcat-icon-emoji')?.value.trim();
+  const security = document.getElementById('mcat-security')?.checked || false;
+  let cat = id ? state.materialCategories.find(c => c.id === id) : null;
+  if (!cat) {
+    cat = { id: uid(), order: state.materialCategories.length + 1 };
+    state.materialCategories.push(cat);
+  }
+  cat.name_nl = nameNl;
+  cat.name_fr = nameFr || nameNl;
+  cat.security = security;
+  if (editingMatCatIsCustomIcon && editingMatCatIcon) {
+    cat.customIcon = editingMatCatIcon;
+    cat.icon = null;
+  } else {
+    cat.customIcon = null;
+    cat.icon = emojiVal || '📦';
+  }
+  await dbPut('materialCategories', cat);
+  markSyncDirty();
+  buildMatCategoryFilter();
+  toast(nl?'✓ Categorie opgeslagen':'✓ Catégorie sauvegardée');
+  openMaterialCategoryManager();
+}
+
+async function deleteMaterialCategory(id) {
+  const nl = currentLang === 'nl';
+  if (!confirm(nl?'Categorie verwijderen? Items verliezen hun categorie.':'Supprimer? Les articles perdront leur catégorie.')) return;
+  for (const it of state.items.filter(i => i.materialCategoryId === id)) {
+    it.materialCategoryId = null; await dbPut('items', it);
+  }
+  await dbDelete('materialCategories', id);
+  state.materialCategories = state.materialCategories.filter(c => c.id !== id);
+  markSyncDirty(); buildMatCategoryFilter();
+  openMaterialCategoryManager();
+}
+
 async function fixAndPushCategories() {
   const nl = currentLang === 'nl';
   // Stap 1: Wis alle categorieën lokaal
@@ -4569,6 +4769,26 @@ function openItemEditor(itemId, preselectBoxId) {
       </div>
     </div>
     <div class="form-group">
+      <label class="form-label">${currentLang==='fr'?'Catégorie':'Categorie'}</label>
+      <div style="display:flex;gap:6px;">
+        <select class="form-select" id="item-matcat" onchange="checkItemSecurityCat(this.value)" style="flex:1;">
+          <option value="">— ${currentLang==='fr'?'Choisir':'Kies'} —</option>
+          ${state.materialCategories.map(c => {
+            const icon = c.customIcon ? `<img>` : (c.icon||'📦');
+            const name = currentLang==='fr' ? (c.name_fr||c.name_nl) : c.name_nl;
+            return `<option value="${c.id}" ${item?.materialCategoryId===c.id?'selected':''}>${c.icon||''} ${escapeHtml(name)}</option>`;
+          }).join('')}
+        </select>
+        <button class="icon-btn" onclick="openMaterialCategoryManager()" title="${currentLang==='fr'?'Gérer catégories':'Categorieën beheren'}" style="font-size:14px;">⚙️</button>
+      </div>
+    </div>
+    <div class="form-group" id="item-placed-group" style="display:${isMaterialSecurityCat(item?.materialCategoryId)?'block':'none'};">
+      <label class="form-label" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="item-placed" ${item?.placed?'checked':''} style="width:18px;height:18px;accent-color:var(--accent);">
+        <span>🔒 ${currentLang==='fr'?'Placé / Installé':'Geplaatst / Geïnstalleerd'}</span>
+      </label>
+    </div>
+    <div class="form-group">
       <label class="form-label">${t('photos')} (${t('optional')})</label>
       <div class="photo-upload" id="item-photo-area"></div>
     </div>
@@ -4622,6 +4842,10 @@ async function saveItem(id) {
   item.name = name;
   item.name_fr = document.getElementById('item-name-fr')?.value.trim() || item.name_fr || '';
   item.quantity = parseInt(document.getElementById('item-qty').value) || 1;
+  item.materialCategoryId = document.getElementById('item-matcat')?.value || null;
+  item.placed = isMaterialSecurityCat(item.materialCategoryId)
+    ? (document.getElementById('item-placed')?.checked || false)
+    : false;
   // Locatie
   const locPill = document.querySelector('.type-pill[data-itype].active');
   item.locationType = locPill ? locPill.dataset.itype : 'box';
@@ -4930,6 +5154,26 @@ function setHelpLang(lang) {
   document.getElementById('help-content-fr').style.display = lang === 'fr' ? 'block' : 'none';
   document.getElementById('help-lang-nl')?.classList.toggle('active', lang === 'nl');
   document.getElementById('help-lang-fr')?.classList.toggle('active', lang === 'fr');
+}
+
+function isMaterialSecurityCat(catId) {
+  if (!catId) return false;
+  const cat = state.materialCategories.find(c => c.id === catId);
+  return cat?.security === true;
+}
+
+function checkItemSecurityCat(catId) {
+  const group = document.getElementById('item-placed-group');
+  if (group) group.style.display = isMaterialSecurityCat(catId) ? 'block' : 'none';
+}
+
+function matCatName(c) {
+  if (!c) return '?';
+  return currentLang === 'fr' ? (c.name_fr || c.name_nl || '?') : (c.name_nl || '?');
+}
+
+function findMatCat(id) {
+  return state.materialCategories.find(c => c.id === id) || null;
 }
 
 function selectItemLocType(btn, type) {
@@ -6090,7 +6334,8 @@ async function exportData() {
     categories: state.categories,
     units: state.units,
     stockNames: state.stockNames,
-    shops: state.shops
+    shops: state.shops,
+    materialCategories: state.materialCategories
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -6132,7 +6377,7 @@ async function confirmReset() {
   await dbClear('shelves'); await dbClear('boxes'); await dbClear('items');
   await dbClear('stockItems'); await dbClear('categories');
   await dbClear('units'); await dbClear('stockNames'); await dbClear('shops');
-  state = { shelves: [], boxes: [], items: [], stockItems: [], categories: [], units: [], stockNames: [], shops: [] };
+  state = { shelves: [], boxes: [], items: [], stockItems: [], categories: [], units: [], stockNames: [], shops: [], materialCategories: [] };
   for (const c of DEFAULT_CATEGORIES) { await dbPut('categories', c); state.categories.push(c); }
   for (const u of DEFAULT_UNITS) { await dbPut('units', u); state.units.push(u); }
   for (const s of DEFAULT_SHOPS) { await dbPut('shops', s); state.shops.push(s); }
@@ -6779,9 +7024,12 @@ function dbShowMode(mode) {
   if (el) el.textContent = subtitles[mode];
 
   // Build filters
+  const matCatFilters = [{id:'all',nl:'Alles',fr:'Tout'}, ...state.materialCategories.map(c => ({
+    id: c.id, nl: c.name_nl, fr: c.name_fr||c.name_nl
+  }))];
   const filterDefs = {
     stock: [{id:'all',nl:'Alles',fr:'Tout'},{id:'low',nl:'Laag',fr:'Bas'},{id:'empty',nl:'Op',fr:'Épuisé'}],
-    material: [{id:'all',nl:'Alles',fr:'Tout'}],
+    material: matCatFilters,
     freezer: [{id:'all',nl:'Alles',fr:'Tout'},{id:'old',nl:'⚠️ Te lang',fr:'⚠️ Trop long'}],
     fridge: [{id:'all',nl:'Alles',fr:'Tout'},{id:'old',nl:'⚠️ Te lang',fr:'⚠️ Trop long'}],
     freezer_kitchen: [{id:'all',nl:'Alles',fr:'Tout'},{id:'old',nl:'⚠️ Te lang',fr:'⚠️ Trop long'}],
@@ -6840,8 +7088,12 @@ function dbRender() {
     el('db-stat-empty', all.filter(i=>(i.quantity||0)===0).length);
   } else if (dbMode === 'material') {
     list = state.items;
-    if (q) list = list.filter(i => i.name.toLowerCase().includes(q));
-    list = [...list].sort((a,b) => a.name.localeCompare(b.name, nl?'nl':'fr'));
+    if (q) list = list.filter(i => {
+      const matCat = findMatCat(i.materialCategoryId);
+      return iName(i).toLowerCase().includes(q) || matCatName(matCat).toLowerCase().includes(q);
+    });
+    if (dbFilter && dbFilter !== 'all') list = list.filter(i => i.materialCategoryId === dbFilter);
+    list = [...list].sort((a,b) => iName(a).localeCompare(iName(b), nl?'nl':'fr'));
   } else if (dbMode === 'freezer') {
     list = state.stockItems.filter(i => i.storageLocation === 'freezer');
     if (q) list = list.filter(i => iName(i).toLowerCase().includes(q));
@@ -6966,7 +7218,20 @@ function dbCardHTML(it, nl) {
         : `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${shop.color||'#737373'};margin-right:4px;vertical-align:middle;"></span>`)
     : '';
 
-  const hasButtons = dbMode === 'stock' || dbMode === 'freezer' || dbMode === 'fridge' || dbMode === 'freezer_kitchen';
+  // Material category + placed badge
+  let matCatHtml = '';
+  if (dbMode === 'material') {
+    const matCat = findMatCat(it.materialCategoryId);
+    if (matCat) {
+      const iconH = matCat.customIcon
+        ? `<img src="${matCat.customIcon}" style="width:12px;height:12px;border-radius:3px;object-fit:cover;vertical-align:middle;margin-right:2px;">`
+        : `${matCat.icon||''}`;
+      matCatHtml = `<div style="font-size:10px;color:var(--text-faint);margin-top:2px;">${iconH} ${escapeHtml(matCatName(matCat))}</div>`;
+    }
+    if (it.placed) {
+      matCatHtml += `<div style="font-size:10px;color:#0f8c6b;font-weight:600;">✅ ${nl?'Geplaatst':'Placé'}</div>`;
+    }
+  }
 
   return `<div class="db-card" style="box-shadow:0 4px 0 ${isEmpty?'#d4a0a0':isLow?'#d4b870':isTooLong?'#d4b870':'#c8c4bc'},0 6px 16px ${shadow},0 12px 32px rgba(0,0,0,0.06);">
     <div class="db-card-bar ${barClass}"></div>
@@ -6976,6 +7241,7 @@ function dbCardHTML(it, nl) {
         <div style="flex:1;min-width:0;padding-top:2px;">
           <div class="db-card-name">${shopLogoHtml}${escapeHtml(iName(it))}${it.subtype?` · ${escapeHtml(it.subtype)}`:''}</div>
           <div class="db-card-loc">${loc}</div>
+          ${matCatHtml}
         </div>
       </div>
       <div class="db-card-qty">
@@ -6984,7 +7250,7 @@ function dbCardHTML(it, nl) {
         ${min>0?`<span class="db-card-min">min ${min}</span>`:''}
       </div>
       ${freezeHtml}
-      ${hasButtons
+      ${(dbMode === 'stock' || dbMode === 'freezer' || dbMode === 'fridge' || dbMode === 'freezer_kitchen')
         ? `<div class="db-card-btns">
             <button class="db-btn db-btn-minus" onclick="dbAdjust('${it.id}',-1)">−</button>
             <button class="db-btn db-btn-plus" onclick="dbAdjust('${it.id}',1)">+</button>
@@ -7458,7 +7724,7 @@ async function importDataObj(data) {
   await dbClear('shelves'); await dbClear('boxes'); await dbClear('items');
   await dbClear('stockItems'); await dbClear('categories');
   await dbClear('units'); await dbClear('stockNames'); await dbClear('shops');
-  state = { shelves:[], boxes:[], items:[], stockItems:[], categories:[], units:[], stockNames:[], shops:[] };
+  state = { shelves:[], boxes:[], items:[], stockItems:[], categories:[], units:[], stockNames:[], shops:[], materialCategories:[] };
   for (const s of (data.shelves||[])) { await dbPut('shelves',s); state.shelves.push(s); }
   for (const b of (data.boxes||[])) { await dbPut('boxes',b); state.boxes.push(b); }
   for (const i of (data.items||[])) { await dbPut('items',i); state.items.push(i); }
@@ -7490,7 +7756,10 @@ async function importDataObj(data) {
   for (const u of (data.units?.length?data.units:DEFAULT_UNITS)) { await dbPut('units',u); state.units.push(u); }
   for (const n of (data.stockNames||[])) { await dbPut('stockNames',n); state.stockNames.push(n); }
   for (const s of (data.shops?.length?data.shops:DEFAULT_SHOPS)) { await dbPut('shops',s); state.shops.push(s); }
-  state.categories.sort((a,b)=>(a.order||999)-(b.order||999));
+  // materialCategories
+  const matCats = data.materialCategories?.length ? data.materialCategories : DEFAULT_MATERIAL_CATEGORIES;
+  for (const c of matCats) { await dbPut('materialCategories',c); state.materialCategories.push(c); }
+  state.materialCategories.sort((a,b)=>(a.order||999)-(b.order||999));
   state.units.sort((a,b)=>a.label.localeCompare(b.label,'nl'));
   render();
 }
