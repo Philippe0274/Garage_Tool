@@ -7224,14 +7224,15 @@ function dbCardHTML(it, nl) {
 
   const cat = findCat(it.categoryId);
 
-  // Foto: item foto > box foto (materiaal) > categorie icoon
+  // Foto: item foto > box foto (materiaal) > categorie foto/icoon
   let photoHtml = '';
   const photo = it.photos?.[0] || null;
   const boxPhoto = (dbMode==='material') ? (state.boxes.find(b => b.id === it.boxId)?.photo || null) : null;
+  const catCustomIcon = (dbMode!=='material' && cat?.customIcon) ? cat.customIcon : null;
   const fallbackIcon = (dbMode==='material') ? '📦' : (cat?.icon || '📦');
 
-  if (photo || boxPhoto) {
-    const src = photo || boxPhoto;
+  if (photo || boxPhoto || catCustomIcon) {
+    const src = photo || boxPhoto || catCustomIcon;
     photoHtml = `<img src="${src}" style="
       width:46px; height:46px; border-radius:13px;
       object-fit:cover; flex-shrink:0;
@@ -7288,7 +7289,7 @@ function dbCardHTML(it, nl) {
         : `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${shop.color||'#737373'};margin-right:4px;vertical-align:middle;"></span>`)
     : '';
 
-  // Material category + placed badge
+  // Category + placed badge
   let matCatHtml = '';
   if (dbMode === 'material') {
     const matCat = findMatCat(it.materialCategoryId);
@@ -7300,6 +7301,14 @@ function dbCardHTML(it, nl) {
     }
     if (it.placed) {
       matCatHtml += `<div style="font-size:10px;color:#0f8c6b;font-weight:600;">✅ ${nl?'Geplaatst':'Placé'}</div>`;
+    }
+  } else if (dbMode === 'stock' || dbMode === 'fridge' || dbMode === 'freezer' || dbMode === 'freezer_kitchen') {
+    const stockCat = findCat(it.categoryId);
+    if (stockCat) {
+      const iconH = stockCat.customIcon
+        ? `<img src="${stockCat.customIcon}" style="width:12px;height:12px;border-radius:3px;object-fit:cover;vertical-align:middle;margin-right:2px;">`
+        : `${stockCat.icon||''}`;
+      matCatHtml = `<div style="font-size:10px;color:var(--text-faint);margin-top:2px;">${iconH} ${escapeHtml(catName(stockCat))}</div>`;
     }
   }
 
