@@ -2677,7 +2677,7 @@ function buildBrowseCatFilter() {
   if (!c) return;
   let html = '';
   state.categories.forEach(cat => {
-    html += `<button class="fchip" onclick="filterBrowseCat('${cat.id}',this)">${cat.icon||''} ${escapeHtml(catName(cat))}</button>`;
+    html += `<button class="fchip" onclick="filterBrowseCat('${cat.id}',this)">${catIconHtml(cat,14)} ${escapeHtml(catName(cat))}</button>`;
   });
   html += `<button class="cat-manage-btn" onclick="openCategoryManager()">⚙️</button>`;
   c.innerHTML = html;
@@ -3324,6 +3324,16 @@ async function forgetStockName(name) {
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const catName = (cat) => cat ? (cat[`name_${currentLang}`] || cat.name_nl || cat.name || '?') : '?';
+
+// Toont categorie-icoon: foto (customIcon) of emoji
+function catIconHtml(cat, size) {
+  const s = size || 16;
+  if (!cat) return '📦';
+  if (cat.customIcon) {
+    return `<img src="${cat.customIcon}" style="width:${s}px;height:${s}px;border-radius:4px;object-fit:cover;vertical-align:middle;">`;
+  }
+  return cat.icon || '📦';
+}
 // Taalafhankelijke naam voor items en stockItems
 const iName = (it) => it ? (currentLang==='fr' && it.name_fr ? it.name_fr : it.name || '?') : '?';
 const findCat = (id) => state.categories.find(c => c.id === id);
@@ -4150,7 +4160,7 @@ function renderStockRow(it) {
   return `<div class="${rowClass.join(' ')}">
     ${it.photos?.[0]
       ? `<img class="stock-thumb" src="${it.photos[0]}" onclick="openStockEditor('${it.id}')">`
-      : `<div class="stock-thumb" onclick="openStockEditor('${it.id}')">${cat?.icon || '🥫'}</div>`}
+      : `<div class="stock-thumb" onclick="openStockEditor('${it.id}')">${cat?.customIcon ? `<img src="${cat.customIcon}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">` : (cat?.icon || '🥫')}</div>`}
     <div class="stock-info" onclick="openStockEditor('${it.id}')">
       <div class="stock-name">${shopDot}${escapeHtml(iName(it))}${it.subtype ? ` <span style="font-size:11px;color:var(--mode-accent);font-family:'JetBrains Mono';">· ${escapeHtml(it.subtype)}</span>` : ''}</div>
       <div class="stock-meta">${metaParts.join(' · ')}</div>
@@ -5714,7 +5724,7 @@ function guessIcon(name) {
 function openCategoryManager() {
   const rows = state.categories.map(c => `
     <div class="cat-row">
-      <span class="cat-icon">${c.icon || '📦'}</span>
+      <span class="cat-icon">${catIconHtml(c, 22)}</span>
       <span class="cat-name">${escapeHtml(catName(c))}</span>
       <div class="cat-actions">
         <button class="cat-action-btn" onclick="editCategory('${c.id}')">✏️</button>
@@ -5814,12 +5824,25 @@ function editCategory(catId) {
   const isNew = !cat;
   const nl = currentLang === 'nl';
   window._catIconManuallySet = !isNew && cat?.icon && cat.icon !== '📦';
+  editingStockCatIcon = cat?.customIcon || '';
+  editingStockCatIsCustom = !!cat?.customIcon;
   openModal(cat ? `✏️ ${escapeHtml(catName(cat))}` : t('add_category'), `
     <div class="form-group">
       <label class="form-label">${t('cat_icon')}</label>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="text" class="form-input" id="cat-icon-input" value="${cat?.icon || '📦'}" maxlength="4" style="font-size:24px;text-align:center;width:80px;flex:0 0 80px;" oninput="window._catIconManuallySet=true">
-        <button class="btn btn-secondary btn-small" style="margin:0;flex:1;" onclick="autoPickIcon()">🪄 ${nl ? 'Auto-icoon' : 'Icône auto'}</button>
+      <div style="background:var(--surface-2);border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" class="form-input" id="cat-icon-input" value="${cat?.customIcon?'':(cat?.icon || '📦')}" maxlength="4" style="font-size:24px;text-align:center;width:70px;flex:0 0 70px;" oninput="window._catIconManuallySet=true">
+          <button class="btn btn-secondary btn-small" style="margin:0;flex:1;" onclick="autoPickIcon()">🪄 ${nl ? 'Auto-emoji' : 'Auto-emoji'}</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-faint);text-align:center;">— ${nl?'of':'ou'} —</div>
+        <div id="cat-icon-preview" style="display:flex;align-items:center;gap:8px;">
+          ${cat?.customIcon ? `<img src="${cat.customIcon}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">` : ''}
+          <button type="button" class="btn btn-secondary btn-small" onclick="document.getElementById('cat-icon-file').click()">
+            📁 ${nl?'Eigen afbeelding':'Image perso'}
+          </button>
+          ${cat?.customIcon ? `<button type="button" class="btn btn-secondary btn-small" onclick="clearStockCatCustomIcon()">✕</button>` : ''}
+          <input type="file" id="cat-icon-file" accept="image/*" style="display:none;" onchange="loadStockCatCustomIcon(event)">
+        </div>
       </div>
     </div>
     <div class="form-group">
@@ -5840,7 +5863,6 @@ function editCategory(catId) {
           <div style="display:flex;align-items:center;gap:6px;">
             <input type="number" class="form-input" id="cat-fridge-days" value="${cat?.fridge_days ?? ''}" min="1" max="365" placeholder="${nl?'bv. 7':'ex. 7'}" style="width:80px;">
             <span style="font-size:12px;color:var(--text-dim);">${nl?'dagen':'jours'}</span>
-            <span style="font-size:11px;color:var(--text-faint);">(${nl?'leeg = niet van toepassing':'vide = non applicable'})</span>
           </div>
         </div>
         <div class="form-group">
@@ -5857,6 +5879,31 @@ function editCategory(catId) {
       <button class="btn" onclick="saveCategory('${cat?.id || ''}')">${t('save')}</button>
     </div>
   `);
+}
+
+let editingStockCatIcon = '';
+let editingStockCatIsCustom = false;
+
+async function loadStockCatCustomIcon(e) {
+  const file = e.target.files[0]; if (!file) return;
+  editingStockCatIcon = await fileToCompressedDataURL(file);
+  editingStockCatIsCustom = true;
+  const nl = currentLang === 'nl';
+  const preview = document.getElementById('cat-icon-preview');
+  if (preview) preview.innerHTML = `
+    <img src="${editingStockCatIcon}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">
+    <button type="button" class="btn btn-secondary btn-small" onclick="document.getElementById('cat-icon-file').click()">📁 ${nl?'Wijzigen':'Changer'}</button>
+    <button type="button" class="btn btn-secondary btn-small" onclick="clearStockCatCustomIcon()">✕</button>
+    <input type="file" id="cat-icon-file" accept="image/*" style="display:none;" onchange="loadStockCatCustomIcon(event)">`;
+}
+
+function clearStockCatCustomIcon() {
+  editingStockCatIcon = ''; editingStockCatIsCustom = false;
+  const nl = currentLang === 'nl';
+  const preview = document.getElementById('cat-icon-preview');
+  if (preview) preview.innerHTML = `
+    <button type="button" class="btn btn-secondary btn-small" onclick="document.getElementById('cat-icon-file').click()">📁 ${nl?'Eigen afbeelding':'Image perso'}</button>
+    <input type="file" id="cat-icon-file" accept="image/*" style="display:none;" onchange="loadStockCatCustomIcon(event)">`;
 }
 
 function autoSuggestIcon(name) {
@@ -5940,9 +5987,16 @@ async function _doSaveCategory(id, nlName, frName, icon) {
       ? { id: uid(), order: (state.categories.length + 1), createdAt: Date.now() }
       : state.categories.find(c => c.id === id);
     if (!cat) { toast('DEBUG: cat-object null'); return; }
-    cat.icon = icon || '📦';
     cat.name_nl = nlName || frName;
     cat.name_fr = frName || nlName;
+    // Custom icon (foto) of emoji
+    if (editingStockCatIsCustom && editingStockCatIcon) {
+      cat.customIcon = editingStockCatIcon;
+      cat.icon = null;
+    } else {
+      cat.customIcon = null;
+      cat.icon = icon || '📦';
+    }
     const fd = document.getElementById('cat-fridge-days')?.value;
     const fm = document.getElementById('cat-freezer-months')?.value;
     cat.fridge_days = fd ? parseInt(fd) : null;
@@ -6239,7 +6293,7 @@ function openRestockMode() {
   const rows = list.map(it => {
     const cat = findCat(it.categoryId);
     return `<div class="restock-row" data-id="${it.id}">
-      ${it.photos?.[0] ? `<img class="stock-thumb" src="${it.photos[0]}">` : `<div class="stock-thumb">${cat?.icon||'🥫'}</div>`}
+      ${it.photos?.[0] ? `<img class="stock-thumb" src="${it.photos[0]}">` : `<div class="stock-thumb">${cat?.customIcon ? `<img src="${cat.customIcon}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">` : (cat?.icon||'🥫')}</div>`}
       <div class="restock-info">
         <div class="restock-name">${escapeHtml(iName(it))}</div>
         <div class="restock-meta">${it.unit ? escapeHtml(it.unit) + ' · ' : ''}min ${it.minQuantity || 0}${it.targetQuantity ? ' · ' + (currentLang==='fr'?'plein':'vol') + ' ' + it.targetQuantity : ''}</div>
@@ -7031,8 +7085,8 @@ function dbShowMode(mode) {
   if (el) el.textContent = subtitles[mode];
 
   // Build filters
-  const matCatFilters = [{id:'all',nl:'Alles',fr:'Tout'}, ...state.materialCategories.map(c => ({
-    id: c.id, nl: c.name_nl, fr: c.name_fr||c.name_nl
+  const matCatFilters = [{id:'all',nl:'Alles',fr:'Tout',icon:'',customIcon:null}, ...state.materialCategories.map(c => ({
+    id: c.id, nl: c.name_nl, fr: c.name_fr||c.name_nl, icon: c.icon, customIcon: c.customIcon
   }))];
   const filterDefs = {
     stock: [{id:'all',nl:'Alles',fr:'Tout'},{id:'low',nl:'Laag',fr:'Bas'},{id:'empty',nl:'Op',fr:'Épuisé'}],
@@ -7043,11 +7097,14 @@ function dbShowMode(mode) {
   };
   const fc = document.getElementById('db-filters');
   if (fc) {
-    fc.innerHTML = (filterDefs[mode]||[]).map(f =>
-      `<button class="db-filter-btn${f.id==='all'?' active':''}" onclick="dbSetFilter('${f.id}',this)">
-        ${nl ? f.nl : f.fr}
-      </button>`
-    ).join('');
+    fc.innerHTML = (filterDefs[mode]||[]).map(f => {
+      const iconHtml = f.customIcon
+        ? `<img src="${f.customIcon}" style="width:16px;height:16px;border-radius:3px;object-fit:cover;vertical-align:middle;margin-right:4px;">`
+        : (f.icon ? f.icon + ' ' : '');
+      return `<button class="db-filter-btn${f.id==='all'?' active':''}" onclick="dbSetFilter('${f.id}',this)">
+        ${iconHtml}${nl ? f.nl : f.fr}
+      </button>`;
+    }).join('');
   }
   dbRender();
 }
@@ -7749,7 +7806,7 @@ async function doEditorPush() {
       ...driveData,
       stockItems: mergedStockItems,
       items: mergedItems,
-      // Alle andere data (shelves, boxes, categories...) van Drive bewaren
+      materialCategories: state.materialCategories, // foto's meesturen
       syncVersion: (driveData.syncVersion || 0) + 1,
       lastModified: Date.now(),
       deviceName: deviceName || 'Editor PC',
@@ -8008,6 +8065,16 @@ function buildExportObject() {
 }
 
 async function importDataObj(data) {
+  // Bewaar lokale materialCategories customIcons VOOR de state reset
+  const savedMatCatIcons = {};
+  for (const c of state.materialCategories) {
+    if (c.customIcon) savedMatCatIcons[c.id] = c.customIcon;
+  }
+  const savedStockCatIcons = {};
+  for (const c of state.categories) {
+    if (c.customIcon) savedStockCatIcons[c.id] = c.customIcon;
+  }
+
   await dbClear('shelves'); await dbClear('boxes'); await dbClear('items');
   await dbClear('stockItems'); await dbClear('categories');
   await dbClear('units'); await dbClear('stockNames'); await dbClear('shops');
@@ -8030,6 +8097,10 @@ async function importDataObj(data) {
         (d.name_nl||'').toLowerCase() === key);
       if (def?.name_fr) c.name_fr = def.name_fr;
     }
+    // Bewaar lokale custom icon als Drive die niet heeft
+    if (!c.customIcon && savedStockCatIcons[c.id]) {
+      c.customIcon = savedStockCatIcons[c.id];
+    }
     await dbPut('categories', c);
     state.categories.push(c);
   }
@@ -8043,12 +8114,32 @@ async function importDataObj(data) {
   for (const u of (data.units?.length?data.units:DEFAULT_UNITS)) { await dbPut('units',u); state.units.push(u); }
   for (const n of (data.stockNames||[])) { await dbPut('stockNames',n); state.stockNames.push(n); }
   for (const s of (data.shops?.length?data.shops:DEFAULT_SHOPS)) { await dbPut('shops',s); state.shops.push(s); }
-  // materialCategories
-  const matCats = data.materialCategories?.length ? data.materialCategories : DEFAULT_MATERIAL_CATEGORIES;
-  for (const c of matCats) { await dbPut('materialCategories',c); state.materialCategories.push(c); }
+  // materialCategories — bewaar lokale customIcons als Drive die niet heeft
+  const matCatsFromDrive = data.materialCategories?.length ? data.materialCategories : DEFAULT_MATERIAL_CATEGORIES;
+  for (const c of matCatsFromDrive) {
+    // Als Drive geen customIcon heeft maar lokaal wel → bewaar lokale icon
+    if (!c.customIcon && savedMatCatIcons[c.id]) {
+      c.customIcon = savedMatCatIcons[c.id];
+    }
+    await dbPut('materialCategories', c);
+    state.materialCategories.push(c);
+  }
+  // Voeg lokale categorieën toe die niet in Drive zitten
+  for (const [id, icon] of Object.entries(savedMatCatIcons)) {
+    if (!state.materialCategories.find(c => c.id === id)) {
+      // Categorie bestaat lokaal maar niet in Drive — herstel vanuit DEFAULT
+      const def = DEFAULT_MATERIAL_CATEGORIES.find(d => d.id === id);
+      if (def) {
+        const restored = {...def, customIcon: icon};
+        await dbPut('materialCategories', restored);
+        state.materialCategories.push(restored);
+      }
+    }
+  }
   state.materialCategories.sort((a,b)=>(a.order||999)-(b.order||999));
   state.units.sort((a,b)=>a.label.localeCompare(b.label,'nl'));
   render();
+  buildMatCategoryFilter();
 }
 
 // ── Eerste connect ─────────────────────────────────────────
