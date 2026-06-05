@@ -4146,8 +4146,14 @@ function renderStockRow(it) {
   const counterClass = isEmpty ? 'counter-display empty' : (isLow ? 'counter-display low' : 'counter-display');
 
   const metaParts = [];
+  // Categorie met icoon vooraan (zoals bij materiaal)
+  if (cat) {
+    const ic = cat.customIcon
+      ? `<img src="${cat.customIcon}" style="width:13px;height:13px;border-radius:3px;object-fit:cover;vertical-align:middle;margin-right:3px;">`
+      : (cat.icon ? cat.icon + ' ' : '');
+    metaParts.push(`${ic}${escapeHtml(catName(cat))}`);
+  }
   if (loc) metaParts.push(loc);
-  else if (cat) metaParts.push(escapeHtml(catName(cat)));
   if (min > 0) metaParts.push(`min ${min}`);
   if (it.price) metaParts.push(`€${it.price.toFixed(2)}`);
 
