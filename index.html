@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.2.8">
-<title>Garage Bavaylei 1.2.8</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.2.9">
+<title>Garage Bavaylei 1.2.9</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.2.8.webmanifest">
+<link rel="manifest" href="manifest-1.2.9.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,8 +23,28 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
+  const APP_CODE_VERSION = '1.2.9';
+  window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
+
+  async function garageClearRuntimeCache() {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(reg => reg.unregister()));
+    }
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(key => caches.delete(key)));
+    }
+  }
+
+  window.refreshAppToLatest = async function refreshAppToLatest() {
+    localStorage.removeItem('garage_app_code_reload_version');
+    try { await garageClearRuntimeCache(); } catch (err) { console.warn('Manual cache cleanup failed:', err); }
+    const freshUrl = location.pathname + '?v=' + APP_CODE_VERSION + '&manual=' + Date.now() + location.hash;
+    location.replace(freshUrl);
+  };
+
   (async () => {
-    const APP_CODE_VERSION = '1.2.8';
     const KEY = 'garage_app_code_version';
     const RELOAD_KEY = 'garage_app_code_reload_version';
     let hash = 0;
@@ -34,14 +54,7 @@
     const previous = localStorage.getItem(KEY);
     localStorage.setItem(KEY, APP_CODE_VERSION);
     try {
-      if ('serviceWorker' in navigator) {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(regs.map(reg => reg.unregister()));
-      }
-      if ('caches' in window) {
-        const keys = await caches.keys();
-        await Promise.all(keys.map(key => caches.delete(key)));
-      }
+      await garageClearRuntimeCache();
       const alreadyReloaded = localStorage.getItem(RELOAD_KEY) === APP_CODE_VERSION;
       if (!alreadyReloaded || previous !== APP_CODE_VERSION) {
         localStorage.setItem(RELOAD_KEY, APP_CODE_VERSION);
@@ -107,6 +120,14 @@
     color:var(--mode-accent); letter-spacing:0; text-transform:none;
   }
   .top-controls { display:flex; gap:6px; align-items:center; }
+  .refresh-btn {
+    background:var(--mode-accent); border:none; color:white;
+    width:34px; height:34px; border-radius:var(--radius-sm);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:16px; font-weight:900; flex-shrink:0;
+    box-shadow:0 1px 2px rgba(0,0,0,0.12);
+  }
+  .refresh-btn:active { transform:translateY(1px); opacity:.86; }
   .lang-switch {
     display:flex; gap:2px; background:var(--surface-2);
     border-radius:20px; padding:3px;
@@ -140,6 +161,13 @@
   }
   .icon-btn:active { background:var(--surface-3); }
   .icon-btn.recording { background:var(--mode-accent); color:white; animation:pulse 1.2s infinite; }
+  .quick-delete-btn {
+    background:var(--danger-bg); border:1px solid #f0c4c4; color:var(--danger);
+    width:34px; height:34px; border-radius:var(--radius-sm);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:15px; flex-shrink:0;
+  }
+  .quick-delete-btn:active { background:#ffe0e0; }
   @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.6;} }
 
   /* CONTENT */
@@ -1286,10 +1314,11 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.2.8</span>
+      <span class="app-version">versie: 1.2.9</span>
     </div>
   </div>
   <div class="top-controls">
+    <button class="refresh-btn" onclick="refreshAppToLatest()" title="Laatste versie laden" aria-label="Laatste versie laden">↻</button>
     <div class="lang-switch">
       <button class="lang-btn active" data-lang="nl" onclick="setLang('nl')">NL</button>
       <button class="lang-btn" data-lang="fr" onclick="setLang('fr')">FR</button>
@@ -2742,6 +2771,7 @@ function renderBrowseMaterial() {
         <div class="browse-name">${escapeHtml(iName(it))}${it.quantity > 1 ? ` <span style="color:var(--text-dim);font-weight:400;font-size:12px;">×${it.quantity}</span>` : ''}${placedBadge}</div>
         <div class="browse-loc">${catLabel}${matCat&&loc?' · ':''} ${escapeHtml(loc)}</div>
       </div>
+      <button class="quick-delete-btn" onclick="event.stopPropagation();deleteItem('${it.id}')" title="${currentLang==='fr'?'Supprimer':'Verwijderen'}" aria-label="${currentLang==='fr'?'Supprimer':'Verwijderen'}">🗑</button>
       <div class="browse-right">›</div>
     </div>`;
   }).join('') + '</div>';
@@ -2875,6 +2905,7 @@ function renderBrowseLocation(locationId) {
         <div class="browse-name">${escapeHtml(iName(it))}${it.quantity > 1 ? ` <span style="color:var(--text-dim);font-weight:400;font-size:12px;">×${it.quantity}</span>` : ''}</div>
         <div class="browse-loc">🔧 ${escapeHtml(loc)}</div>
       </div>
+      <button class="quick-delete-btn" onclick="event.stopPropagation();deleteItem('${it.id}')" title="${nl?'Verwijderen':'Supprimer'}" aria-label="${nl?'Verwijderen':'Supprimer'}">🗑</button>
     </div>`;
   }).join('');
 
@@ -4353,6 +4384,7 @@ function renderStockRow(it) {
       <div class="${counterClass}" onclick="event.stopPropagation();promptSetQty('${it.id}')">${qty}<span class="stock-unit">${escapeHtml(it.unit||'')}</span></div>
       <button class="counter-btn plus" onclick="event.stopPropagation();dashboardAdjustStock('${it.id}',1)">+</button>
     </div>
+    <button class="quick-delete-btn" onclick="event.stopPropagation();deleteStock('${it.id}')" title="${currentLang==='fr'?'Supprimer':'Verwijderen'}" aria-label="${currentLang==='fr'?'Supprimer':'Verwijderen'}">🗑</button>
   </div>`;
 }
 
@@ -5092,9 +5124,14 @@ async function deleteItem(id) {
   await dbDelete('items', id);
   state.items = state.items.filter(i => i.id !== id);
   closeModal();
-  showView('material');
-  renderShelvesList('material', 'shelvesList');
-  renderBoxesList();
+  markSyncDirty();
+  if (currentView === 'browse' && currentBrowseMode) {
+    showBrowse(currentBrowseMode);
+  } else {
+    showView('material');
+    renderShelvesList('material', 'shelvesList');
+    renderBoxesList();
+  }
   render();
 }
 
@@ -5826,9 +5863,14 @@ async function deleteStock(id) {
   await dbDelete('stockItems', id);
   state.stockItems = state.stockItems.filter(i => i.id !== id);
   closeModal();
+  markSyncDirty();
   setMode('stock');
-  showView('browse');
-  showBrowse('stock');
+  if (currentView === 'browse' && currentBrowseMode) {
+    showBrowse(currentBrowseMode);
+  } else {
+    showView('browse');
+    showBrowse('stock');
+  }
   render();
 }
 
