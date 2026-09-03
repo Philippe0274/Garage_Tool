@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#f8f7f4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Garage Organizer">
-<title>Garage Organizer</title>
+<meta name="apple-mobile-web-app-title" content="Garage Organizer 1.2.3">
+<title>Garage Organizer 1.2.3</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -21,7 +21,7 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
   (async () => {
-    const APP_CODE_VERSION = '1.2.2';
+    const APP_CODE_VERSION = '1.2.3';
     const KEY = 'garage_app_code_version';
     const previous = localStorage.getItem(KEY);
     if (previous === APP_CODE_VERSION) return;
@@ -35,7 +35,7 @@
         const keys = await caches.keys();
         await Promise.all(keys.map(key => caches.delete(key)));
       }
-      if (previous && !location.search.includes('fresh=')) {
+      if (!location.search.includes('fresh=')) {
         location.replace(location.pathname + '?fresh=' + APP_CODE_VERSION + location.hash);
       }
     } catch (err) {
@@ -1276,7 +1276,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.2.2</span>
+      <span class="app-version">versie: 1.2.3</span>
     </div>
   </div>
   <div class="top-controls">
