@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.3.0">
-<title>Garage Bavaylei 1.3.0</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.3.1">
+<title>Garage Bavaylei 1.3.1</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.3.0.webmanifest">
+<link rel="manifest" href="manifest-1.3.1.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.3.0';
+  const APP_CODE_VERSION = '1.3.1';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1314,7 +1314,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.3.0</span>
+      <span class="app-version">versie: 1.3.1</span>
     </div>
   </div>
   <div class="top-controls">
@@ -3399,6 +3399,13 @@ async function loadState() {
       if (existing.name_nl !== c.name_nl) { existing.name_nl = c.name_nl; changed = true; }
       if (!existing.name_fr && c.name_fr) { existing.name_fr = c.name_fr; changed = true; }
       if (existing.security === undefined) { existing.security = c.security; changed = true; }
+      if (c.customIcon && existing.customIcon !== c.customIcon) {
+        existing.customIcon = c.customIcon;
+        existing.icon = c.icon || existing.icon;
+        changed = true;
+      }
+      if (!existing.customIcon && c.icon && existing.icon !== c.icon) { existing.icon = c.icon; changed = true; }
+      if (!existing.order && c.order) { existing.order = c.order; changed = true; }
       if (changed) await dbPut('materialCategories', existing);
     }
   }
@@ -8400,6 +8407,15 @@ async function importDataObj(data) {
   // materialCategories — bewaar lokale customIcons als Drive die niet heeft
   const matCatsFromDrive = data.materialCategories?.length ? data.materialCategories : DEFAULT_MATERIAL_CATEGORIES;
   for (const c of matCatsFromDrive) {
+    const def = DEFAULT_MATERIAL_CATEGORIES.find(d => d.id === c.id);
+    if (def) {
+      c.name_nl = def.name_nl || c.name_nl;
+      c.name_fr = def.name_fr || c.name_fr;
+      c.icon = def.icon || c.icon;
+      if (def.customIcon && !c.customIcon) c.customIcon = def.customIcon;
+      if (!c.order && def.order) c.order = def.order;
+      if (c.security === undefined) c.security = def.security;
+    }
     // Als Drive geen customIcon heeft maar lokaal wel → bewaar lokale icon
     if (!c.customIcon && savedMatCatIcons[c.id]) {
       c.customIcon = savedMatCatIcons[c.id];
