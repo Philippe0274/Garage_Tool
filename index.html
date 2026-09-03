@@ -2342,10 +2342,10 @@ function updateHomeLabels() {
   el('lbl-screen-scan', nl ? 'Scannen' : 'Scanner');
   el('lbl-material', nl ? 'Materiaal' : 'Matériel');
   el('lbl-stock', nl ? 'Voorraad' : 'Stock');
-  el('lbl-freezer', nl ? 'Vriezer' : 'Congélateur');
+  el('lbl-freezer', nl ? 'Vrieskast' : 'Congélateur');
   el('lbl-suggest-recipes', nl ? '🍳 Wat kan ik maken?' : '🍳 Que puis-je cuisiner ?');
   el('lbl-fridge', nl ? 'Ijskast' : 'Réfrigérateur');
-  el('lbl-freezer-kitchen', nl ? 'Vriezer keuken' : 'Congélateur cuisine');
+  el('lbl-freezer-kitchen', nl ? 'Oude keukenvriezer' : 'Ancien congélateur cuisine');
   el('fchip-frz-all', nl ? 'Alles' : 'Tout');
   el('fchip-frz-old', nl ? '⚠️ Te lang' : '⚠️ Trop long');
   el('fchip-fri-all', nl ? 'Alles' : 'Tout');
@@ -2641,7 +2641,7 @@ function renderBrowseMaterial() {
     list = list.filter(i => {
       const box = state.boxes.find(b => b.id === i.boxId);
       const matCat = findMatCat(i.materialCategoryId);
-      const hay = [iName(i), i.description, (i.tags||[]).join(' '), box?.name||'', matCatName(matCat)].join(' ').toLowerCase();
+      const hay = [iName(i), i.description, (i.tags||[]).join(' '), box?.name||'', matCatName(matCat), physicalLocationLabel(i.physicalLocation || box?.physicalLocation || HOME_LOCATION_ID)].join(' ').toLowerCase();
       return hay.includes(q);
     });
   }
@@ -2660,9 +2660,11 @@ function renderBrowseMaterial() {
   c.innerHTML = '<div style="padding:0 12px;">' + list.map(it => {
     const box = state.boxes.find(b => b.id === it.boxId);
     const shelf = box ? state.shelves.find(s => s.id === box.shelfId) : (it.shelfId ? state.shelves.find(s => s.id === it.shelfId) : null);
-    const loc = it.locationType === 'shelf' && shelf
+    const baseLoc = physicalLocationLabel(it.physicalLocation || box?.physicalLocation || HOME_LOCATION_ID);
+    const placeLoc = it.locationType === 'shelf' && shelf
       ? `${shelf.name}${it.level?' · L'+it.level:''}${it.position?' · '+{left:currentLang==='fr'?'G':'L',center:'M',right:currentLang==='fr'?'D':'R'}[it.position]:''}`
-      : box ? (box.name + (shelf?' · '+shelf.name:'')) : '—';
+      : box ? (box.name + (shelf?' · '+shelf.name:'')) : (it.locationType === 'free' ? (currentLang==='fr'?'Libre':'Losstaand') : '—');
+    const loc = [baseLoc, placeLoc].filter(Boolean).join(' · ');
     const thumb = (it.photos && it.photos[0]) || (box && box.photo) || '';
     const matCat = findMatCat(it.materialCategoryId);
     const catIconHtml = matCat
@@ -2676,7 +2678,7 @@ function renderBrowseMaterial() {
       ${thumb ? `<img class="browse-thumb" src="${thumb}">` : `<div class="browse-thumb">📦</div>`}
       <div class="browse-info">
         <div class="browse-name">${escapeHtml(iName(it))}${it.quantity > 1 ? ` <span style="color:var(--text-dim);font-weight:400;font-size:12px;">×${it.quantity}</span>` : ''}${placedBadge}</div>
-        <div class="browse-loc">${catLabel}${matCat&&loc?' · ':''} ${loc}</div>
+        <div class="browse-loc">${catLabel}${matCat&&loc?' · ':''} ${escapeHtml(loc)}</div>
       </div>
       <div class="browse-right">›</div>
     </div>`;
@@ -3338,6 +3340,38 @@ async function forgetStockName(name) {
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const catName = (cat) => cat ? (cat[`name_${currentLang}`] || cat.name_nl || cat.name || '?') : '?';
+const HOME_LOCATION_ID = 'bavaylei';
+const PHYSICAL_LOCATIONS = [
+  { id: 'bavaylei', nl: 'De Bavaylei', fr: 'De Bavaylei', icon: '🏠' },
+  { id: 'vestenstraat', nl: 'Vestenstraat 4', fr: 'Vestenstraat 4', icon: '📍' },
+  { id: 'pending', nl: 'Nog te bepalen', fr: 'À déterminer', icon: '❔' }
+];
+
+function physicalLocationLabel(id) {
+  const loc = PHYSICAL_LOCATIONS.find(l => l.id === id) || PHYSICAL_LOCATIONS.find(l => l.id === HOME_LOCATION_ID);
+  if (!loc) return '';
+  return `${loc.icon} ${currentLang === 'fr' ? loc.fr : loc.nl}`;
+}
+
+function physicalLocationOptions(selected) {
+  const val = selected || HOME_LOCATION_ID;
+  return PHYSICAL_LOCATIONS.map(loc =>
+    `<option value="${loc.id}" ${val === loc.id ? 'selected' : ''}>${loc.icon} ${escapeHtml(currentLang === 'fr' ? loc.fr : loc.nl)}</option>`
+  ).join('');
+}
+
+function stockStorageLabel(loc) {
+  const labels = {
+    shelf: currentLang === 'fr' ? 'Stock / étagère' : 'Voorraad / rek',
+    freezer: currentLang === 'fr' ? 'Congélateur' : 'Vrieskast',
+    fridge: currentLang === 'fr' ? 'Cuisine - réfrigérateur' : 'Keuken - ijskast',
+    freezer_kitchen: currentLang === 'fr' ? 'Ancien congélateur cuisine' : 'Oude keukenvriezer',
+    box: 'Box',
+    vestenstraat: 'Vestenstraat 4',
+    pending: currentLang === 'fr' ? 'À déterminer' : 'Nog te bepalen'
+  };
+  return labels[loc || 'shelf'] || labels.shelf;
+}
 
 // Toont categorie-icoon: foto (customIcon) of emoji
 function catIconHtml(cat, size) {
@@ -3894,9 +3928,10 @@ function openBoxManager() {
         const matCount = state.items.filter(i => i.boxId === b.id).length;
         const stkCount = state.stockItems.filter(i => i.boxId === b.id).length;
         const posMap = {left:nl?'Links':'Gauche',center:nl?'Midden':'Centre',right:nl?'Rechts':'Droite'};
-        const loc = shelf
+        const place = shelf
           ? `${escapeHtml(shelf.name)}${b.level?' · L'+b.level:''}${b.position?' · '+posMap[b.position]:''}`
           : '—';
+        const loc = `${escapeHtml(physicalLocationLabel(b.physicalLocation || HOME_LOCATION_ID))} · ${place}`;
         return `<div class="cat-row">
           ${b.photo
             ? `<img src="${b.photo}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0;">`
@@ -4067,7 +4102,7 @@ function formatLocation(box, shelf) {
   if (!box) return '—';
   const positionMap = { left: t('left'), center: t('center'), right: t('right') };
   const pos = box.position ? positionMap[box.position] : '';
-  const parts = [];
+  const parts = [physicalLocationLabel(box.physicalLocation || HOME_LOCATION_ID)];
   if (shelf) parts.push(shelf.name);
   if (box.level) parts.push(`${t('level')} ${box.level}`);
   if (pos) parts.push(pos);
@@ -4140,6 +4175,7 @@ function renderStockRow(it) {
   const isLow = !isEmpty && min > 0 && qty <= min;
   const shelf = state.shelves.find(s => s.id === it.shelfId);
   const locParts = [];
+  locParts.push(stockStorageLabel(it.storageLocation || 'shelf'));
   if (shelf) locParts.push(shelf.name);
   if (it.level) locParts.push(`L${it.level}`);
   if (it.position) locParts.push({left:t('left'),center:t('center'),right:t('right')}[it.position] || '');
@@ -4209,6 +4245,7 @@ async function adjustStock(id, delta) {
   await dbPut('stockItems', item);
   renderStockList();
   render();
+  markSyncDirty();
 }
 
 function promptSetQty(id) {
@@ -4527,6 +4564,12 @@ function openBoxEditor(boxId, preselectShelfId, preselectLevel, preselectPositio
       <input type="text" class="form-input" id="box-name" value="${box?.name || ''}" placeholder="Box 1">
     </div>
     <div class="form-group">
+      <label class="form-label">${currentLang==='fr'?'Lieu principal':'Hoofdlocatie'}</label>
+      <select class="form-select" id="box-physical-location">
+        ${physicalLocationOptions(box?.physicalLocation)}
+      </select>
+    </div>
+    <div class="form-group">
       <label class="form-label">${t('select_shelf')}</label>
       <select class="form-select" id="box-shelf" onchange="updateLevelOptions('box',this.value)">
         <option value="">—</option>${shelfOptions}
@@ -4624,6 +4667,7 @@ async function saveBox(id) {
   if (!name) return;
   const box = id ? state.boxes.find(b => b.id === id) : { id: uid(), createdAt: Date.now() };
   box.name = name;
+  box.physicalLocation = document.getElementById('box-physical-location')?.value || HOME_LOCATION_ID;
   box.shelfId = document.getElementById('box-shelf').value || null;
   box.level = parseInt(document.getElementById('box-level').value) || null;
   box.position = document.getElementById('box-position').value || null;
@@ -4729,7 +4773,7 @@ function openItemEditor(itemId, preselectBoxId) {
   editingItemPhotos = item?.photos ? [...item.photos] : [];
   const boxOptions = state.boxes.map(b => {
     const shelf = state.shelves.find(s => s.id === b.shelfId);
-    return `<option value="${b.id}" ${(item?.boxId===b.id || preselectBoxId===b.id) ? 'selected' : ''}>${escapeHtml(b.name)}${shelf ? ` (${escapeHtml(shelf.name)})` : ''}</option>`;
+    return `<option value="${b.id}" ${(item?.boxId===b.id || preselectBoxId===b.id) ? 'selected' : ''}>${escapeHtml(b.name)} · ${escapeHtml(physicalLocationLabel(b.physicalLocation || HOME_LOCATION_ID))}${shelf ? ` (${escapeHtml(shelf.name)})` : ''}</option>`;
   }).join('');
   openModal(item ? `✏️ ${escapeHtml(item.name)}` : t('add_item'), `
     <div class="form-group">
@@ -4753,6 +4797,12 @@ function openItemEditor(itemId, preselectBoxId) {
         <label class="form-label">${t('quantity')}</label>
         <input type="number" class="form-input" id="item-qty" value="${item?.quantity || 1}" min="1">
       </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">${currentLang==='fr'?'Lieu principal':'Hoofdlocatie'}</label>
+      <select class="form-select" id="item-physical-location">
+        ${physicalLocationOptions(item?.physicalLocation)}
+      </select>
     </div>
     <div class="form-group">
       <label class="form-label">${currentLang==='fr'?'Emplacement':'Locatie'}</label>
@@ -4871,6 +4921,7 @@ async function saveItem(id) {
   item.name = name;
   item.name_fr = document.getElementById('item-name-fr')?.value.trim() || item.name_fr || '';
   item.quantity = parseInt(document.getElementById('item-qty').value) || 1;
+  item.physicalLocation = document.getElementById('item-physical-location')?.value || HOME_LOCATION_ID;
   item.materialCategoryId = document.getElementById('item-matcat')?.value || null;
   item.placed = isMaterialSecurityCat(item.materialCategoryId)
     ? (document.getElementById('item-placed')?.checked || false)
@@ -5048,10 +5099,12 @@ function openStockEditor(stockId, preselectShelfId, preselectLevel, preselectPos
     <div class="form-group">
       <label class="form-label">${currentLang==='fr'?'Emplacement':'Bewaarplaats'}</label>
       <div class="type-pills">
-        <button type="button" class="type-pill${(!item?.storageLocation||item?.storageLocation==='shelf')?' active':''}" data-loc="shelf" onclick="selectStorageLoc(this,'shelf')">📦 ${currentLang==='fr'?'Étagère':'Schap'}</button>
-        <button type="button" class="type-pill${item?.storageLocation==='freezer'?' active':''}" data-loc="freezer" onclick="selectStorageLoc(this,'freezer')">🧊 ${currentLang==='fr'?'Congélateur':'Vriezer'}</button>
-        <button type="button" class="type-pill${item?.storageLocation==='fridge'?' active':''}" data-loc="fridge" onclick="selectStorageLoc(this,'fridge')">🌡️ ${currentLang==='fr'?'Réfrigérateur':'Ijskast'}</button>
-        <button type="button" class="type-pill${item?.storageLocation==='freezer_kitchen'?' active':''}" data-loc="freezer_kitchen" onclick="selectStorageLoc(this,'freezer_kitchen')">❄️ ${currentLang==='fr'?'Congélateur cuisine':'Vriezer keuken'}</button>
+        <button type="button" class="type-pill${(!item?.storageLocation||item?.storageLocation==='shelf')?' active':''}" data-loc="shelf" onclick="selectStorageLoc(this,'shelf')">🏠 ${stockStorageLabel('shelf')}</button>
+        <button type="button" class="type-pill${item?.storageLocation==='fridge'?' active':''}" data-loc="fridge" onclick="selectStorageLoc(this,'fridge')">🌡️ ${stockStorageLabel('fridge')}</button>
+        <button type="button" class="type-pill${item?.storageLocation==='freezer'?' active':''}" data-loc="freezer" onclick="selectStorageLoc(this,'freezer')">🧊 ${stockStorageLabel('freezer')}</button>
+        <button type="button" class="type-pill${item?.storageLocation==='vestenstraat'?' active':''}" data-loc="vestenstraat" onclick="selectStorageLoc(this,'vestenstraat')">📍 ${stockStorageLabel('vestenstraat')}</button>
+        <button type="button" class="type-pill${item?.storageLocation==='pending'?' active':''}" data-loc="pending" onclick="selectStorageLoc(this,'pending')">❔ ${stockStorageLabel('pending')}</button>
+        <button type="button" class="type-pill${item?.storageLocation==='freezer_kitchen'?' active':''}" data-loc="freezer_kitchen" onclick="selectStorageLoc(this,'freezer_kitchen')">❄️ ${stockStorageLabel('freezer_kitchen')}</button>
         <button type="button" class="type-pill${item?.storageLocation==='box'?' active':''}" data-loc="box" onclick="selectStorageLoc(this,'box')">🗃️ Box</button>
       </div>
     </div>
