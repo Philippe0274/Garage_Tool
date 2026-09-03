@@ -19,6 +19,30 @@
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+  (async () => {
+    const APP_CODE_VERSION = '1.2.2';
+    const KEY = 'garage_app_code_version';
+    const previous = localStorage.getItem(KEY);
+    if (previous === APP_CODE_VERSION) return;
+    localStorage.setItem(KEY, APP_CODE_VERSION);
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(reg => reg.unregister()));
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(key => caches.delete(key)));
+      }
+      if (previous && !location.search.includes('fresh=')) {
+        location.replace(location.pathname + '?fresh=' + APP_CODE_VERSION + location.hash);
+      }
+    } catch (err) {
+      console.warn('Cache cleanup failed:', err);
+    }
+  })();
+</script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   :root {
@@ -1252,7 +1276,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.2.1</span>
+      <span class="app-version">versie: 1.2.2</span>
     </div>
   </div>
   <div class="top-controls">
