@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.3.3">
-<title>Garage Bavaylei 1.3.3</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.3.5">
+<title>Garage Bavaylei 1.3.5</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.3.3.webmanifest">
+<link rel="manifest" href="manifest-1.3.5.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.3.3';
+  const APP_CODE_VERSION = '1.3.5';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1314,7 +1314,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.3.3</span>
+      <span class="app-version">versie: 1.3.5</span>
     </div>
   </div>
   <div class="top-controls">
@@ -1755,6 +1755,9 @@
     <input type="text" class="form-input" id="ha-url-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://ha.philippedm.be/api/webhook/..." onchange="haSaveUrl()" style="margin-bottom:6px;">
     <div id="ha-status" style="font-size:12px;color:var(--text-dim);margin-bottom:6px;"></div>
     <button class="btn" id="ha-send-btn" onclick="haSend()" style="margin-bottom:6px;">🏠 <span id="lbl-ha-send">Stuur materiaal naar Home Assistant</span></button>
+    <input type="text" class="form-input" id="ha-url-input-frz" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://ha.philippedm.be/api/webhook/... (vriezer)" onchange="haSaveUrl('frz')" style="margin:10px 0 6px;">
+    <div id="ha-status-frz" style="font-size:12px;color:var(--text-dim);margin-bottom:6px;"></div>
+    <button class="btn" id="ha-send-btn-frz" onclick="haSendFreezer()" style="margin-bottom:6px;">🧊 <span id="lbl-ha-send-frz">Stuur vriezer naar Home Assistant</span></button>
     <div class="section-title" style="margin-top:8px;"><span class="section-title-text" id="lbl-settings-manage">Beheer</span></div>
     <button class="btn btn-secondary" onclick="openCategoryManager()" data-i18n="manage_cats">🏷️ Categorieën beheren</button>
     <button class="btn btn-secondary" onclick="openUnitManager()" data-i18n="manage_units">📏 Eenheden beheren</button>
@@ -8240,6 +8243,7 @@ function gDriveLogout() {
   gAccessToken = null; gTokenExpiry = 0; gUserName = null; gUserPic = null;
   localStorage.removeItem('gdrive_token'); localStorage.removeItem('gdrive_token_expiry');
   localStorage.removeItem('gdrive_user_name'); localStorage.removeItem('gdrive_user_pic');
+  localStorage.removeItem('gdrive_file_id'); gFileId = null;
   if (gSyncTimer) { clearTimeout(gSyncTimer); clearInterval(gSyncTimer); gSyncTimer = null; }
   closeModal();
   updateSyncUI('off', currentLang==='nl'?'Niet verbonden':'Non connecté');
@@ -8306,12 +8310,15 @@ async function driveFindFile() {
   } catch(e) { return null; }
 }
 
+let gLastGetStatus = 0;
 async function driveGetData() {
+  gLastGetStatus = 0;
   try {
     const r = await fetch(
       `https://www.googleapis.com/drive/v3/files/${gFileId}?alt=media`,
       { headers: { Authorization:`Bearer ${gAccessToken}` } }
     );
+    gLastGetStatus = r.status;
     if (!r.ok) return null;
     return await r.json();
   } catch(e) { return null; }
@@ -8319,24 +8326,41 @@ async function driveGetData() {
 
 async function driveUpload(data) {
   const json = JSON.stringify(data);
-  if (gFileId) {
-    await fetch(
+  const nl = currentLang === 'nl';
+  async function patch() {
+    return fetch(
       `https://www.googleapis.com/upload/drive/v3/files/${gFileId}?uploadType=media`,
       { method:'PATCH', headers:{ Authorization:`Bearer ${gAccessToken}`, 'Content-Type':'application/json' }, body:json }
     );
-  } else {
-    const meta = { name: GDRIVE_FILE_NAME, parents: [GDRIVE_SPACES] };
-    const form = new FormData();
-    form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
-    form.append('file', new Blob([json], {type:'application/json'}));
-    const r = await fetch(
-      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-      { method:'POST', headers:{ Authorization:`Bearer ${gAccessToken}` }, body:form }
-    );
-    const created = await r.json();
-    gFileId = created.id;
-    localStorage.setItem('gdrive_file_id', gFileId);
   }
+  if (gFileId) {
+    const r = await patch();
+    if (r.ok) return;
+    if (r.status !== 404) throw new Error((nl?'Upload mislukt (fout ':'Envoi échoué (erreur ') + r.status + ')');
+    // Bestand-ID is verouderd: zoek het juiste bestand op Drive
+    gFileId = null;
+    localStorage.removeItem('gdrive_file_id');
+    const fid = await driveFindFile();
+    if (fid) {
+      gFileId = fid;
+      localStorage.setItem('gdrive_file_id', fid);
+      const r2 = await patch();
+      if (r2.ok) return;
+      throw new Error((nl?'Upload mislukt (fout ':'Envoi échoué (erreur ') + r2.status + ')');
+    }
+  }
+  const meta = { name: GDRIVE_FILE_NAME, parents: [GDRIVE_SPACES] };
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
+  form.append('file', new Blob([json], {type:'application/json'}));
+  const r = await fetch(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+    { method:'POST', headers:{ Authorization:`Bearer ${gAccessToken}` }, body:form }
+  );
+  if (!r.ok) throw new Error((nl?'Upload mislukt (fout ':'Envoi échoué (erreur ') + r.status + ')');
+  const created = await r.json();
+  gFileId = created.id;
+  localStorage.setItem('gdrive_file_id', gFileId);
 }
 
 // ============================================================================
@@ -8346,26 +8370,33 @@ async function driveUpload(data) {
 // ============================================================================
 const HA_URL_KEY = 'ha_webhook_url';
 const HA_SENT_KEY = 'ha_last_sent';
-function haGetUrl() { try { return localStorage.getItem(HA_URL_KEY) || ''; } catch(e) { return ''; } }
-function haSaveUrl() {
-  const el = document.getElementById('ha-url-input');
+const HA_URL_KEY_FRZ = 'ha_webhook_url_vriezer';
+const HA_SENT_KEY_FRZ = 'ha_last_sent_vriezer';
+function haGetUrl(kind) { try { return localStorage.getItem(kind === 'frz' ? HA_URL_KEY_FRZ : HA_URL_KEY) || ''; } catch(e) { return ''; } }
+function haSaveUrl(kind) {
+  const el = document.getElementById(kind === 'frz' ? 'ha-url-input-frz' : 'ha-url-input');
   const v = el ? el.value.trim() : '';
-  try { localStorage.setItem(HA_URL_KEY, v); } catch(e) {}
+  try { localStorage.setItem(kind === 'frz' ? HA_URL_KEY_FRZ : HA_URL_KEY, v); } catch(e) {}
   haUpdateUi();
   toast(currentLang==='fr' ? '✓ Adresse enregistrée' : '✓ Adres opgeslagen');
 }
 function haUpdateUi() {
   const nl = currentLang !== 'fr';
-  const inp = document.getElementById('ha-url-input');
-  if (inp && inp.value !== haGetUrl()) inp.value = haGetUrl();
-  const st = document.getElementById('ha-status');
-  if (!st) return;
-  let last = '';
-  try { last = localStorage.getItem(HA_SENT_KEY) || ''; } catch(e) {}
-  if (!haGetUrl()) st.textContent = nl ? 'Plak hierboven het webhook-adres van Home Assistant.' : "Collez ci-dessus l'adresse webhook de Home Assistant.";
-  else st.textContent = last ? ((nl ? 'Laatst verstuurd: ' : 'Dernier envoi : ') + last) : (nl ? 'Nog niet verstuurd.' : 'Pas encore envoyé.');
-  const l = document.getElementById('lbl-ha-send');
-  if (l) l.textContent = nl ? 'Stuur materiaal naar Home Assistant' : 'Envoyer le matériel à Home Assistant';
+  [['', HA_SENT_KEY, 'ha-url-input', 'ha-status', 'lbl-ha-send', nl ? 'Stuur materiaal naar Home Assistant' : 'Envoyer le matériel à Home Assistant'],
+   ['frz', HA_SENT_KEY_FRZ, 'ha-url-input-frz', 'ha-status-frz', 'lbl-ha-send-frz', nl ? 'Stuur vriezer naar Home Assistant' : 'Envoyer le congélateur à Home Assistant']
+  ].forEach(([kind, sentKey, inpId, stId, lblId, lblText]) => {
+    const inp = document.getElementById(inpId);
+    if (inp && inp.value !== haGetUrl(kind)) inp.value = haGetUrl(kind);
+    const st = document.getElementById(stId);
+    if (st) {
+      let last = '';
+      try { last = localStorage.getItem(sentKey) || ''; } catch(e) {}
+      if (!haGetUrl(kind)) st.textContent = nl ? 'Plak hierboven het webhook-adres van Home Assistant.' : "Collez ci-dessus l'adresse webhook de Home Assistant.";
+      else st.textContent = last ? ((nl ? 'Laatst verstuurd: ' : 'Dernier envoi : ') + last) : (nl ? 'Nog niet verstuurd.' : 'Pas encore envoyé.');
+    }
+    const l = document.getElementById(lblId);
+    if (l) l.textContent = lblText;
+  });
 }
 function haBuildList() {
   const posNl = { left:'links', center:'midden', right:'rechts' };
@@ -8405,13 +8436,46 @@ function haBuildList() {
   });
   return { versie: 1, verstuurd: new Date().toISOString(), aantal: items.length, items: items };
 }
-async function haSend() {
+function haBuildFreezer() {
   const nl = currentLang !== 'fr';
-  const url = haGetUrl();
+  const items = state.stockItems
+    .filter(i => (i.storageLocation === 'freezer' || i.storageLocation === 'freezer_kitchen') && (i.quantity || 0) > 0)
+    .map(it => {
+      const cat = findCat(it.categoryId);
+      const unknown = !it.freezeDate || it.freezeDate === 'unknown';
+      const ms = unknown ? null : new Date(it.freezeDate).getTime();
+      const dagen = (ms && !isNaN(ms)) ? Math.floor((Date.now() - ms) / 86400000) : null;
+      const months = (cat && cat.freezer_months !== undefined) ? cat.freezer_months : 3;
+      const maxDagen = (months === null) ? null : months * 30;
+      const onbekend = unknown || dagen === null;
+      const teLang = onbekend || (maxDagen !== null && dagen > maxDagen);
+      return {
+        id: it.id,
+        naam: it.name || '',
+        naam_fr: it.name_fr || '',
+        aantal: it.quantity || 1,
+        eenheid: it.unit || '',
+        categorie: cat ? (cat.name_nl || '') : '',
+        categorie_fr: cat ? (cat.name_fr || cat.name_nl || '') : '',
+        bewaarplaats: it.storageLocation === 'freezer_kitchen' ? 'vriezer keuken' : 'vrieskast',
+        bewaarplaats_fr: it.storageLocation === 'freezer_kitchen' ? 'congélateur cuisine' : 'congélateur',
+        invriesdatum: onbekend ? 'onbekend' : String(it.freezeDate).slice(0, 10),
+        dagen: dagen,
+        max_dagen: maxDagen,
+        onbekend: onbekend,
+        te_lang: teLang
+      };
+    });
+  // onbekend eerst, dan het langst in de vriezer
+  items.sort((a, b) => (b.onbekend - a.onbekend) || ((b.dagen || 0) - (a.dagen || 0)));
+  return { versie: 1, soort: 'vriezer', verstuurd: new Date().toISOString(), aantal: items.length, items: items };
+}
+async function haPost(kind, payload) {
+  const nl = currentLang !== 'fr';
+  const url = haGetUrl(kind);
+  const st = document.getElementById(kind === 'frz' ? 'ha-status-frz' : 'ha-status');
   if (!url) { toast(nl ? 'Vul eerst het webhook-adres in' : "Saisissez d'abord l'adresse webhook"); return; }
-  const payload = haBuildList();
   const body = JSON.stringify(payload);
-  const st = document.getElementById('ha-status');
   if (st) st.textContent = nl ? 'Versturen...' : 'Envoi...';
   let ok = false, verified = false, detail = '';
   try {
@@ -8426,7 +8490,7 @@ async function haSend() {
   }
   if (ok) {
     const stamp = new Date().toLocaleString(nl ? 'nl-BE' : 'fr-BE');
-    try { localStorage.setItem(HA_SENT_KEY, stamp + ' (' + payload.aantal + ')'); } catch(e) {}
+    try { localStorage.setItem(kind === 'frz' ? HA_SENT_KEY_FRZ : HA_SENT_KEY, stamp + ' (' + payload.aantal + ')'); } catch(e) {}
     haUpdateUi();
     toast((nl ? '✓ Verstuurd: ' : '✓ Envoyé : ') + payload.aantal + (verified ? '' : (nl ? ' (antwoord niet te controleren)' : ' (réponse non vérifiable)')));
   } else {
@@ -8434,6 +8498,8 @@ async function haSend() {
     toast(nl ? 'Versturen mislukt' : "Échec de l'envoi");
   }
 }
+function haSend() { return haPost('', haBuildList()); }
+function haSendFreezer() { return haPost('frz', haBuildFreezer()); }
 window.addEventListener('load', () => { setTimeout(haUpdateUi, 600); });
 
 function buildExportObject() {
@@ -8592,7 +8658,10 @@ async function syncMaster(showFeedback) {
     const driveData = await driveGetData();
 
     if (!driveData) {
-      // Geen Drive data → upload alles
+      // Alleen uploaden als het Drive-bestand echt ontbreekt (404); bij andere fouten stoppen
+      if (gLastGetStatus && gLastGetStatus !== 404) {
+        throw new Error((currentLang==='nl'?'Drive lezen mislukt (fout ':'Lecture Drive échouée (erreur ') + gLastGetStatus + ')');
+      }
       const data = buildExportObject();
       data.syncVersion = localVersion + 1;
       await driveUpload(data);
