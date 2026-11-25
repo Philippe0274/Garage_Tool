@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.3.2">
-<title>Garage Bavaylei 1.3.2</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.3.3">
+<title>Garage Bavaylei 1.3.3</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.3.2.webmanifest">
+<link rel="manifest" href="manifest-1.3.3.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.3.2';
+  const APP_CODE_VERSION = '1.3.3';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1314,7 +1314,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.3.2</span>
+      <span class="app-version">versie: 1.3.3</span>
     </div>
   </div>
   <div class="top-controls">
@@ -1750,6 +1750,11 @@
     <button class="btn" id="editor-push-btn" onclick="showEditorPushModal()" style="display:none;margin-bottom:6px;background:#e05a2b;">
       📤 <span id="lbl-editor-push">Stuur naar Google Drive</span>
     </button>
+    <!-- Home Assistant koppeling -->
+    <div class="section-title" style="margin-top:8px;"><span class="section-title-text" id="lbl-ha-section">🏠 Home Assistant</span></div>
+    <input type="text" class="form-input" id="ha-url-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://ha.philippedm.be/api/webhook/..." onchange="haSaveUrl()" style="margin-bottom:6px;">
+    <div id="ha-status" style="font-size:12px;color:var(--text-dim);margin-bottom:6px;"></div>
+    <button class="btn" id="ha-send-btn" onclick="haSend()" style="margin-bottom:6px;">🏠 <span id="lbl-ha-send">Stuur materiaal naar Home Assistant</span></button>
     <div class="section-title" style="margin-top:8px;"><span class="section-title-text" id="lbl-settings-manage">Beheer</span></div>
     <button class="btn btn-secondary" onclick="openCategoryManager()" data-i18n="manage_cats">🏷️ Categorieën beheren</button>
     <button class="btn btn-secondary" onclick="openUnitManager()" data-i18n="manage_units">📏 Eenheden beheren</button>
@@ -8333,6 +8338,103 @@ async function driveUpload(data) {
     localStorage.setItem('gdrive_file_id', gFileId);
   }
 }
+
+// ============================================================================
+// HOME ASSISTANT KOPPELING (materiaal -> webhook)
+// Stuurt een compacte zoeklijst (zonder foto's) van al het materiaal.
+// Het webhook-adres staat enkel lokaal in deze browser (localStorage).
+// ============================================================================
+const HA_URL_KEY = 'ha_webhook_url';
+const HA_SENT_KEY = 'ha_last_sent';
+function haGetUrl() { try { return localStorage.getItem(HA_URL_KEY) || ''; } catch(e) { return ''; } }
+function haSaveUrl() {
+  const el = document.getElementById('ha-url-input');
+  const v = el ? el.value.trim() : '';
+  try { localStorage.setItem(HA_URL_KEY, v); } catch(e) {}
+  haUpdateUi();
+  toast(currentLang==='fr' ? '✓ Adresse enregistrée' : '✓ Adres opgeslagen');
+}
+function haUpdateUi() {
+  const nl = currentLang !== 'fr';
+  const inp = document.getElementById('ha-url-input');
+  if (inp && inp.value !== haGetUrl()) inp.value = haGetUrl();
+  const st = document.getElementById('ha-status');
+  if (!st) return;
+  let last = '';
+  try { last = localStorage.getItem(HA_SENT_KEY) || ''; } catch(e) {}
+  if (!haGetUrl()) st.textContent = nl ? 'Plak hierboven het webhook-adres van Home Assistant.' : "Collez ci-dessus l'adresse webhook de Home Assistant.";
+  else st.textContent = last ? ((nl ? 'Laatst verstuurd: ' : 'Dernier envoi : ') + last) : (nl ? 'Nog niet verstuurd.' : 'Pas encore envoyé.');
+  const l = document.getElementById('lbl-ha-send');
+  if (l) l.textContent = nl ? 'Stuur materiaal naar Home Assistant' : 'Envoyer le matériel à Home Assistant';
+}
+function haBuildList() {
+  const posNl = { left:'links', center:'midden', right:'rechts' };
+  const posFr = { left:'à gauche', center:'au milieu', right:'à droite' };
+  const items = state.items.map(it => {
+    const box = state.boxes.find(b => b.id === it.boxId) || null;
+    const shelf = box ? state.shelves.find(s => s.id === box.shelfId) : (it.shelfId ? state.shelves.find(s => s.id === it.shelfId) : null);
+    const onShelf = it.locationType === 'shelf' && shelf;
+    const level = onShelf ? it.level : (box ? box.level : null);
+    const pos = onShelf ? it.position : (box ? box.position : null);
+    const phys = PHYSICAL_LOCATIONS.find(l => l.id === (it.physicalLocation || (box && box.physicalLocation) || HOME_LOCATION_ID));
+    const cat = findMatCat(it.materialCategoryId);
+    const nlParts = [], frParts = [];
+    if (phys) { nlParts.push(phys.nl); frParts.push(phys.fr); }
+    if (box) { nlParts.push('box ' + box.name); frParts.push('boîte ' + box.name); }
+    if (shelf) { nlParts.push(shelf.name); frParts.push(shelf.name); }
+    if (level) { nlParts.push('niveau ' + level); frParts.push('niveau ' + level); }
+    if (pos && posNl[pos]) { nlParts.push(posNl[pos]); frParts.push(posFr[pos]); }
+    if (!box && !shelf) {
+      if (it.locationType === 'free') { nlParts.push('losstaand'); frParts.push('libre'); }
+    }
+    return {
+      id: it.id,
+      naam: it.name || '',
+      naam_fr: it.name_fr || '',
+      tags: it.tags || [],
+      aantal: it.quantity || 1,
+      categorie: cat ? (cat.name_nl || '') : '',
+      categorie_fr: cat ? (cat.name_fr || cat.name_nl || '') : '',
+      box: box ? box.name : '',
+      schap: shelf ? shelf.name : '',
+      niveau: level || '',
+      positie: pos || '',
+      plaats_nl: nlParts.join(', '),
+      plaats_fr: frParts.join(', ')
+    };
+  });
+  return { versie: 1, verstuurd: new Date().toISOString(), aantal: items.length, items: items };
+}
+async function haSend() {
+  const nl = currentLang !== 'fr';
+  const url = haGetUrl();
+  if (!url) { toast(nl ? 'Vul eerst het webhook-adres in' : "Saisissez d'abord l'adresse webhook"); return; }
+  const payload = haBuildList();
+  const body = JSON.stringify(payload);
+  const st = document.getElementById('ha-status');
+  if (st) st.textContent = nl ? 'Versturen...' : 'Envoi...';
+  let ok = false, verified = false, detail = '';
+  try {
+    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+    ok = r.ok; verified = true; detail = 'HTTP ' + r.status;
+  } catch (e1) {
+    // Browser blokkeert mogelijk het lezen van het antwoord (CORS): stuur dan zonder antwoord-controle.
+    try {
+      await fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ lijst: body }).toString() });
+      ok = true; verified = false; detail = 'no-cors';
+    } catch (e2) { ok = false; detail = String(e2 && e2.message || e2); }
+  }
+  if (ok) {
+    const stamp = new Date().toLocaleString(nl ? 'nl-BE' : 'fr-BE');
+    try { localStorage.setItem(HA_SENT_KEY, stamp + ' (' + payload.aantal + ')'); } catch(e) {}
+    haUpdateUi();
+    toast((nl ? '✓ Verstuurd: ' : '✓ Envoyé : ') + payload.aantal + (verified ? '' : (nl ? ' (antwoord niet te controleren)' : ' (réponse non vérifiable)')));
+  } else {
+    if (st) st.textContent = (nl ? 'Mislukt: ' : 'Échec : ') + detail;
+    toast(nl ? 'Versturen mislukt' : "Échec de l'envoi");
+  }
+}
+window.addEventListener('load', () => { setTimeout(haUpdateUi, 600); });
 
 function buildExportObject() {
   return {
