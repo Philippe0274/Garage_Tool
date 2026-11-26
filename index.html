@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.3">
-<title>Garage Bavaylei 1.4.3</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.4">
+<title>Garage Bavaylei 1.4.4</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.4.3.webmanifest">
+<link rel="manifest" href="manifest-1.4.4.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.4.3';
+  const APP_CODE_VERSION = '1.4.4';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1401,7 +1401,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.4.3</span>
+      <span class="app-version">versie: 1.4.4</span>
     </div>
   </div>
   <div class="top-controls">
@@ -8052,7 +8052,7 @@ function updateEditorBanner() {
   if (countEl) {
     countEl.textContent = n > 0
       ? `${n} ${nl?(n===1?'wijziging':'wijzigingen'):(n===1?'modification':'modifications')}`
-      : (nl?'Editor modus — PC · v1.4.3':'Mode Éditeur — PC · v1.4.3');
+      : (nl?'Editor modus — PC · v1.4.4':'Mode Éditeur — PC · v1.4.4');
     countEl.style.color = n > 0 ? '#f0b429' : '#aaa';
   }
   if (pushBtn) pushBtn.style.display = n > 0 ? 'block' : 'none';
@@ -8075,10 +8075,15 @@ function initEditorMode() {
     banner.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="color:#f0b429;">💻</span>
-        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.4.3':'Mode Éditeur — PC · v1.4.3'}</span>
+        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.4.4':'Mode Éditeur — PC · v1.4.4'}</span>
       </div>
       <div style="display:flex;gap:8px;">
-        <button onclick="editorLoadFromDrive()" style="
+        <button onclick="editorScanUnsynced()" id="editor-scan-btn" style="
+          background:#f0b429; color:#1a1a1a; border:none; border-radius:8px;
+          padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer;
+          font-family:'JetBrains Mono'; white-space:nowrap;
+        ">🔍 ${nl?'Niet verstuurd?':'Non envoyé ?'}</button>
+        <button onclick="editorLoadFromDrive()" style=\"
           background:#3b82f6; color:#fff; border:none; border-radius:8px;
           padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer;
           font-family:'JetBrains Mono'; white-space:nowrap;
@@ -8094,6 +8099,65 @@ function initEditorMode() {
   }
   document.querySelectorAll('.nav-btn[data-view="add"]').forEach(b => b.style.display = '');
   document.querySelectorAll('.nav-btn[data-view="material"]').forEach(b => b.style.display = '');
+}
+
+const UNSYNC_KINDS = [['material','items','items','🔧'],['stock','stockItems','stockItems','🥫'],['shelf','shelves','shelves','🗄️'],['box','boxes','boxes','📦']];
+let editorUnsynced = [];
+async function editorScanUnsynced() {
+  const nl = currentLang === 'nl';
+  if (!isGTokenValid()) {
+    toast(nl?'Verbind eerst met Google Drive via Instellingen':'Connectez-vous d\'abord à Google Drive');
+    showView('settings');
+    return;
+  }
+  try {
+    if (!gFileId) {
+      const fid = await driveFindFile();
+      if (!fid) throw new Error(nl?'Geen backup gevonden op Drive':'Aucune sauvegarde sur Drive');
+      gFileId = fid;
+      localStorage.setItem('gdrive_file_id', fid);
+    }
+    const driveData = await driveGetData();
+    if (!driveData) throw new Error(nl?'Drive niet bereikbaar':'Drive inaccessible');
+    editorUnsynced = [];
+    for (const [type, sk, dk, icon] of UNSYNC_KINDS) {
+      const onDrive = new Set((driveData[dk] || []).map(i => i.id));
+      for (const it of state[sk]) {
+        if (onDrive.has(it.id)) continue;
+        editorUnsynced.push({ type, id: it.id, icon, name: iName(it) || it.name || '?', created: it.createdAt || 0, pre: (it.createdAt || 0) > (gLastSync || 0) });
+      }
+    }
+    if (!editorUnsynced.length) {
+      openModal(nl?'Niet verstuurd?':'Non envoyé ?', `<p style="font-size:14px;">${nl?'Alles wat op deze laptop staat, staat ook op Drive.':'Tout ce qui est sur cet ordinateur est aussi sur Drive.'}</p><div class="btn-row" style="margin-top:14px;"><button class="btn btn-secondary" onclick="closeModal()">OK</button></div>`);
+      return;
+    }
+    const rows = editorUnsynced.map((u, i) => `<label style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <input type="checkbox" id="unsync-${i}" ${u.pre ? 'checked' : ''} style="width:20px;height:20px;">
+      <span style="font-size:20px;">${u.icon}</span>
+      <span style="flex:1;font-weight:700;">${escapeHtml(u.name)}</span>
+      <span style="font-size:11px;color:var(--text-dim);font-family:'JetBrains Mono';">${u.created ? new Date(u.created).toLocaleDateString(nl?'nl-BE':'fr-BE') : ''}</span>
+    </label>`).join('');
+    openModal(nl?'Nog niet op Drive':'Pas encore sur Drive', `
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">${nl?'Deze items staan op deze laptop maar nog niet op Drive. Vink aan wat je wilt meesturen. Oudere items staan niet aangevinkt, want die zijn mogelijk bewust verwijderd op de gsm.':'Ces éléments sont sur cet ordinateur mais pas encore sur Drive. Cochez ceux à envoyer. Les plus anciens ne sont pas cochés : ils ont peut-être été supprimés volontairement sur le téléphone.'}</p>
+      ${rows}
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn btn-secondary" onclick="closeModal()">${nl?'Annuleren':'Annuler'}</button>
+        <button class="btn" onclick="editorSendUnsynced()">📤 ${nl?'Stuur geselecteerde':'Envoyer la sélection'}</button>
+      </div>`);
+  } catch(e) {
+    toast('❌ ' + (e.message||e));
+  }
+}
+
+async function editorSendUnsynced() {
+  const picked = editorUnsynced.filter((u, i) => { const c = document.getElementById('unsync-' + i); return c && c.checked; });
+  if (!picked.length) { closeModal(); return; }
+  for (const u of picked) {
+    editorChanges = editorChanges.filter(c => c.id !== u.id);
+    editorChanges.push({ type: 'add', itemType: u.type, id: u.id, name: u.name, changes: [] });
+  }
+  updateEditorBanner();
+  await doEditorPush();
 }
 
 async function editorLoadFromDrive() {
