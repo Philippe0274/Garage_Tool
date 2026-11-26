@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.2">
-<title>Garage Bavaylei 1.4.2</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.3">
+<title>Garage Bavaylei 1.4.3</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.4.2.webmanifest">
+<link rel="manifest" href="manifest-1.4.3.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.4.2';
+  const APP_CODE_VERSION = '1.4.3';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1401,7 +1401,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.4.2</span>
+      <span class="app-version">versie: 1.4.3</span>
     </div>
   </div>
   <div class="top-controls">
@@ -6990,7 +6990,9 @@ async function bulkMatSave() {
     const item = { id: it.id, name: it.name, quantity: it.qty, boxId: it.boxId || null, createdAt: it.createdAt, photos: [], tags: [], description: '' };
     await dbPut('items', item);
     state.items.push(item);
+    editorTrackChange('add', 'material', item, []);
   }
+  markSyncDirty();
   const n = bulkMatItems.length;
   bulkMatItems = [];
   renderBulkMatQueue();
@@ -7064,7 +7066,9 @@ async function bulkStkSave() {
     await dbPut('stockItems', item);
     await rememberStockName(it.name);
     state.stockItems.push(item);
+    editorTrackChange('add', 'stock', item, []);
   }
+  markSyncDirty();
   const n = bulkStkItems.length;
   bulkStkItems = [];
   renderBulkStkQueue();
@@ -7289,6 +7293,7 @@ async function importExcel(e) {
       await dbPut('stockItems', item);
       await rememberStockName(nameNl);
       state.stockItems.push(item);
+      editorTrackChange('add', 'stock', item, []);
     } else {
       const qty  = parseInt(get(row, ['aantal','quantité','quantity','qty'])) || 1;
       const desc = get(row, ['beschrijving','description']);
@@ -7302,10 +7307,12 @@ async function importExcel(e) {
       };
       await dbPut('items', item);
       state.items.push(item);
+      editorTrackChange('add', 'material', item, []);
     }
     imported++;
   }
 
+  markSyncDirty();
   render();
   const msg = skipped > 0
     ? `✓ ${imported} ${currentLang==='nl'?'geïmporteerd':'importés'}, ${skipped} ${currentLang==='nl'?'overgeslagen':'ignorés'}`
@@ -8045,7 +8052,7 @@ function updateEditorBanner() {
   if (countEl) {
     countEl.textContent = n > 0
       ? `${n} ${nl?(n===1?'wijziging':'wijzigingen'):(n===1?'modification':'modifications')}`
-      : (nl?'Editor modus — PC · v1.4.2':'Mode Éditeur — PC · v1.4.2');
+      : (nl?'Editor modus — PC · v1.4.3':'Mode Éditeur — PC · v1.4.3');
     countEl.style.color = n > 0 ? '#f0b429' : '#aaa';
   }
   if (pushBtn) pushBtn.style.display = n > 0 ? 'block' : 'none';
@@ -8068,7 +8075,7 @@ function initEditorMode() {
     banner.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="color:#f0b429;">💻</span>
-        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.4.2':'Mode Éditeur — PC · v1.4.2'}</span>
+        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.4.3':'Mode Éditeur — PC · v1.4.3'}</span>
       </div>
       <div style="display:flex;gap:8px;">
         <button onclick="editorLoadFromDrive()" style="
