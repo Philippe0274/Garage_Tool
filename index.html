@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.3.5">
-<title>Garage Bavaylei 1.3.5</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.0">
+<title>Garage Bavaylei 1.4.0</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.3.5.webmanifest">
+<link rel="manifest" href="manifest-1.4.0.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.3.5';
+  const APP_CODE_VERSION = '1.4.0';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1301,6 +1301,93 @@
     header { position:static; }
     .modal-overlay { display:none !important; }
   }
+
+  /* ═══ BOODSCHAPPEN (1.4.0) ═══ */
+  #bd-screen{position:fixed;inset:0;z-index:250;background:var(--bg);display:none;flex-direction:column;overscroll-behavior:contain}
+  #bd-screen.open{display:flex}
+  #bd-screen *{box-sizing:border-box}
+  .bd-top{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);padding-top:max(10px,env(safe-area-inset-top,0px))}
+  .bd-back{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);font-size:24px;line-height:1;color:var(--text)}
+  .bd-ttl{font-weight:900;font-size:19px;letter-spacing:-.01em}
+  .bd-main{flex:1;overflow-y:auto;padding:12px 14px calc(24px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
+  .bd-summary{background:linear-gradient(135deg,var(--accent),#ff9a4d);color:#fff;border-radius:20px;padding:16px 16px 14px;margin-bottom:12px;box-shadow:0 8px 22px rgba(224,90,43,.3)}
+  .bd-summary .big{font:900 30px 'Archivo',sans-serif;letter-spacing:-.02em;line-height:1.1}
+  .bd-summary .sub{font-size:13px;opacity:.95;margin-top:2px}
+  .bd-prog{height:8px;border-radius:5px;background:rgba(255,255,255,.35);margin-top:12px;overflow:hidden}
+  .bd-prog i{display:block;height:100%;background:#fff;border-radius:5px;transition:width .35s}
+  .bd-composer{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:12px}
+  .bd-cform{display:flex;gap:8px}
+  .bd-cform input{flex:1;min-width:0;border:2px solid var(--border-strong);background:var(--bg);border-radius:13px;padding:13px;font-size:16px;font-family:inherit;color:var(--text)}
+  .bd-cform input:focus{border-color:var(--accent);outline:none}
+  .bd-addbtn{background:var(--accent);color:#fff;border:0;border-radius:13px;width:52px;font-size:28px;font-weight:700}
+  .bd-frinput{width:100%;margin-top:6px;border:1.5px dashed var(--border-strong);background:var(--bg);border-radius:11px;padding:9px 11px;font-size:14px;font-family:inherit;color:var(--text)}
+  .bd-mem{font-size:12px;color:var(--success);margin:8px 2px 0;min-height:16px}
+  .bd-lbl{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);margin:10px 2px 6px}
+  .bd-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+  .bd-scroll>*{flex:none}
+  .bd-chip{border-radius:20px;padding:7px 12px;font-weight:800;font-size:13px;display:flex;align-items:center;gap:5px;white-space:nowrap;font-family:inherit;border:1px solid var(--border-strong);background:var(--surface);color:var(--text-dim)}
+  .bd-chip.sh{--sc:#737373}
+  .bd-chip.on{background:var(--sc);border-color:var(--sc);color:#fff}
+  .bd-chip.tint{background:color-mix(in srgb,var(--sc) 12%,#fff);border-color:color-mix(in srgb,var(--sc) 40%,#fff);color:color-mix(in srgb,var(--sc) 80%,#000)}
+  .bd-chip.new{border:2px dashed var(--border-strong);background:transparent;color:var(--accent)}
+  .bd-chip.ice{border-color:#b5d4ea;background:#e6f2fa;color:#2a6f9e}
+  .bd-chip.ice.on{background:#2a6f9e;border-color:#2a6f9e;color:#fff}
+  .bd-nsform{display:flex;gap:8px;margin-top:10px}
+  .bd-nsform[hidden]{display:none}
+  .bd-nsform input{flex:1;min-width:0;border:2px solid var(--accent);background:var(--bg);border-radius:13px;padding:11px;font-size:15px;font-family:inherit;color:var(--text)}
+  .bd-btn{border:0;border-radius:14px;padding:14px;font-weight:800;font-size:14.5px;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
+  .bd-btn.ok{background:var(--accent);color:#fff;flex:1.3}
+  .bd-btn.ok[disabled]{background:var(--surface-2);color:var(--text-faint)}
+  .bd-btn.wa{background:#128c7e;color:#fff;flex:1}
+  .bd-btn.ghost{background:var(--surface-2);color:var(--text);border:1px solid var(--border)}
+  .bd-nsform .bd-btn{padding:0 16px}
+  .bd-tabs{position:sticky;top:-12px;z-index:5;background:linear-gradient(to bottom,var(--bg) 85%,transparent);padding:12px 0 6px;margin-top:6px}
+  .bd-tabs .bd-chip{font-size:13px}
+  .bd-tabs .c{font:700 11px 'JetBrains Mono',monospace;opacity:.85}
+  .bd-group{margin-top:14px;--sc:#737373}
+  .bd-ghead{display:flex;align-items:center;gap:10px;border-radius:16px 16px 0 0;padding:10px 12px;background:var(--sc);color:#fff}
+  .bd-ghead .gi{font-size:22px}.bd-ghead b{font-size:17px;font-weight:900}.bd-ghead .gc{font:700 11px 'JetBrains Mono',monospace;opacity:.9}
+  .bd-ghead .gs{margin-left:auto;border:0;border-radius:10px;width:36px;height:36px;background:rgba(255,255,255,.25);color:#fff;font-size:16px}
+  .bd-gbody{background:var(--surface);border:1px solid var(--border);border-top:0;border-radius:0 0 16px 16px;overflow:hidden}
+  .bd-row{display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid var(--surface-2);min-height:62px;--sc:#737373}
+  .bd-row:last-child{border-bottom:0}
+  .bd-focus .bd-row{min-height:74px;padding:12px 10px}.bd-focus .nm{font-size:18px}.bd-focus .bd-cb{width:40px;height:40px;border-radius:12px}
+  .bd-cb{width:34px;height:34px;flex:none;border:2.5px solid var(--border-strong);border-radius:10px;background:var(--bg);display:grid;place-items:center;color:transparent;padding:0}
+  .bd-cb svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}
+  .bd-row.done{background:var(--success-bg)}
+  .bd-row.done .bd-cb{background:var(--success);border-color:var(--success);color:#fff}
+  .bd-row.done .nm,.bd-row.done .emo{opacity:.5}.bd-row.done .nm{text-decoration:line-through}
+  .bd-row .emo{font-size:25px;width:30px;text-align:center;flex:none}
+  .bd-row .mid{flex:1;min-width:0}
+  .bd-row .nm{font-weight:800;font-size:16px;overflow-wrap:anywhere}
+  .bd-meta{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:4px}
+  .bd-pill{font:700 11px 'JetBrains Mono',monospace;border-radius:12px;padding:3px 8px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text-dim);display:inline-flex;gap:4px;align-items:center}
+  button.bd-pill{cursor:pointer}
+  .bd-pill.sh{background:color-mix(in srgb,var(--sc) 12%,#fff);border-color:color-mix(in srgb,var(--sc) 40%,#fff);color:color-mix(in srgb,var(--sc) 80%,#000)}
+  .bd-pill.frz{background:#e6f2fa;border-color:#b5d4ea;color:#2a6f9e}
+  .bd-pill.off{opacity:.45}
+  .bd-pill.info{background:var(--warning-bg);border-color:#ecc98a;color:var(--warning)}
+  .bd-step{display:flex;align-items:center;border:1px solid var(--border);border-radius:12px;background:var(--surface-2);flex:none}
+  .bd-step button{width:32px;height:38px;border:0;background:transparent;font-size:19px;font-weight:800;color:var(--text-dim)}
+  .bd-step output{min-width:46px;text-align:center;font:700 13px 'JetBrains Mono',monospace}
+  .bd-x{width:28px;height:36px;border:0;background:transparent;color:var(--text-faint);font-size:15px;flex:none}
+  .bd-empty{padding:26px 14px;text-align:center;color:var(--text-dim);border:2px dashed var(--border-strong);border-radius:16px;margin-top:14px}
+  .bd-empty b{display:block;font-size:20px;margin-bottom:4px;color:var(--text)}
+  .bd-bar{position:sticky;bottom:-24px;display:flex;gap:8px;padding:12px 0 6px;margin-top:16px;background:linear-gradient(to top,var(--bg) 72%,transparent)}
+  .bd-veil{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;z-index:30}
+  .bd-veil[hidden]{display:none}
+  .bd-sheet{background:var(--bg);width:100%;max-height:90%;overflow-y:auto;border-radius:22px 22px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+  .bd-sheet h2{font-size:20px;font-weight:900;margin-bottom:4px}
+  .bd-sheet .small{font-size:12.5px;color:var(--text-dim)}
+  .bd-sheet textarea{width:100%;height:230px;border:1.5px solid var(--border-strong);border-radius:12px;background:var(--surface);padding:12px;font:500 13px/1.55 'JetBrains Mono',monospace;resize:none;margin:10px 0;color:var(--text)}
+  .bd-sheet input[type=text],.bd-sheet input[type=tel]{width:100%;border:1.5px solid var(--border-strong);border-radius:11px;padding:11px;font-size:15px;background:var(--surface);font-family:inherit;color:var(--text)}
+  .bd-btns{display:flex;gap:8px;margin-top:8px}
+  .bd-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+  .bd-gopt{border-radius:14px;padding:14px 10px;font-weight:900;font-size:15px;display:flex;align-items:center;gap:8px;text-align:left;font-family:inherit;--sc:#737373;background:color-mix(in srgb,var(--sc) 12%,#fff);border:1px solid color-mix(in srgb,var(--sc) 40%,#fff);color:color-mix(in srgb,var(--sc) 80%,#000)}
+  .bd-gopt.on{background:var(--sc);color:#fff;border-color:var(--sc)}
+  .bd-proc{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+  .bd-proc input[type=date]{border:1.5px solid #b5d4ea;background:#e6f2fa;color:#2a6f9e;border-radius:9px;padding:6px 8px;font:700 12px 'JetBrains Mono',monospace}
+  .bd-home-n{font:800 26px 'Archivo',sans-serif;color:var(--accent);margin-right:6px}
 </style>
 </head>
 <body>
@@ -1314,7 +1401,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.3.5</span>
+      <span class="app-version">versie: 1.4.0</span>
     </div>
   </div>
   <div class="top-controls">
@@ -1338,6 +1425,15 @@
     <div class="home-title" id="home-title">Wat wil je<br>vandaag doen?</div>
 
     <div class="home-choice">
+      <div class="choice-card accent" onclick="shopOpen()" id="home-shop-card">
+        <div class="choice-icon orange">🛒</div>
+        <div class="choice-text">
+          <div class="choice-title" id="lbl-shop-home">Boodschappen</div>
+          <div class="choice-sub" id="home-shop-sub">—</div>
+        </div>
+        <div class="bd-home-n" id="home-shop-n">0</div>
+        <div class="choice-arrow" style="color:var(--accent);">›</div>
+      </div>
       <div class="choice-card" onclick="showView('browse')">
         <div class="choice-icon teal">🔍</div>
         <div class="choice-text">
@@ -2187,6 +2283,37 @@
   </div>
 </div>
 
+<!-- ─── BOODSCHAPPEN (1.4.0) ─────────────────────────────── -->
+<div id="bd-screen" role="dialog" aria-label="Boodschappen">
+  <div class="bd-top"><button class="bd-back" onclick="shopClose()" aria-label="Terug">‹</button><div class="bd-ttl" id="bd-ttl">🛒 Boodschappen</div></div>
+  <div class="bd-main" id="bd-main">
+    <div class="bd-summary" id="bd-summary"></div>
+    <div class="bd-composer">
+      <form class="bd-cform" id="bd-form" autocomplete="off">
+        <input id="bd-input" type="text" enterkeyhint="done" aria-label="Nieuw item" list="bd-names">
+        <datalist id="bd-names"></datalist>
+        <button class="bd-addbtn" type="submit" aria-label="Toevoegen">＋</button>
+      </form>
+      <div class="bd-mem" id="bd-mem"></div>
+      <input class="bd-frinput" id="bd-fr" autocomplete="off" aria-label="Franse naam">
+      <div class="bd-lbl" id="bd-l-shop">Winkel</div>
+      <div class="bd-scroll" id="bd-shops"></div>
+      <form class="bd-nsform" id="bd-newform" hidden autocomplete="off"><input id="bd-newinput" aria-label="Nieuwe winkel"><button class="bd-btn ok" id="bd-newbtn" type="submit">Maak</button></form>
+      <div class="bd-lbl" id="bd-l-frz">Vrieskast</div>
+      <div class="bd-scroll"><button class="bd-chip ice" id="bd-frz" type="button" aria-pressed="false"></button></div>
+      <div class="bd-lbl" id="bd-l-quick"></div>
+      <div class="bd-scroll" id="bd-quick"></div>
+    </div>
+    <div class="bd-tabs" id="bd-tabs"></div>
+    <div id="bd-body"></div>
+    <div class="bd-bar">
+      <button class="bd-btn wa" id="bd-share" type="button">💬</button>
+      <button class="bd-btn ok" id="bd-proc" type="button" disabled>✓</button>
+    </div>
+  </div>
+  <div class="bd-veil" id="bd-veil" hidden><div class="bd-sheet" id="bd-sheet" role="dialog" aria-modal="true"></div></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2669,6 +2796,7 @@ function setMode(mode) {
 
 // ── RENDER HOME STATS ──────────────────────────────────────
 function render() {
+  try { shopHomeUpdate(); } catch (e) {}
   const low = getLowStockItems();
   const expiring = getExpiringItems();
   const setEl = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
@@ -6395,7 +6523,7 @@ async function deleteCategory(id) {
 // ============================================================================
 let shoppingGroupMode = 'shop'; // 'shop' or 'category'
 
-function openShoppingList() {
+function openShoppingListOld() {
   const low = getLowStockItems();
   if (low.length === 0) {
     openModal(t('shopping_list_title'), `<div class="empty"><div class="empty-icon">🎉</div><div class="empty-text">${t('no_low_stock')}</div></div>`);
@@ -6662,6 +6790,7 @@ function handleScannedUrl(text) {
 }
 window.addEventListener('hashchange', handleHashChange);
 function handleHashChange() {
+  if (/boodschappen/i.test(location.hash)) { shopOpen(); return; }
   const m = location.hash.match(/box=([a-z0-9]+)/i);
   if (m) {
     const box = state.boxes.find(b => b.id === m[1]);
@@ -8958,6 +9087,437 @@ async function confirmDashboardAdjust(id, delta) {
 
 
 
+
+
+// ============================================================================
+// BOODSCHAPPEN (1.4.0) — gedeelde boodschappenlijst per winkel, Frans bericht voor Angela
+// De lijst zelf (handmatige items, "vaak nodig", nummer van Angela) staat in localStorage van dit toestel.
+// Winkels en voorraad gebruiken de bestaande opslag van de app.
+// ============================================================================
+(function(){
+'use strict';
+var SK = 'garage_shop_v1', DAY = 86400000;
+var D = {};
+function ld(){ try { D = JSON.parse(localStorage.getItem(SK)) || {}; } catch(e) { D = {}; }
+  D.manual = D.manual || []; D.skip = D.skip || {}; D.autoDone = D.autoDone || {}; D.autoQty = D.autoQty || {};
+  D.autoShop = D.autoShop || {}; D.autoFrz = D.autoFrz || {}; D.mem = D.mem || {}; D.angela = D.angela || ''; }
+function sv(){ try { localStorage.setItem(SK, JSON.stringify(D)); } catch(e) {} }
+ld();
+
+var X = {
+ nl:{ title:'Boodschappen', to_buy:'{n} te kopen', shops1:'winkel', shopsN:'winkels', in_basket:'in het mandje', for_freezer:'voor de vrieskast',
+  nothing:'Niets nodig 🎉', all_stocked:'Alles is voldoende voorradig.', all_basket:'Alles in het mandje 🎉', all_basket_sub:'Druk op “Verwerk aangekocht” om de voorraad bij te werken.',
+  ph_add:'Wat heb je nodig? bv. 2 melk', ph_fr:'🇫🇷 Naam in het Frans (optioneel), bv. gouttes nasales', shop:'Winkel', new_shop:'＋ Nieuwe winkel', no_shop:'Geen winkel',
+  frz_btn:'❄️ Dit gaat in de vrieskast', frz_lbl:'Vrieskast', quick:'Vaak nodig, één tik om toe te voegen', quick_empty:'Wat je toevoegt, verschijnt hier de volgende keer als snelle knop.',
+  all:'Alles', send:'💬 Stuur naar Angela', send_shop:'💬 Stuur naar Angela: ', process:'✓ Verwerk aangekocht', process_n:'✓ Verwerk {n}',
+  share_title:'Stuur naar Angela', share_sub:'Gaat in het Frans, per winkel. Artikels zonder Franse vertaling blijven in het Nederlands.', copy:'Kopieer', copied:'Gekopieerd ✓',
+  close:'Sluiten', cancel:'Annuleren', confirm:'✓ Bevestig', proc_title:'Verwerk aangekocht', proc_sub:'{n} aangekocht.', proc_frz:'{n} gaan naar de vrieskast, met de invriesdatum hieronder.', proc_all:'Alles gaat naar de voorraad.',
+  to_frz:'❄️ → vrieskast', to_stock:'→ voorraad +', shop_for:'Waar koop je dit?', shop_new_ph:'Winkel staat er niet bij? Typ de naam', make:'Maak', fr_title:'Franse naam', fr_ph:'bv. gouttes nasales',
+  fr_hint:'Dit staat in het bericht voor Angela. Leeg laten = de Nederlandse naam blijft staan.', save:'Bewaar', stock_info:'voorraad {a} / min {b}', remembered:'✓ Onthouden: ', frz_word:'vrieskast',
+  empty_t:'Nog niets op de lijst', empty_s:'Typ hierboven wat je nodig hebt, of tik op een snelle suggestie.', nr_lbl:'Nummer van Angela (WhatsApp)', nr_ph:'bv. 0465 12 34 56', nr_need:'Vul eerst het nummer van Angela in',
+  not_now:'Niet nu kopen', remove:'Verwijderen', fr_edit:'Franse naam wijzigen', pick_shop:'Andere winkel kiezen', editor_no:'Editor: voorraad aanpassen niet toegestaan, gebruik de telefoon',
+  done_frz:'{n} in de vrieskast (invriesdatum {d})', done_stock:'{n} bijgevuld in de voorraad', shop_added:'✓ Winkel {s} toegevoegd', fr_saved:'✓ Franse naam onthouden: ', home_sub0:'Niets nodig', home_sub:'{n} te kopen' },
+ fr:{ title:'Courses', to_buy:'{n} à acheter', shops1:'magasin', shopsN:'magasins', in_basket:'dans le panier', for_freezer:'pour le congélateur',
+  nothing:'Rien à acheter 🎉', all_stocked:'Tout est en stock.', all_basket:'Tout est dans le panier 🎉', all_basket_sub:'Appuie sur « Valider les achats » pour mettre à jour le stock.',
+  ph_add:'De quoi as-tu besoin ? p.ex. 2 lait', ph_fr:'🇫🇷 Nom en français (facultatif), p.ex. gouttes nasales', shop:'Magasin', new_shop:'＋ Nouveau magasin', no_shop:'Sans magasin',
+  frz_btn:'❄️ Va au congélateur', frz_lbl:'Congélateur', quick:'Souvent nécessaire, un tap pour ajouter', quick_empty:'Ce que tu ajoutes apparaîtra ici comme bouton rapide.',
+  all:'Tout', send:'💬 Envoyer à Angela', send_shop:'💬 Envoyer à Angela : ', process:'✓ Valider les achats', process_n:'✓ Valider {n}',
+  share_title:'Envoyer à Angela', share_sub:'Part en français, par magasin. Les articles sans traduction restent en néerlandais.', copy:'Copier', copied:'Copié ✓',
+  close:'Fermer', cancel:'Annuler', confirm:'✓ Confirmer', proc_title:'Valider les achats', proc_sub:'{n} acheté(s).', proc_frz:'{n} vont au congélateur, avec la date ci-dessous.', proc_all:'Tout va dans le stock.',
+  to_frz:'❄️ → congélateur', to_stock:'→ stock +', shop_for:'Où achètes-tu ceci ?', shop_new_ph:'Le magasin n’est pas là ? Tape son nom', make:'Créer', fr_title:'Nom français', fr_ph:'p.ex. gouttes nasales',
+  fr_hint:'Ce nom apparaît dans le message pour Angela. Vide = le nom néerlandais reste.', save:'Enregistrer', stock_info:'stock {a} / min {b}', remembered:'✓ Mémorisé : ', frz_word:'congélateur',
+  empty_t:'Rien sur la liste', empty_s:'Tape ci-dessus ce dont tu as besoin, ou touche une suggestion rapide.', nr_lbl:'Numéro d’Angela (WhatsApp)', nr_ph:'p.ex. 0465 12 34 56', nr_need:'Saisis d’abord le numéro d’Angela',
+  not_now:'Ne pas acheter maintenant', remove:'Supprimer', fr_edit:'Modifier le nom français', pick_shop:'Choisir un autre magasin', editor_no:'Éditeur : modifier le stock n’est pas autorisé, utilise le téléphone',
+  done_frz:'{n} au congélateur (date {d})', done_stock:'{n} ajouté(s) au stock', shop_added:'✓ Magasin {s} ajouté', fr_saved:'✓ Nom français mémorisé : ', home_sub0:'Rien à acheter', home_sub:'{n} à acheter' }
+};
+function L(){ return (typeof currentLang !== 'undefined' && currentLang === 'fr') ? 'fr' : 'nl'; }
+function x(k, a){ var s = X[L()][k]; if (s === undefined) s = X.nl[k]; if (s === undefined) s = k; return a === undefined ? s : s.replace(/\{(\w)\}/g, function(m, c){ return (a && typeof a === 'object') ? a[c] : a; }); }
+function lc(s){ return String(s || '').toLowerCase(); }
+function cap(s){ s = String(s || '').trim(); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function pad(n){ return (n < 10 ? '0' : '') + n; }
+function isoOf(d){ return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function todayIso(){ return isoOf(new Date()); }
+function nlDate(i){ var p = String(i).split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+function E(s){ return escapeHtml(s); }
+var _n = 0; function nid(){ _n++; return 'b' + Date.now().toString(36) + _n; }
+function $(id){ return document.getElementById(id); }
+
+/* ---- Frans woordenboekje (alleen voor de gewone dingen; de rest blijft Nederlands tot je zelf een Franse naam geeft) ---- */
+var DICT = {"melk":"lait","eieren":"œufs","ei":"œuf","brood":"pain","boterkoeken":"couques au beurre","koffie":"café","koffiefilters":"filtres à café","toiletpapier":"papier toilette","rijst":"riz","wasmiddel":"lessive","gehakt":"viande hachée","bananen":"bananes","yoghurt":"yaourt","kaas":"fromage","tomaten":"tomates","kip":"poulet","kippenboutfilet":"filet de cuisses de poulet","spinazie":"épinards","boter":"beurre","suiker":"sucre","bloem":"farine","pasta":"pâtes","water":"eau","bier":"bière","wijn":"vin","appels":"pommes","sinaasappels":"oranges","aardappelen":"pommes de terre","uien":"oignons","wortelen":"carottes","sla":"salade","komkommer":"concombre","paprika":"poivrons","champignons":"champignons","ham":"jambon","worst":"saucisse","vis":"poisson","zalm":"saumon","afwasmiddel":"liquide vaisselle","shampoo":"shampooing","tandpasta":"dentifrice","keukenrol":"essuie-tout","vuilniszakken":"sacs poubelle","thee":"thé","chocolade":"chocolat","olie":"huile","azijn":"vinaigre","room":"crème","pizza":"pizza","frieten":"frites","ijs":"glace","appelsap":"jus de pomme","sinaasappelsap":"jus d'orange"};
+var UNITFR = {stuk:'pce', pak:'paquet', doos:'boîte', rol:'rouleau(x)', kg:'kg', gr:'g', bokaal:'bocal', blik:'boîte', fles:'bouteille', brik:'brique', st:'pce'};
+var SHFR = {markt:'Marché', bakker:'Boulangerie', slager:'Boucherie', apotheek:'Pharmacie', andere:'Autres'};
+var SH_EMO = {lidl:'🔵', aldi:'🟦', colruyt:'🟠', delhaize:'🦁', carrefour:'🔷', markt:'🧺', bakker:'🥖', slager:'🥩', apotheek:'💊', andere:'⚪'};
+var NEW_SHOPS = [['Lidl','#0050aa'],['Aldi','#00a0b0'],['Colruyt','#e30613'],['Markt','#2e9b4f'],['Bakker','#b8791f'],['Slager','#a02c8c'],['Apotheek','#1a9a6f']];
+var POOL = ['#7a4fd1','#e0a000','#d6336c','#3b82c4','#5a9e2f','#c2410c'];
+function emoji(n){ n = lc(n); var m = [[/melk|room|yoghurt|lait|yaourt/,'🥛'],[/\bei|eieren|œuf/,'🥚'],[/brood|pistolet|boterkoek|croissant|taart|koek|pain/,'🥖'],[/gehakt|steak|vlees|worst|spek|viande/,'🥩'],[/kip|poulet/,'🍗'],[/vis|zalm|scampi|poisson|saumon/,'🐟'],[/spinazie|sla|groente|prei|wortel|tomaat|tomaten|bloemkool|épinard/,'🥬'],[/appel|banaan|fruit|sinaas|druif|peer|pomme|banane/,'🍎'],[/kaas|fromage/,'🧀'],[/koffie|thee|café|thé/,'☕'],[/toilet|keukenrol/,'🧻'],[/wasmiddel|afwas|zeep|shampoo|poets|lessive/,'🧴'],[/rijst|pasta|spaghetti|meel|suiker|riz|pâtes/,'🍚'],[/bier|wijn|cola|water|sap|bière|vin/,'🥤'],[/chocolade|snoep|ijs|chocolat|glace/,'🍫'],[/druppel|pil|zalf|siroop|tablet|pharma|gouttes/,'💊']];
+  for (var i = 0; i < m.length; i++) if (m[i][0].test(n)) return m[i][1]; return '🛒'; }
+
+/* ---- winkels (bestaande opslag van de app: state.shops) ---- */
+function shopById(id){ return id ? (state.shops.find(function(s){ return s.id === id; }) || null) : null; }
+function shName(id){ var s = shopById(id); return s ? s.name : x('no_shop'); }
+function shFr(id){ var s = shopById(id); if (!s) return 'Autres'; return SHFR[lc(s.name)] || s.name; }
+function shEmo(id){ var s = shopById(id); if (!s) return '❔'; return SH_EMO[lc(s.name)] || '🏬'; }
+function shColor(id){ var s = shopById(id); return (s && s.color) || '#8a8a8a'; }
+function shortSh(id){ return '--sc:' + shColor(id); }
+async function ensureShops(){
+  var changed = false;
+  for (var i = 0; i < NEW_SHOPS.length; i++) {
+    var nm = NEW_SHOPS[i][0];
+    if (state.shops.some(function(s){ return lc(s.name) === lc(nm); })) continue;
+    var shop = { id: uid(), name: nm, color: NEW_SHOPS[i][1], order: state.shops.length + 1, createdAt: Date.now() };
+    await dbPut('shops', shop); state.shops.push(shop); changed = true;
+  }
+  if (changed) { state.shops.sort(function(a, b){ return (a.order || 999) - (b.order || 999); }); try { markSyncDirty(); } catch(e) {} }
+}
+async function newShop(name){
+  name = cap(name); if (!name) return null;
+  var ex = state.shops.filter(function(s){ return lc(s.name) === lc(name); })[0];
+  if (ex) return ex.id;
+  var shop = { id: uid(), name: name, color: POOL[state.shops.length % POOL.length], order: state.shops.length + 1, createdAt: Date.now() };
+  await dbPut('shops', shop); state.shops.push(shop);
+  try { markSyncDirty(); } catch(e) {}
+  toast(x('shop_added', {s: name}));
+  return shop.id;
+}
+function shopsOrdered(){
+  var l = state.shops.slice().sort(function(a, b){ return (a.order || 999) - (b.order || 999); });
+  return l.map(function(s){ return s.id; }).concat(['']);
+}
+
+/* ---- regels ---- */
+function eff(it){ var k = lc(it.name), loc = it.storageLocation || ''; return state.stockItems.filter(function(s){ return lc(s.name) === k && (s.storageLocation || '') === loc; }).reduce(function(a, s){ return a + (s.quantity || 0); }, 0); }
+function isLow(it){ var min = it.minQuantity || 0; return min > 0 && eff(it) <= min; }
+function isFrzLoc(it){ return it && (it.storageLocation === 'freezer' || it.storageLocation === 'freezer_kitchen'); }
+function qtyStep(u){ u = lc(u); return (u === 'gr' || u === 'g' || u === 'ml') ? 100 : 1; }
+function frUnit(u){ if (!u) return ''; var w = String(u).split(' '); var f = UNITFR[lc(w[0])]; if (f) { w[0] = f; return w.join(' '); } return u; }
+function fmt(q, u){ return q + (u ? ' ' + u : ''); }
+function fmtFr(q, u){ var f = frUnit(u); return q + (f ? ' ' + f : ''); }
+function autoRows(){
+  var out = [];
+  state.stockItems.forEach(function(it){
+    if (!isLow(it) || D.skip[it.id]) return;
+    var need = ((it.targetQuantity || ((it.minQuantity || 0) * 2) || it.minQuantity || 0)) - eff(it);
+    var q = D.autoQty[it.id]; if (q == null) q = Math.max(need, 1);
+    var f = D.autoFrz[it.id]; if (f == null) f = isFrzLoc(it);
+    var sh = D.autoShop[it.id]; if (sh == null) sh = it.shopId || '';
+    out.push({ kind:'auto', id:it.id, name:iName(it), nl:it.name, qty:q, unit:it.unit || '', frz:f, shop:sh, fr:it.name_fr || '', done:!!D.autoDone[it.id],
+      info:x('stock_info', {a:eff(it), b:it.minQuantity}), stock:it });
+  });
+  return out;
+}
+function manualRows(){ return D.manual.map(function(m){ return { kind:'manual', id:m.id, name:m.name, nl:m.name, qty:m.qty, unit:m.unit || '', frz:!!m.frz, shop:m.shop || '', fr:m.fr || '', done:!!m.done, info:'' }; }); }
+function allRows(){ return autoRows().concat(manualRows()); }
+function frOf(r){ var m = D.mem[lc(r.nl || r.name)]; return r.fr || (m && m.fr) || DICT[lc(r.nl || r.name)] || ''; }
+var filter = 'all', cShop = '', cFrz = false, picked = false, ctx = null;
+
+/* ---- scherm openen/sluiten ---- */
+window.shopOpen = async function(){
+  try { await ensureShops(); } catch(e) {}
+  var el = $('bd-screen'); el.classList.add('open'); document.body.style.overflow = 'hidden';
+  closeSheet(); filter = 'all'; render(); $('bd-main').scrollTop = 0;
+};
+window.shopClose = function(){
+  $('bd-screen').classList.remove('open'); document.body.style.overflow = ''; closeSheet();
+  if (/boodschappen/i.test(location.hash)) { try { history.replaceState(null, '', location.pathname + location.search); } catch(e) { location.hash = ''; } }
+  try { render_home(); } catch(e) {}
+};
+
+/* ---- start-knop ---- */
+function openCount(){ return allRows().filter(function(r){ return !r.done; }).length; }
+function render_home(){
+  var n = openCount();
+  var a = $('home-shop-n'), b = $('home-shop-sub'), c = $('lbl-shop-home');
+  if (a) a.textContent = n; if (c) c.textContent = x('title'); if (b) b.textContent = n ? x('home_sub', n) : x('home_sub0');
+}
+window.shopHomeUpdate = render_home;
+
+/* ---- tekenen ---- */
+function render(){
+  render_home();
+  if (!$('bd-screen').classList.contains('open')) return;
+  $('bd-ttl').textContent = '🛒 ' + x('title');
+  var nmz = {}; state.stockItems.forEach(function(i){ nmz[i.name] = 1; }); $('bd-names').innerHTML = Object.keys(nmz).slice(0, 400).map(function(n){ return '<option value="' + E(n) + '">'; }).join('');
+  var rows = allRows(), open = rows.filter(function(r){ return !r.done; }), done = rows.filter(function(r){ return r.done; });
+  var frzOpen = open.filter(function(r){ return r.frz; });
+  var seen = {}; open.forEach(function(r){ seen[r.shop] = 1; }); var nS = Object.keys(seen).length;
+  var tot = rows.length, pct = tot ? Math.round(done.length / tot * 100) : 0;
+  var shopsTxt = nS + ' ' + (nS === 1 ? x('shops1') : x('shopsN'));
+  $('bd-summary').innerHTML = (open.length || !done.length)
+    ? '<div class="big">' + (open.length ? x('to_buy', open.length) : x('nothing')) + '</div><div class="sub">' + (open.length ? shopsTxt + (frzOpen.length ? ' · ' + frzOpen.length + ' ' + x('for_freezer') + ' ❄️' : '') + (done.length ? ' · ' + done.length + ' ' + x('in_basket') : '') : x('all_stocked')) + '</div>' + (tot ? '<div class="bd-prog"><i style="width:' + pct + '%"></i></div>' : '')
+    : '<div class="big">' + x('all_basket') + '</div><div class="sub">' + x('all_basket_sub') + '</div><div class="bd-prog"><i style="width:100%"></i></div>';
+  $('bd-input').placeholder = x('ph_add'); $('bd-fr').placeholder = x('ph_fr');
+  $('bd-l-shop').textContent = x('shop'); $('bd-l-frz').textContent = x('frz_lbl'); $('bd-l-quick').textContent = x('quick');
+  $('bd-newinput').placeholder = x('shop_new_ph'); $('bd-newbtn').textContent = x('make');
+  renderComposer(rows);
+  // tabs
+  var counts = {}; rows.forEach(function(r){ if (!r.done) counts[r.shop] = (counts[r.shop] || 0) + 1; });
+  if (filter !== 'all' && !rows.some(function(r){ return r.shop === filter; })) filter = 'all';
+  var th = '<button type="button" class="bd-chip' + (filter === 'all' ? ' on' : '') + '" style="--sc:#1a1a1a" data-a="tab" data-v="all">' + x('all') + ' <span class="c">' + open.length + '</span></button>';
+  shopsOrdered().forEach(function(id){
+    var n = rows.filter(function(r){ return r.shop === id; }).length; if (!n) return;
+    th += '<button type="button" class="bd-chip sh ' + (filter === id ? 'on' : 'tint') + '" style="' + shortSh(id) + '" data-a="tab" data-v="' + E(id) + '">' + shEmo(id) + ' ' + E(shName(id)) + ' <span class="c">' + (counts[id] || 0) + '</span></button>';
+  });
+  $('bd-tabs').innerHTML = '<div class="bd-scroll">' + th + '</div>';
+  // groepen
+  var body = '';
+  shopsOrdered().forEach(function(id){
+    if (filter !== 'all' && filter !== id) return;
+    var g = rows.filter(function(r){ return r.shop === id; }); if (!g.length) return;
+    g.sort(function(a, b){ return (a.done - b.done) || ((b.frz ? 1 : 0) - (a.frz ? 1 : 0)); });
+    var d = g.filter(function(r){ return r.done; }).length;
+    body += '<div class="bd-group' + (filter !== 'all' ? ' bd-focus' : '') + '" style="' + shortSh(id) + '"><div class="bd-ghead"><span class="gi">' + shEmo(id) + '</span><b>' + E(shName(id)) + '</b><span class="gc">' + d + '/' + g.length + '</span><button class="gs" data-a="gshare" data-v="' + E(id) + '" aria-label="' + E(x('send_shop') + shName(id)) + '">💬</button></div><div class="bd-gbody">' + g.map(rowHtml).join('') + '</div></div>';
+  });
+  $('bd-body').innerHTML = body || '<div class="bd-empty"><b>' + x('empty_t') + '</b>' + x('empty_s') + '</div>';
+  var scope = rows.filter(function(r){ return r.done && (filter === 'all' || r.shop === filter); });
+  var pb = $('bd-proc'); pb.disabled = !scope.length; pb.textContent = scope.length ? x('process_n', scope.length) + (filter === 'all' ? '' : ' (' + shName(filter) + ')') : x('process');
+  $('bd-share').textContent = filter === 'all' ? x('send') : x('send_shop') + shName(filter);
+}
+function renderComposer(rows){
+  var h = '';
+  shopsOrdered().forEach(function(id){ h += '<button type="button" class="bd-chip sh' + (cShop === id ? ' on' : '') + '" style="' + shortSh(id) + '" data-a="cshop" data-v="' + E(id) + '">' + shEmo(id) + ' ' + E(shName(id)) + '</button>'; });
+  h += '<button type="button" class="bd-chip new" data-a="newshop">' + x('new_shop') + '</button>';
+  $('bd-shops').innerHTML = h;
+  var f = $('bd-frz'); f.textContent = x('frz_btn'); f.className = 'bd-chip ice' + (cFrz ? ' on' : ''); f.setAttribute('aria-pressed', String(cFrz));
+  var inList = {}; rows.forEach(function(r){ inList[lc(r.nl || r.name)] = 1; });
+  var q = Object.keys(D.mem).filter(function(k){ return !inList[k]; }).sort(function(a, b){ return (D.mem[b].c || 0) - (D.mem[a].c || 0); }).slice(0, 8);
+  $('bd-quick').innerHTML = q.length ? q.map(function(k){ var m = D.mem[k]; return '<button type="button" class="bd-chip sh tint" style="' + shortSh(m.shop) + '" data-a="quick" data-v="' + E(k) + '">＋ ' + E(m.n) + (m.frz ? ' ❄️' : '') + '</button>'; }).join('') : '<span style="font-size:12px;color:var(--text-dim)">' + x('quick_empty') + '</span>';
+}
+function rowHtml(r){
+  var key = r.kind + ':' + r.id, fr = frOf(r);
+  return '<div class="bd-row' + (r.done ? ' done' : '') + '" style="' + shortSh(r.shop) + '"><button class="bd-cb" data-a="tick" data-k="' + key + '" aria-pressed="' + r.done + '" aria-label="' + E(r.name) + '"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>' +
+    '<div class="emo">' + emoji(r.nl || r.name) + '</div><div class="mid"><div class="nm">' + E(r.name) + '</div><div class="bd-meta">' +
+    '<button class="bd-pill sh" data-a="shop" data-k="' + key + '" title="' + E(x('pick_shop')) + '">' + shEmo(r.shop) + ' ' + E(shName(r.shop)) + ' ▾</button>' +
+    '<button class="bd-pill frz' + (r.frz ? '' : ' off') + '" data-a="frz" data-k="' + key + '">❄️' + (r.frz ? ' ' + x('frz_word') : '') + '</button>' +
+    '<button class="bd-pill" data-a="fr" data-k="' + key + '" title="' + E(x('fr_edit')) + '">🇫🇷 ' + E(fr || '—') + '</button>' +
+    (r.info ? '<span class="bd-pill info">' + E(r.info) + '</span>' : '') + '</div></div>' +
+    '<div class="bd-step"><button data-a="minus" data-k="' + key + '" aria-label="−">−</button><output>' + E(fmt(r.qty, r.unit)) + '</output><button data-a="plus" data-k="' + key + '" aria-label="+">+</button></div>' +
+    '<button class="bd-x" data-a="del" data-k="' + key + '" title="' + E(r.kind === 'auto' ? x('not_now') : x('remove')) + '" aria-label="' + E(r.kind === 'auto' ? x('not_now') : x('remove')) + '">✕</button></div>';
+}
+
+/* ---- invoer ---- */
+function parse(txt){
+  var m = String(txt).trim().match(/^(\d+(?:[.,]\d+)?)\s*(kg|gr|g|ml|l|st|stuks?|x)?\s+(.+)$/i);
+  if (m) { var u = lc(m[2] || ''); var map = {kg:'Kg', gr:'Gr', g:'Gr', ml:'ml', l:'L', st:'Stuk', stuk:'Stuk', stuks:'Stuk', x:'Stuk'}; return { qty: parseFloat(m[1].replace(',', '.')), unit: u ? (map[u] || '') : '', name: cap(m[3]) }; }
+  return { qty: 1, unit: '', name: cap(txt) };
+}
+function stockMatch(name, frzWanted){
+  var k = lc(name);
+  var list = state.stockItems.filter(function(s){ return lc(s.name) === k; });
+  var pref = list.filter(function(s){ return isFrzLoc(s) === !!frzWanted; })[0];
+  return pref || list[0] || null;
+}
+function hintMem(){
+  var p = parse($('bd-input').value), m = D.mem[lc(p.name)], st = stockMatch(p.name, false);
+  var fr = (m && m.fr) || (st && st.name_fr) || DICT[lc(p.name)] || '';
+  var txt = '';
+  if (p.name && (m || st)) { var sh = m ? m.shop : (st.shopId || ''); txt = x('remembered') + shName(sh) + ((m && m.frz) || (!m && isFrzLoc(st)) ? ' · ' + x('frz_word') : '') + (fr ? ' · 🇫🇷 ' + fr : ''); }
+  else if (p.name && fr) txt = '🇫🇷 ' + fr;
+  $('bd-mem').textContent = txt;
+}
+function onType(){
+  var p = parse($('bd-input').value), m = D.mem[lc(p.name)], st = stockMatch(p.name, false);
+  if (!picked) {
+    if (m) { cShop = m.shop; cFrz = !!m.frz; }
+    else if (st) { cShop = st.shopId || ''; cFrz = isFrzLoc(st); }
+    else { cShop = ''; cFrz = false; }
+  }
+  hintMem(); renderComposer(allRows());
+}
+function addItem(name, qty, unit, shop, frz, fr){
+  var st = stockMatch(name, frz);
+  if (st) { if (!unit) unit = st.unit || ''; if (!fr && st.name_fr) fr = st.name_fr; }
+  var au = autoRows().filter(function(r){ return lc(r.nl) === lc(name); })[0];
+  if (au) { D.autoQty[au.id] = au.qty + qty; if (shop) D.autoShop[au.id] = shop; if (frz) D.autoFrz[au.id] = true; }
+  else {
+    var dup = D.manual.filter(function(m){ return lc(m.name) === lc(name) && !m.done; })[0];
+    if (dup) { dup.qty += qty; if (fr) dup.fr = fr; if (shop) dup.shop = shop; if (frz) dup.frz = true; }
+    else D.manual.push({ id: nid(), name: name, qty: qty, unit: unit || '', frz: !!frz, shop: shop || '', fr: fr || '', done: false });
+  }
+  var pm = D.mem[lc(name)];
+  D.mem[lc(name)] = { n: name, shop: shop || '', frz: !!frz, unit: unit || '', fr: fr || (pm && pm.fr) || (st && st.name_fr) || '', c: ((pm && pm.c) || 0) + 1 };
+  sv();
+}
+
+/* ---- sheets ---- */
+function openSheet(html){ $('bd-sheet').innerHTML = html; $('bd-veil').hidden = false; }
+function closeSheet(){ var v = $('bd-veil'); if (v) v.hidden = true; ctx = null; }
+function find(key){ var p = key.split(':'), id = p.slice(1).join(':');
+  if (p[0] === 'auto') return { kind:'auto', id:id, stock: state.stockItems.filter(function(s){ return s.id === id; })[0] };
+  return { kind:'manual', id:id, m: D.manual.filter(function(m){ return m.id === id; })[0] }; }
+function shopSheet(title, cur){
+  var h = '<h2>' + x('shop_for') + '</h2><p class="small">' + E(title) + '</p><div class="bd-grid">' + shopsOrdered().map(function(id){ return '<button type="button" class="bd-gopt' + (cur === id ? ' on' : '') + '" style="' + shortSh(id) + '" data-a="pick" data-v="' + E(id) + '">' + shEmo(id) + ' ' + E(shName(id)) + '</button>'; }).join('') + '</div>' +
+    '<form class="bd-nsform" data-form="newshop2" autocomplete="off"><input type="text" name="n" placeholder="' + E(x('shop_new_ph')) + '"><button class="bd-btn ok" type="submit">' + x('make') + '</button></form>' +
+    '<div class="bd-btns"><button class="bd-btn ghost" data-a="closesheet" style="flex:1" type="button">' + x('close') + '</button></div>';
+  openSheet(h);
+}
+async function applyPick(v){
+  if (!ctx) return;
+  if (ctx.t === 'row') {
+    var f = find(ctx.k);
+    if (f.kind === 'auto') { D.autoShop[f.id] = v; if (f.stock && !isEditorDevice()) { f.stock.shopId = v || null; f.stock.lastUpdated = Date.now(); await dbPut('stockItems', f.stock); try { markSyncDirty(); } catch(e) {} } var mk = D.mem[lc(f.stock.name)]; if (mk) mk.shop = v; }
+    else { f.m.shop = v; var pm = D.mem[lc(f.m.name)]; if (pm) pm.shop = v; else D.mem[lc(f.m.name)] = { n: f.m.name, shop: v, frz: !!f.m.frz, unit: f.m.unit || '', fr: f.m.fr || '', c: 1 }; }
+    toast('✓ ' + (f.kind === 'auto' ? iName(f.stock) : f.m.name) + ' → ' + shName(v));
+  }
+  sv(); closeSheet(); render();
+}
+function frSheet(key){
+  var f = find(key), nm = f.kind === 'auto' ? f.stock.name : f.m.name;
+  var cur = f.kind === 'auto' ? (f.stock.name_fr || '') : (f.m.fr || '');
+  cur = cur || (D.mem[lc(nm)] && D.mem[lc(nm)].fr) || DICT[lc(nm)] || '';
+  ctx = { t: 'fr', k: key };
+  openSheet('<h2>' + x('fr_title') + '</h2><p class="small">' + E(nm) + '</p><form class="bd-nsform" data-form="fr" autocomplete="off"><input type="text" name="v" value="' + E(cur) + '" placeholder="' + E(x('fr_ph')) + '"><button class="bd-btn ok" type="submit">' + x('save') + '</button></form><p class="small" style="margin-top:8px">' + x('fr_hint') + '</p><div class="bd-btns"><button class="bd-btn ghost" data-a="closesheet" style="flex:1" type="button">' + x('close') + '</button></div>');
+  setTimeout(function(){ var i = document.querySelector('#bd-sheet input[name=v]'); if (i) i.focus(); }, 60);
+}
+
+/* ---- delen (altijd Frans, altijd naar Angela) ---- */
+function shareText(only){
+  var rows = allRows().filter(function(r){ return !r.done && (only == null || r.shop === only); });
+  var d = new Date().toLocaleDateString('fr-BE', { weekday:'long', day:'numeric', month:'long' });
+  var t = '🛒 Courses, ' + d + '\n';
+  shopsOrdered().forEach(function(id){
+    var g = rows.filter(function(r){ return r.shop === id; }); if (!g.length) return;
+    t += '\n*' + shEmo(id) + ' ' + shFr(id) + '*\n' + g.map(function(r){ return '☐ ' + (r.qty > 1 || r.unit ? fmtFr(r.qty, r.unit) + ' ' : '') + (frOf(r) || r.nl || r.name) + (r.frz ? ' ❄️' : ''); }).join('\n') + '\n';
+  });
+  if (!rows.length) t += '\nRien à acheter.\n';
+  return t.trim();
+}
+function waDigits(v){ var d = String(v || '').replace(/\D/g, ''); if (d.indexOf('00') === 0) d = d.slice(2); else if (d.charAt(0) === '0') d = '32' + d.slice(1); return d; }
+function shareSheet(only){
+  var t = shareText(only);
+  ctx = { t: 'share' };
+  openSheet('<h2>' + x('share_title') + '</h2><p class="small">' + x('share_sub') + '</p><textarea id="bd-sharetxt">' + E(t) + '</textarea>' +
+    '<div class="small" style="margin-bottom:4px">' + x('nr_lbl') + '</div><input type="tel" id="bd-nr" inputmode="tel" value="' + E(D.angela) + '" placeholder="' + E(x('nr_ph')) + '">' +
+    '<div class="bd-btns"><button class="bd-btn ghost" data-a="copy" style="flex:1" type="button">' + x('copy') + '</button><button class="bd-btn wa" data-a="wa" style="flex:1.6" type="button">💬 ' + x('share_title') + '</button></div>' +
+    '<div class="bd-btns"><button class="bd-btn ghost" data-a="closesheet" style="flex:1" type="button">' + x('close') + '</button></div>');
+}
+function doCopy(btn){
+  var ta = $('bd-sharetxt');
+  function ok(){ btn.textContent = x('copied'); setTimeout(function(){ btn.textContent = x('copy'); }, 1600); }
+  function fb(){ ta.focus(); ta.select(); try { document.execCommand('copy'); ok(); } catch(e) {} }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, fb); else fb();
+}
+function doWa(){
+  var nr = $('bd-nr').value.trim(); var d = waDigits(nr);
+  if (d.length < 9) { toast(x('nr_need')); $('bd-nr').focus(); return; }
+  D.angela = nr; sv();
+  window.open('https://wa.me/' + d + '?text=' + encodeURIComponent($('bd-sharetxt').value), '_blank');
+}
+
+/* ---- verwerken ---- */
+function scopeDone(){ return allRows().filter(function(r){ return r.done && (filter === 'all' || r.shop === filter); }); }
+function procSheet(){
+  var done = scopeDone(); if (!done.length) return;
+  var n = done.filter(function(r){ return r.frz; }).length;
+  ctx = { t: 'proc' };
+  openSheet('<h2>' + x('proc_title') + '</h2><p class="small">' + x('proc_sub', done.length) + ' ' + (n ? x('proc_frz', n) : x('proc_all')) + '</p>' +
+    done.map(function(r, i){
+      var dest = r.frz ? '<span class="bd-pill frz">' + x('to_frz') + '</span> <input type="date" data-pd="' + i + '" value="' + todayIso() + '">' : '<span class="bd-pill" style="background:var(--success-bg);color:var(--success);border-color:var(--success)">' + x('to_stock') + E(fmt(r.qty, r.unit)) + '</span>';
+      return '<div class="bd-proc"><div class="emo" style="font-size:24px;width:30px;text-align:center">' + emoji(r.nl || r.name) + '</div><div style="flex:1;min-width:0"><div style="font-weight:800">' + E(r.name) + ' <span class="small">' + E(fmt(r.qty, r.unit)) + ' · ' + E(shName(r.shop)) + '</span></div><div class="bd-meta" style="gap:8px">' + dest + '</div></div></div>';
+    }).join('') +
+    '<div class="bd-btns"><button class="bd-btn ghost" data-a="closesheet" style="flex:1" type="button">' + x('cancel') + '</button><button class="bd-btn ok" data-a="procok" type="button">' + x('confirm') + '</button></div>');
+}
+async function procOk(){
+  if (isEditorDevice()) { toast(x('editor_no')); return; }
+  var done = scopeDone(), dates = {};
+  document.querySelectorAll('#bd-sheet [data-pd]').forEach(function(i){ dates[i.getAttribute('data-pd')] = i.value || todayIso(); });
+  var nF = 0, nS = 0, d0 = '';
+  for (var i = 0; i < done.length; i++) {
+    var r = done[i], base = r.kind === 'auto' ? r.stock : stockMatch(r.nl, r.frz);
+    if (r.frz) {
+      var date = dates[i] || todayIso(); d0 = d0 || date; nF++;
+      var catId = (base && base.categoryId) || (findCat('cat_frozen') ? 'cat_frozen' : null);
+      var item = { id: uid(), name: (base && base.name) || r.nl, name_fr: (base && base.name_fr) || frOf(r) || '', quantity: r.qty, unit: r.unit || (base && base.unit) || '',
+        categoryId: catId, minQuantity: 0, subtype: null, storageLocation: (base && base.storageLocation === 'freezer_kitchen') ? 'freezer_kitchen' : 'freezer', freezeDate: date,
+        shopId: r.shop || null, photos: [], description: '', createdAt: Date.now(), lastUpdated: Date.now() };
+      await dbPut('stockItems', item); state.stockItems.push(item);
+    } else {
+      var ex = (r.kind === 'auto') ? r.stock : (base && !isFrzLoc(base) ? base : null);
+      if (ex) { ex.quantity = (ex.quantity || 0) + r.qty; ex.lastUpdated = Date.now(); await dbPut('stockItems', ex); }
+      else { var ni = { id: uid(), name: r.nl, name_fr: frOf(r) || '', quantity: r.qty, unit: r.unit || '', categoryId: null, minQuantity: 0, subtype: null, shopId: r.shop || null, photos: [], description: '', createdAt: Date.now(), lastUpdated: Date.now() };
+        await dbPut('stockItems', ni); state.stockItems.push(ni); }
+      nS++;
+    }
+    if (r.kind === 'manual') D.manual = D.manual.filter(function(m){ return m.id !== r.id; });
+    else { delete D.autoDone[r.id]; delete D.autoQty[r.id]; delete D.autoFrz[r.id]; delete D.skip[r.id]; }
+    var pm = D.mem[lc(r.nl)]; if (pm) pm.c = (pm.c || 0) + 1;
+  }
+  sv(); try { markSyncDirty(); } catch(e) {}
+  closeSheet(); render();
+  try { if (typeof renderStockList === 'function') renderStockList(); } catch(e) {}
+  try { window.render && window.render(); } catch(e) {}
+  toast('✓ ' + (nF ? x('done_frz', {n:nF, d:nlDate(d0)}) : '') + (nF && nS ? ' · ' : '') + (nS ? x('done_stock', nS) : ''));
+  if (nF > 0 && haGetUrl('frz')) setTimeout(function(){ haSendFreezer(); }, 1800);
+}
+
+/* ---- klikken ---- */
+document.addEventListener('DOMContentLoaded', function(){
+  var scr = $('bd-screen');
+  scr.addEventListener('click', async function(e){
+    var b = e.target.closest('[data-a]'); if (!b) return;
+    var a = b.getAttribute('data-a'), k = b.getAttribute('data-k'), v = b.getAttribute('data-v');
+    if (a === 'closesheet') { closeSheet(); return; }
+    if (a === 'tab') { filter = v; render(); return; }
+    if (a === 'cshop') { cShop = v; picked = true; renderComposer(allRows()); return; }
+    if (a === 'newshop') { var nf = $('bd-newform'); nf.hidden = !nf.hidden; if (!nf.hidden) $('bd-newinput').focus(); return; }
+    if (a === 'quick') { var m = D.mem[v]; addItem(m.n, 1, m.unit, m.shop, m.frz, m.fr); render(); return; }
+    if (a === 'gshare') { shareSheet(v); return; }
+    if (a === 'copy') { doCopy(b); return; }
+    if (a === 'wa') { doWa(); return; }
+    if (a === 'procok') { procOk(); return; }
+    if (a === 'pick') { await applyPick(v); return; }
+    if (!k) return;
+    var f = find(k);
+    if (a === 'shop') { ctx = { t: 'row', k: k }; shopSheet(f.kind === 'auto' ? iName(f.stock) : f.m.name, f.kind === 'auto' ? (D.autoShop[f.id] != null ? D.autoShop[f.id] : (f.stock.shopId || '')) : (f.m.shop || '')); return; }
+    if (a === 'fr') { frSheet(k); return; }
+    if (a === 'tick') { if (f.kind === 'auto') D.autoDone[f.id] = !D.autoDone[f.id]; else f.m.done = !f.m.done; }
+    if (a === 'plus' || a === 'minus') {
+      var d = a === 'plus' ? 1 : -1;
+      if (f.kind === 'auto') { var rr = autoRows().filter(function(r){ return r.id === f.id; })[0]; D.autoQty[f.id] = Math.max(1, (rr ? rr.qty : 1) + d * qtyStep(f.stock.unit)); }
+      else f.m.qty = Math.max(1, f.m.qty + d * qtyStep(f.m.unit));
+    }
+    if (a === 'frz') { if (f.kind === 'auto') { var c = D.autoFrz[f.id]; if (c == null) c = isFrzLoc(f.stock); D.autoFrz[f.id] = !c; } else f.m.frz = !f.m.frz; }
+    if (a === 'del') { if (f.kind === 'auto') D.skip[f.id] = true; else D.manual = D.manual.filter(function(m){ return m.id !== f.id; }); }
+    sv(); render();
+  });
+  scr.addEventListener('submit', async function(e){
+    var fm = e.target; e.preventDefault();
+    var kind = fm.getAttribute('data-form') || fm.id;
+    if (kind === 'bd-form') {
+      var inp = $('bd-input'); if (!inp.value.trim()) return;
+      var p = parse(inp.value);
+      addItem(p.name, p.qty, p.unit, cShop, cFrz, $('bd-fr').value.trim());
+      if (cShop) toast('✓ ' + p.name + ' → ' + shName(cShop));
+      inp.value = ''; $('bd-fr').value = ''; cShop = ''; cFrz = false; picked = false; hintMem(); render(); inp.focus();
+    } else if (kind === 'bd-newform') {
+      var id = await newShop($('bd-newinput').value); $('bd-newinput').value = '';
+      if (id != null) { cShop = id; picked = true; $('bd-newform').hidden = true; render(); }
+    } else if (kind === 'newshop2') {
+      var id2 = await newShop(fm.elements.n.value);
+      if (id2 != null) await applyPick(id2);
+    } else if (kind === 'fr') {
+      if (!ctx || ctx.t !== 'fr') return;
+      var f = find(ctx.k), val = fm.elements.v.value.trim();
+      if (f.kind === 'auto') { f.stock.name_fr = val; f.stock.lastUpdated = Date.now(); await dbPut('stockItems', f.stock); try { markSyncDirty(); } catch(e2) {} }
+      else f.m.fr = val;
+      var nm = f.kind === 'auto' ? f.stock.name : f.m.name, pm = D.mem[lc(nm)];
+      if (pm) pm.fr = val; else D.mem[lc(nm)] = { n: nm, shop: f.kind === 'auto' ? (f.stock.shopId || '') : (f.m.shop || ''), frz: false, unit: '', fr: val, c: 0 };
+      sv(); closeSheet(); render(); toast(x('fr_saved') + (val || '—'));
+    }
+  });
+  $('bd-input').addEventListener('input', onType);
+  $('bd-frz').addEventListener('click', function(){ cFrz = !cFrz; picked = true; renderComposer(allRows()); });
+  $('bd-share').addEventListener('click', function(){ shareSheet(filter === 'all' ? null : filter); });
+  $('bd-proc').addEventListener('click', procSheet);
+  $('bd-veil').addEventListener('click', function(e){ if (e.target === $('bd-veil')) closeSheet(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && $('bd-screen').classList.contains('open')) { if (!$('bd-veil').hidden) closeSheet(); else shopClose(); } });
+  window.addEventListener('hashchange', function(){ if (/boodschappen/i.test(location.hash)) shopOpen(); });
+  render_home();
+});
+window.shopRender = render;
+})();
+
+window.openShoppingList = function(){ shopOpen(); };
+(function(){ var _sl = setLang; window.setLang = function(l){ _sl(l); try { shopHomeUpdate(); shopRender(); } catch(e) {} }; })();
 
 (async () => {
   try {
