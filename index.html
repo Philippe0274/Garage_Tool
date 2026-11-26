@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.4">
-<title>Garage Bavaylei 1.4.4</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.5">
+<title>Garage Bavaylei 1.4.5</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.4.4.webmanifest">
+<link rel="manifest" href="manifest-1.4.5.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.4.4';
+  const APP_CODE_VERSION = '1.4.5';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1401,7 +1401,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.4.4</span>
+      <span class="app-version">versie: 1.4.5</span>
     </div>
   </div>
   <div class="top-controls">
@@ -6834,6 +6834,7 @@ async function importData(e) {
     const text = await file.text();
     const data = JSON.parse(text);
     if (!data.shelves || !data.boxes || !data.items) throw new Error('invalid');
+    await safetySnapshot('Voor importeren bestand', true);
     await dbClear('shelves'); await dbClear('boxes'); await dbClear('items');
     await dbClear('stockItems'); await dbClear('categories');
     await dbClear('units'); await dbClear('stockNames'); await dbClear('shops');
@@ -6855,6 +6856,7 @@ async function importData(e) {
 
 async function confirmReset() {
   if (!confirm(t('confirm_reset'))) return;
+  await safetySnapshot('Voor alles wissen', true);
   await dbClear('shelves'); await dbClear('boxes'); await dbClear('items');
   await dbClear('stockItems'); await dbClear('categories');
   await dbClear('units'); await dbClear('stockNames'); await dbClear('shops');
@@ -8026,7 +8028,184 @@ function updateDeviceUI() {
 // ============================================================================
 // EDITOR MODUS — PC invoer met manuele push naar Drive
 // ============================================================================
-let editorChanges = []; // { type: 'add'|'edit'|'delete', itemType: 'stock'|'material', id, name, changes }
+// ═══ 1.4.5 BESCHERMING ═══
+// 1) Wat nog niet naar Drive gestuurd is blijft bewaard (ook na herladen/afsluiten)
+const PEND_KEY = 'editor_pending_v1';
+function editorLoadPending() {
+  try { const a = JSON.parse(localStorage.getItem(PEND_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+}
+function editorSavePending() {
+  try { localStorage.setItem(PEND_KEY, JSON.stringify(editorChanges)); } catch (e) {}
+}
+// 2) Veiligheidskopieën in een aparte database (verandert de gewone database niet)
+const SAFE_DB = 'GarageSafety';
+const SAFE_KEEP = 12;
+function safeOpen() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(SAFE_DB, 1);
+    r.onupgradeneeded = () => { r.result.createObjectStore('snaps', { keyPath: 'ts' }); };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function safeAll() {
+  const d = await safeOpen();
+  return new Promise((res, rej) => {
+    const r = d.transaction('snaps').objectStore('snaps').getAll();
+    r.onsuccess = () => { d.close(); res(r.result.sort((a, b) => b.ts - a.ts)); };
+    r.onerror = () => rej(r.error);
+  });
+}
+async function safePutDel(rec, delKeys) {
+  const d = await safeOpen();
+  return new Promise((res, rej) => {
+    const tx = d.transaction('snaps', 'readwrite');
+    const st = tx.objectStore('snaps');
+    if (rec) st.put(rec);
+    (delKeys || []).forEach(k => st.delete(k));
+    tx.oncomplete = () => { d.close(); res(); };
+    tx.onerror = () => rej(tx.error);
+  });
+}
+function safeSig(o) {
+  const k = ['shelves', 'boxes', 'items', 'stockItems', 'categories', 'units', 'shops', 'materialCategories'];
+  return k.map(x => { const a = o[x] || []; let m = 0; a.forEach(i => { m = Math.max(m, i.lastUpdated || i.createdAt || 0); }); return a.length + ':' + m; }).join('|') + '|' + (o.stockNames || []).length;
+}
+async function safetySnapshot(reason, force) {
+  try {
+    const data = buildExportObject();
+    const total = data.shelves.length + data.boxes.length + data.items.length + data.stockItems.length;
+    if (!total) return false;                       // nooit een lege toestand bewaren
+    const sig = safeSig(data);
+    const all = await safeAll();
+    if (!force && all[0] && all[0].sig === sig) return false;
+    const rec = { ts: Date.now(), reason, sig, data, counts: { shelves: data.shelves.length, boxes: data.boxes.length, items: data.items.length, stockItems: data.stockItems.length } };
+    await safePutDel(rec, all.slice(SAFE_KEEP - 1).map(x => x.ts));
+    return true;
+  } catch (e) { console.warn('safetySnapshot:', e); return false; }
+}
+// 3) Lokaal-enkel gegevens verzamelen vóór Drive-data geladen wordt, en daarna terugzetten
+const EDKIND = { stock: 'stockItems', material: 'items', shelf: 'shelves', box: 'boxes' };
+function editorCollectLocalOnly(data) {
+  const out = { kept: {}, edits: [], lastSync: gLastSync || 0 };
+  for (const key of ['shelves', 'boxes', 'items', 'stockItems', 'categories', 'units', 'shops', 'materialCategories']) {
+    const dr = new Set((data[key] || []).map(i => i.id));
+    out.kept[key] = state[key].filter(i => !dr.has(i.id));
+  }
+  const dn = new Set((data.stockNames || []).map(n => n.name));
+  out.kept.stockNames = state.stockNames.filter(n => !dn.has(n.name));
+  for (const c of editorChanges) {
+    if (c.type !== 'edit') continue;
+    const key = EDKIND[c.itemType]; if (!key) continue;
+    const loc = state[key].find(i => i.id === c.id);
+    const dv = (data[key] || []).find(i => i.id === c.id);
+    if (loc && dv) out.edits.push({ key, loc, dv });
+  }
+  return out;
+}
+async function editorRestoreLocalOnly(keep) {
+  for (const key of ['shelves', 'boxes', 'items', 'stockItems']) {
+    const type = Object.keys(EDKIND).find(k => EDKIND[k] === key);
+    for (const it of keep.kept[key]) {
+      if (state[key].some(x => x.id === it.id)) continue;
+      await dbPut(key, it); state[key].push(it);
+      const known = editorChanges.some(c => c.id === it.id);
+      const fresh = !it.createdAt || it.createdAt > keep.lastSync;
+      if (!known && fresh) editorChanges.push({ type: 'add', itemType: type, id: it.id, name: iName(it) || it.name || '?', changes: [] });
+    }
+  }
+  for (const key of ['categories', 'units', 'shops', 'materialCategories']) {
+    for (const it of keep.kept[key]) {
+      const dup = state[key].some(x => x.id === it.id || (it.name_nl && x.name_nl === it.name_nl) || (it.label && x.label === it.label) || (key === 'shops' && it.name && x.name === it.name));
+      if (dup) continue;
+      await dbPut(key, it); state[key].push(it);
+    }
+  }
+  for (const n of keep.kept.stockNames) {
+    if (state.stockNames.some(x => x.name === n.name)) continue;
+    await dbPut('stockNames', n); state.stockNames.push(n);
+  }
+  for (const e of keep.edits) {
+    const idx = state[e.key].findIndex(x => x.id === e.loc.id);
+    if (idx === -1) continue;
+    const c = { ...e.loc };
+    if (e.key === 'stockItems') c.quantity = e.dv.quantity;
+    await dbPut(e.key, c); state[e.key][idx] = c;
+  }
+  state.materialCategories.sort((a, b) => (a.order || 999) - (b.order || 999));
+  state.units.sort((a, b) => a.label.localeCompare(b.label, 'nl'));
+  editorSavePending();
+  updateEditorBanner();
+}
+// 4) Back-upbestand op de pc (max 1 keer per dag automatisch, of met de knop)
+function editorTodayKey() { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+function editorBackupFile() {
+  const o = buildExportObject();
+  const d = new Date(); const p = n => String(n).padStart(2, '0');
+  const name = 'Garage-backup-' + d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes()) + '.json';
+  const blob = new Blob([JSON.stringify(o)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  try { localStorage.setItem('editor_last_backup', editorTodayKey()); } catch (e) {}
+  return name;
+}
+function editorAutoBackup() {
+  try {
+    if (!isEditorDevice()) return;
+    if (localStorage.getItem('editor_last_backup') === editorTodayKey()) return;
+    if (!(state.shelves.length + state.boxes.length + state.items.length + state.stockItems.length)) return;
+    const n = editorBackupFile();
+    toast('💾 ' + (currentLang === 'nl' ? 'Dagelijkse back-up opgeslagen: ' : 'Sauvegarde quotidienne : ') + n);
+  } catch (e) { console.warn('autoBackup', e); }
+}
+let _editorAfterT = null;
+function editorAfterChange() {
+  clearTimeout(_editorAfterT);
+  _editorAfterT = setTimeout(async () => { await safetySnapshot('Automatisch na wijziging'); editorAutoBackup(); }, 15000);
+}
+function editorStartGuards() {
+  setTimeout(async () => { await safetySnapshot('Bij het opstarten'); editorAutoBackup(); }, 8000);
+}
+// 5) Venster: veiligheidskopieën + back-upbestand
+async function editorSafetyModal() {
+  const nl = currentLang === 'nl';
+  let snaps = [];
+  try { snaps = await safeAll(); } catch (e) {}
+  const rows = snaps.map(s => { const c = s.counts || {}; return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+    <div style="flex:1;min-width:0;"><div style="font-weight:700;">${new Date(s.ts).toLocaleString(nl ? 'nl-BE' : 'fr-BE')}</div>
+    <div style="font-size:11px;color:var(--text-dim);">${escapeHtml(s.reason || '')} · ${c.stockItems || 0} ${nl ? 'voorraad' : 'stock'} · ${c.items || 0} ${nl ? 'materiaal' : 'matériel'} · ${c.shelves || 0} ${nl ? 'rekken' : 'étagères'} · ${c.boxes || 0} ${nl ? 'boxen' : 'boîtes'}</div></div>
+    <button class="btn btn-secondary btn-small" onclick="editorRestoreSnap(${s.ts})">${nl ? 'Zet terug' : 'Restaurer'}</button></div>`; }).join('')
+    || `<p style="font-size:13px;color:var(--text-dim);">${nl ? 'Nog geen veiligheidskopieën.' : 'Pas encore de copies de sécurité.'}</p>`;
+  openModal(nl ? '🛟 Back-up en herstel' : '🛟 Sauvegarde et restauration', `
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:10px;">${nl
+      ? 'De app bewaart automatisch veiligheidskopieën van deze laptop. Gaat er iets mis, zet dan hieronder een eerdere toestand terug. Daarna kun je met "Niet verstuurd?" alles naar Drive sturen.'
+      : `L'app garde automatiquement des copies de sécurité de cet ordinateur. En cas de problème, restaurez un état précédent ci-dessous.`}</p>
+    <button class="btn" onclick="editorBackupNow()">💾 ${nl ? 'Maak nu een back-upbestand' : 'Créer un fichier de sauvegarde'}</button>
+    <div style="margin-top:12px;max-height:45vh;overflow-y:auto;">${rows}</div>
+    <div class="btn-row" style="margin-top:12px;"><button class="btn btn-secondary" onclick="closeModal()">${nl ? 'Sluiten' : 'Fermer'}</button></div>`);
+}
+function editorBackupNow() {
+  const n = editorBackupFile();
+  toast('💾 ' + n);
+}
+async function editorRestoreSnap(ts) {
+  const nl = currentLang === 'nl';
+  try {
+    const snaps = await safeAll();
+    const sn = snaps.find(x => x.ts === ts);
+    if (!sn) { toast('❌ ' + (nl ? 'Kopie niet gevonden' : 'Copie introuvable')); return; }
+    await safetySnapshot(nl ? 'Voor herstel' : 'Avant restauration', true);
+    await importDataObj(sn.data, { exact: true });
+    closeModal();
+    render();
+    toast('✓ ' + (nl ? 'Teruggezet' : 'Restauré'));
+    if (isGTokenValid()) setTimeout(() => editorScanUnsynced(), 600);
+  } catch (e) { toast('❌ ' + (e.message || e)); }
+}
+
+let editorChanges = editorLoadPending(); // { type: 'add'|'edit'|'delete', itemType: 'stock'|'material', id, name, changes }
 
 function editorTrackChange(type, itemType, item, changedFields) {
   if (!isEditorDevice()) return;
@@ -8042,17 +8221,19 @@ function editorTrackChange(type, itemType, item, changedFields) {
     changes: changedFields || []
   });
   updateEditorBanner();
+  editorAfterChange();
 }
 
 function updateEditorBanner() {
+  editorSavePending();
   const nl = currentLang === 'nl';
   const n = editorChanges.length;
   const countEl = document.getElementById('editor-banner-count');
   const pushBtn = document.getElementById('editor-push-banner-btn');
   if (countEl) {
     countEl.textContent = n > 0
-      ? `${n} ${nl?(n===1?'wijziging':'wijzigingen'):(n===1?'modification':'modifications')}`
-      : (nl?'Editor modus — PC · v1.4.4':'Mode Éditeur — PC · v1.4.4');
+      ? `${n} ${nl?'nog niet verstuurd':'pas encore envoyé(s)'}`
+      : (nl?'Editor modus — PC · v1.4.5':'Mode Éditeur — PC · v1.4.5');
     countEl.style.color = n > 0 ? '#f0b429' : '#aaa';
   }
   if (pushBtn) pushBtn.style.display = n > 0 ? 'block' : 'none';
@@ -8075,9 +8256,14 @@ function initEditorMode() {
     banner.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="color:#f0b429;">💻</span>
-        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.4.4':'Mode Éditeur — PC · v1.4.4'}</span>
+        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.4.5':'Mode Éditeur — PC · v1.4.5'}</span>
       </div>
       <div style="display:flex;gap:8px;">
+        <button onclick="editorSafetyModal()" id="editor-safe-btn" style="
+          background:#2b2b2b; color:#fff; border:1px solid #555; border-radius:8px;
+          padding:6px 12px; font-size:12px; font-weight:700; cursor:pointer;
+          font-family:'JetBrains Mono'; white-space:nowrap;
+        ">🛟 Back-up</button>
         <button onclick="editorScanUnsynced()" id="editor-scan-btn" style="
           background:#f0b429; color:#1a1a1a; border:none; border-radius:8px;
           padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer;
@@ -8097,6 +8283,7 @@ function initEditorMode() {
     `;
     document.body.insertBefore(banner, document.body.firstChild);
   }
+  try { updateEditorBanner(); editorStartGuards(); } catch (e) {}
   document.querySelectorAll('.nav-btn[data-view="add"]').forEach(b => b.style.display = '');
   document.querySelectorAll('.nav-btn[data-view="material"]').forEach(b => b.style.display = '');
 }
@@ -8160,8 +8347,23 @@ async function editorSendUnsynced() {
   await doEditorPush();
 }
 
-async function editorLoadFromDrive() {
+async function editorLoadFromDrive(confirmed) {
   const nl = currentLang === 'nl';
+  if (!confirmed && editorChanges.length > 0) {
+    const n = editorChanges.length;
+    openModal(nl ? '⚠️ Nog niet verstuurd' : '⚠️ Pas encore envoyé', `
+      <p style="font-size:14px;margin-bottom:8px;">${nl
+        ? `Er staan nog <b>${n}</b> dingen op deze laptop die niet op Drive staan.`
+        : `Il y a encore <b>${n}</b> éléments sur cet ordinateur qui ne sont pas sur Drive.`}</p>
+      <p style="font-size:13px;color:var(--text-dim);">${nl
+        ? 'Laden voegt samen: jouw nieuwe dingen blijven bewaard en er wordt eerst een veiligheidskopie gemaakt. Je kunt ze ook eerst versturen.'
+        : `Le chargement fusionne : vos nouveaux éléments sont conservés et une copie de sécurité est faite d'abord.`}</p>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn" onclick="showEditorPushModal()">📤 ${nl ? 'Eerst versturen' : 'Envoyer d\'abord'}</button>
+        <button class="btn btn-secondary" onclick="closeModal();editorLoadFromDrive(true)">📥 ${nl ? 'Samenvoegen en laden' : 'Fusionner et charger'}</button>
+      </div>`);
+    return;
+  }
   if (!isGTokenValid()) {
     toast(nl?'Verbind eerst met Google Drive via Instellingen':'Connectez-vous d\'abord à Google Drive');
     showView('settings');
@@ -8743,7 +8945,13 @@ function buildExportObject() {
   };
 }
 
-async function importDataObj(data) {
+async function importDataObj(data, opts) {
+  opts = opts || {};
+  let keep = null;
+  if (isEditorDevice()) {
+    await safetySnapshot(currentLang === 'nl' ? 'Voor laden van Drive' : 'Avant chargement depuis Drive');
+    if (!opts.exact) keep = editorCollectLocalOnly(data);
+  }
   // Bewaar lokale materialCategories customIcons VOOR de state reset
   const savedMatCatIcons = {};
   for (const c of state.materialCategories) {
@@ -8826,6 +9034,10 @@ async function importDataObj(data) {
   }
   state.materialCategories.sort((a,b)=>(a.order||999)-(b.order||999));
   state.units.sort((a,b)=>a.label.localeCompare(b.label,'nl'));
+  if (keep) {
+    await editorRestoreLocalOnly(keep);
+    if (editorChanges.length) setTimeout(() => toast('🛡️ ' + editorChanges.length + (currentLang === 'nl' ? ' nog niet verstuurd: veilig bewaard op deze laptop' : ' pas encore envoyé(s) : conservé(s) sur cet ordinateur')), 1800);
+  }
   render();
   buildMatCategoryFilter();
 }
