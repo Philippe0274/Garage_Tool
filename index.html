@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.0">
-<title>Garage Bavaylei 1.4.0</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.1">
+<title>Garage Bavaylei 1.4.1</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.4.0.webmanifest">
+<link rel="manifest" href="manifest-1.4.1.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.4.0';
+  const APP_CODE_VERSION = '1.4.1';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1401,7 +1401,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.4.0</span>
+      <span class="app-version">versie: 1.4.1</span>
     </div>
   </div>
   <div class="top-controls">
@@ -4732,6 +4732,7 @@ async function saveShelf(id) {
   shelf.kind = editingShelfKind;
   await dbPut('shelves', shelf);
   if (!id) state.shelves.push(shelf);
+  editorTrackChange(id ? 'edit' : 'add', 'shelf', shelf, []);
   closeModal();
   toast(t('shelf_added')); markSyncDirty();
   if ((shelf.kind || 'material') === 'stock') {
@@ -4978,6 +4979,7 @@ async function saveBox(id) {
   box.notes = document.getElementById('box-notes').value;
   await dbPut('boxes', box);
   if (!id) state.boxes.push(box);
+  editorTrackChange(id ? 'edit' : 'add', 'box', box, []);
   closeModal();
   toast(t('box_added')); markSyncDirty();
   // Return to box manager if open, else material view
@@ -8022,6 +8024,8 @@ let editorChanges = []; // { type: 'add'|'edit'|'delete', itemType: 'stock'|'mat
 function editorTrackChange(type, itemType, item, changedFields) {
   if (!isEditorDevice()) return;
   // Verwijder vorige entry voor dit item
+  const prevChange = editorChanges.find(c => c.id === item.id);
+  if (prevChange && prevChange.type === 'add' && type === 'edit') type = 'add';
   editorChanges = editorChanges.filter(c => c.id !== item.id);
   editorChanges.push({
     type,
@@ -8206,14 +8210,15 @@ async function doEditorPush() {
         const driveIdx = mergedStockItems.findIndex(i => i.id === change.id);
         if (change.type === 'add' && driveIdx === -1) {
           // Nieuw item — toevoegen
-          mergedStockItems.push(localItem);
+          mergedStockItems.push({ ...localItem, fromEditor: true });
         } else if (change.type === 'edit' && driveIdx >= 0) {
           // Bestaand item — enkel naam/foto/locatie/categorie updaten, NIET het aantal
           const driveItem = mergedStockItems[driveIdx];
           mergedStockItems[driveIdx] = {
             ...localItem,
             quantity: driveItem.quantity, // Bewaar Drive-aantal altijd
-            lastUpdated: Date.now()
+            lastUpdated: Date.now(),
+            editRev: Date.now()
           };
         }
       } else if (change.itemType === 'material') {
@@ -8221,11 +8226,25 @@ async function doEditorPush() {
         if (!localItem) continue;
         const driveIdx = mergedItems.findIndex(i => i.id === change.id);
         if (change.type === 'add' && driveIdx === -1) {
-          mergedItems.push(localItem);
+          mergedItems.push({ ...localItem, fromEditor: true });
         } else if (change.type === 'edit' && driveIdx >= 0) {
-          mergedItems[driveIdx] = { ...localItem, lastUpdated: Date.now() };
+          mergedItems[driveIdx] = { ...localItem, lastUpdated: Date.now(), editRev: Date.now() };
         }
       }
+    }
+
+    // Rekken/schappen en boxen: enkel toevoegen of bestaande bewerken, nooit verwijderen
+    const mergedShelves = [...(driveData.shelves||[])];
+    const mergedBoxes = [...(driveData.boxes||[])];
+    for (const change of editorChanges) {
+      if (change.itemType !== 'shelf' && change.itemType !== 'box') continue;
+      const isShelf = change.itemType === 'shelf';
+      const localItem = (isShelf ? state.shelves : state.boxes).find(i => i.id === change.id);
+      if (!localItem) continue;
+      const target = isShelf ? mergedShelves : mergedBoxes;
+      const di = target.findIndex(i => i.id === change.id);
+      if (di === -1) target.push({ ...localItem, fromEditor: true });
+      else if (change.type === 'edit') target[di] = { ...localItem, editRev: Date.now() };
     }
 
     // Stap 3: Upload — Drive data als basis + editor wijzigingen
@@ -8233,6 +8252,8 @@ async function doEditorPush() {
       ...driveData,
       stockItems: mergedStockItems,
       items: mergedItems,
+      shelves: mergedShelves,
+      boxes: mergedBoxes,
       materialCategories: state.materialCategories, // foto's meesturen
       syncVersion: (driveData.syncVersion || 0) + 1,
       lastModified: Date.now(),
@@ -8912,7 +8933,37 @@ function showExternalChanges(changed, fromDevice) {
 }
 
 // ── Merge helper: combineert lokale + Drive data ───────────
+// Master neemt nieuwe rekken/schappen/boxen/artikels over die de Editor naar Drive stuurde
+async function adoptEditorAdditions(driveData) {
+  let n = 0;
+  for (const key of ['shelves', 'boxes', 'items', 'stockItems']) {
+    const list = driveData[key] || [];
+    for (let i = 0; i < list.length; i++) {
+      const di = list[i];
+      if (!di || !di.fromEditor) continue;
+      const c = { ...di }; delete c.fromEditor;
+      if (!state[key].some(l => l.id === di.id)) { await dbPut(key, c); state[key].push(c); n++; }
+      list[i] = c;
+    }
+    // Wijzigingen van de Editor aan bestaande dingen overnemen (aantallen van de Master blijven behouden)
+    for (let i = 0; i < list.length; i++) {
+      const di = list[i];
+      if (!di || !di.editRev) continue;
+      const idx = state[key].findIndex(l => l.id === di.id);
+      if (idx === -1) continue;
+      const local = state[key][idx];
+      if (local.appliedEditRev === di.editRev) continue;
+      const c = { ...di, appliedEditRev: di.editRev };
+      if (key === 'stockItems') c.quantity = local.quantity;
+      await dbPut(key, c); state[key][idx] = c; list[i] = c; n++;
+    }
+  }
+  return n;
+}
+
 async function mergeWithDrive(driveData) {
+  const nAdopt = await adoptEditorAdditions(driveData);
+  if (nAdopt > 0) toast(currentLang === 'nl' ? '✓ ' + nAdopt + ' wijziging(en) van de laptop overgenomen' : '✓ ' + nAdopt + ' modification(s) de l\'ordinateur reprise(s)');
   // Basis: Drive data (bevat wijzigingen van andere toestellen)
   const mergedStockItems = [...(driveData.stockItems||[])];
 
