@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.1">
-<title>Garage Bavaylei 1.4.1</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.2">
+<title>Garage Bavaylei 1.4.2</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.4.1.webmanifest">
+<link rel="manifest" href="manifest-1.4.2.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.4.1';
+  const APP_CODE_VERSION = '1.4.2';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1401,7 +1401,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.4.1</span>
+      <span class="app-version">versie: 1.4.2</span>
     </div>
   </div>
   <div class="top-controls">
@@ -8045,7 +8045,7 @@ function updateEditorBanner() {
   if (countEl) {
     countEl.textContent = n > 0
       ? `${n} ${nl?(n===1?'wijziging':'wijzigingen'):(n===1?'modification':'modifications')}`
-      : (nl?'Editor modus — PC':'Mode Éditeur — PC');
+      : (nl?'Editor modus — PC · v1.4.2':'Mode Éditeur — PC · v1.4.2');
     countEl.style.color = n > 0 ? '#f0b429' : '#aaa';
   }
   if (pushBtn) pushBtn.style.display = n > 0 ? 'block' : 'none';
@@ -8068,7 +8068,7 @@ function initEditorMode() {
     banner.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="color:#f0b429;">💻</span>
-        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC':'Mode Éditeur — PC'}</span>
+        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.4.2':'Mode Éditeur — PC · v1.4.2'}</span>
       </div>
       <div style="display:flex;gap:8px;">
         <button onclick="editorLoadFromDrive()" style="
@@ -8208,8 +8208,8 @@ async function doEditorPush() {
         const localItem = state.stockItems.find(i => i.id === change.id);
         if (!localItem) continue;
         const driveIdx = mergedStockItems.findIndex(i => i.id === change.id);
-        if (change.type === 'add' && driveIdx === -1) {
-          // Nieuw item — toevoegen
+        if (driveIdx === -1) {
+          // Nieuw item (of nog niet op Drive) — toevoegen
           mergedStockItems.push({ ...localItem, fromEditor: true });
         } else if (change.type === 'edit' && driveIdx >= 0) {
           // Bestaand item — enkel naam/foto/locatie/categorie updaten, NIET het aantal
@@ -8225,7 +8225,7 @@ async function doEditorPush() {
         const localItem = state.items.find(i => i.id === change.id);
         if (!localItem) continue;
         const driveIdx = mergedItems.findIndex(i => i.id === change.id);
-        if (change.type === 'add' && driveIdx === -1) {
+        if (driveIdx === -1) {
           mergedItems.push({ ...localItem, fromEditor: true });
         } else if (change.type === 'edit' && driveIdx >= 0) {
           mergedItems[driveIdx] = { ...localItem, lastUpdated: Date.now(), editRev: Date.now() };
