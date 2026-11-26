@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.5">
-<title>Garage Bavaylei 1.4.5</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.6">
+<title>Garage Bavaylei 1.4.6</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.4.5.webmanifest">
+<link rel="manifest" href="manifest-1.4.6.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.4.5';
+  const APP_CODE_VERSION = '1.4.6';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1401,7 +1401,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.4.5</span>
+      <span class="app-version">versie: 1.4.6</span>
     </div>
   </div>
   <div class="top-controls">
@@ -2700,7 +2700,7 @@ function renderBrowseFreezer() {
     const limit = Date.now() - 90 * 86400000;
     list = list.filter(i =>
       i.freezeDate === 'unknown' ||
-      (i.freezeDate && new Date(i.freezeDate).getTime() < limit)
+      (i.freezeDate && (Date.now() - new Date(i.freezeDate).getTime()) > frzLimitMs(i))
     );
   }
   // Sort: unknown first, then oldest date first
@@ -2728,7 +2728,7 @@ function renderBrowseFreezer() {
     const isUnknown = it.freezeDate === 'unknown';
     const freezeMs = (!isUnknown && it.freezeDate) ? new Date(it.freezeDate).getTime() : null;
     const daysInFreezer = freezeMs ? Math.floor((Date.now() - freezeMs) / 86400000) : null;
-    const isTooLong = isUnknown || (daysInFreezer !== null && daysInFreezer > 90);
+    const isTooLong = isUnknown || (daysInFreezer !== null && daysInFreezer > frzLimitDays(it));
     const rowBorder = isTooLong ? 'border-color:#e8c07a;background:linear-gradient(90deg,var(--warning-bg),var(--surface));' : '';
     let freezeLabel = '';
     if (isUnknown) {
@@ -2743,7 +2743,7 @@ function renderBrowseFreezer() {
           <span style="color:var(--text-dim);font-weight:400;font-size:12px;"> ×${qty}${it.unit?' '+escapeHtml(it.unit):''}</span>
         </div>
         <div class="stock-meta">${freezeLabel}</div>
-        ${isTooLong?`<div class="stock-warnings"><span class="badge-warn badge-expiring">⚠️ ${isUnknown?(currentLang==='nl'?'Datum onbekend':'Date inconnue'):(currentLang==='nl'?'Te lang ingevroren':'Trop longtemps congelé')}</span></div>`:''}
+        ${isTooLong?`<div class="stock-warnings"><span class="badge-warn badge-expiring">⚠️ ${isUnknown?(currentLang==='nl'?'Datum onbekend':'Date inconnue'):(currentLang==='nl'?'Best snel opeten':'À consommer bientôt')}</span></div>`:''}
       </div>
     </div>`;
   }).join('') + '</div>';
@@ -2756,7 +2756,7 @@ function checkFreezerOnLoad(location) {
   const old = state.stockItems.filter(i =>
     i.storageLocation === loc && (
       i.freezeDate === 'unknown' ||
-      (i.freezeDate && new Date(i.freezeDate).getTime() < limit)
+      (i.freezeDate && (Date.now() - new Date(i.freezeDate).getTime()) > frzLimitMs(i))
     )
   );
   if (old.length === 0) return;
@@ -3060,10 +3060,37 @@ function getFridgeLimit(item) {
   return days * 86400000;
 }
 
+// ═══ 1.4.6 BEWAARTIJD DIEPVRIES ═══
+// Maanden kwaliteit in de diepvries (bron: VRT NWS 28/11/2023; gamba/calamares/garnaal = aanname naar magere vis)
+const FRZ_RULES = [
+  [/(^|[^a-z])(zalm|makreel|haring|tonijn|paling|sardien)/, 3],
+  [/(^|[^a-z])(stoofvlees|vol-au-vent|bolognese|lasagne|gekookt|gebakken)/, 3],
+  [/(^|[^a-z])(restje|restjes|maaltijd)/, 1],
+  [/(^|[^a-z])(brood|baguette|pistolet|croissant|boterham)/, 1],
+  [/(^|[^a-z])(kip|kippen|kalkoen|gevogelte)/, 9],
+  [/(^|[^a-z])(varken|spek|karbonade|ribbetje|ribbetjes|spare)/, 4],
+  [/(^|[^a-z])(rund|biefstuk|steak|entrecote|ossenhaas)/, 6],
+  [/(^|[^a-z])(kabeljauw|schol|tong|pangasius|vis|gamba|gamba's|garnaal|garnalen|scampi|calamares|inktvis|mosselen)/, 6],
+  [/(^|[^a-z])(ijs|roomijs)/, 12],
+  [/(^|[^a-z])(boontjes|bonen|erwten|doperwten|prei|bloemkool|knolselder|spinazie|broccoli|wortel|wortelen|spruiten|mais|maïs|paprika|courgette|groenten|fruit|bessen|aardbeien|frambozen|spruitjes|selder|ui|uien|pompoen)/, 12]
+];
+const FRZ_OLD_DEFAULT = { cat_food: 6, cat_drink: 3, cat_dairy: 3, cat_bread: 3, cat_meat: 6, cat_veg: 12, cat_pasta: 12, cat_snacks: 3, cat_frozen: 12, cat_spices: 6 };
+function frzMonthsOf(it) {
+  const nm = ((it.name || '') + ' ' + (it.name_fr || '')).toLowerCase();
+  for (const [re, m] of FRZ_RULES) { if (re.test(nm)) return m; }
+  const cat = findCat(it.categoryId);
+  if (cat && cat.freezer_months === null && cat.id && !FRZ_OLD_DEFAULT[cat.id]) return null;   // bv. hygiëne: geen grens
+  if (cat && typeof cat.freezer_months === 'number') return cat.freezer_months;
+  return 6;
+}
+function frzLimitMs(it) {
+  const m = frzMonthsOf(it);
+  return m === null ? Infinity : m * 30 * 86400000;
+}
+function frzLimitDays(it) { const l = frzLimitMs(it); return l === Infinity ? Infinity : Math.round(l / 86400000); }
+
 function getFreezerlimit(item) {
-  const cat = findCat(item.categoryId);
-  const months = cat?.freezer_months ?? 3;
-  return months * 30 * 86400000;
+  return frzLimitMs(item);
 }
 let currentFridgeStatusFilter = 'all';
 
@@ -3176,7 +3203,7 @@ function renderBrowseFreezerKitchen() {
   if (q) list = list.filter(i => iName(i).toLowerCase().includes(q));
   const limit = Date.now() - 90 * 86400000;
   if (currentFreezerKitchenStatusFilter === 'old') {
-    list = list.filter(i => i.freezeDate === 'unknown' || (i.freezeDate && new Date(i.freezeDate).getTime() < limit));
+    list = list.filter(i => i.freezeDate === 'unknown' || (i.freezeDate && (Date.now() - new Date(i.freezeDate).getTime()) > frzLimitMs(i)));
   }
   list.sort((a,b) => {
     if (a.freezeDate === 'unknown' && b.freezeDate !== 'unknown') return -1;
@@ -3203,7 +3230,7 @@ function renderBrowseFreezerKitchen() {
     const isUnknown = it.freezeDate === 'unknown';
     const freezeMs = (!isUnknown && it.freezeDate) ? new Date(it.freezeDate).getTime() : null;
     const daysIn = freezeMs ? Math.floor((Date.now() - freezeMs) / 86400000) : null;
-    const isTooLong = isUnknown || (daysIn !== null && daysIn > 90);
+    const isTooLong = isUnknown || (daysIn !== null && daysIn > frzLimitDays(it));
     const rowBorder = isTooLong ? 'border-color:#e8c07a;background:linear-gradient(90deg,var(--warning-bg),var(--surface));' : '';
     let dateLabel = '';
     if (isUnknown) dateLabel = `<span style="color:var(--warning);font-weight:600;">❓ ${nl?'Datum onbekend':'Date inconnue'}</span>`;
@@ -3215,7 +3242,7 @@ function renderBrowseFreezerKitchen() {
           <span style="color:var(--text-dim);font-weight:400;font-size:12px;"> ×${qty}${it.unit?' '+escapeHtml(it.unit):''}</span>
         </div>
         <div class="stock-meta">${dateLabel}</div>
-        ${isTooLong?`<div class="stock-warnings"><span class="badge-warn badge-expiring">⚠️ ${isUnknown?(nl?'Datum onbekend':'Date inconnue'):(nl?'Te lang ingevroren':'Trop longtemps congelé')}</span></div>`:''}
+        ${isTooLong?`<div class="stock-warnings"><span class="badge-warn badge-expiring">⚠️ ${isUnknown?(nl?'Datum onbekend':'Date inconnue'):(nl?'Best snel opeten':'À consommer bientôt')}</span></div>`:''}
       </div>
     </div>`;
   }).join('') + '</div>';
@@ -7195,7 +7222,7 @@ function exportFreezer() {
     const isUnknown = it.freezeDate === 'unknown';
     const freezeMs = (!isUnknown && it.freezeDate) ? new Date(it.freezeDate).getTime() : null;
     const days = freezeMs ? Math.floor((Date.now() - freezeMs) / 86400000) : null;
-    const isTooLong = isUnknown || (days !== null && days > 90);
+    const isTooLong = isUnknown || (days !== null && days > frzLimitDays(it));
     return [
       it.name,
       cat ? (nl ? cat.name_nl : (cat.name_fr||cat.name_nl)) : '',
@@ -7639,7 +7666,7 @@ function dbCardHTML(it, nl) {
   const isLow = !isEmpty && min > 0 && qty <= min;
   const isUnknown = it.freezeDate === 'unknown';
   const limit = Date.now() - 90*86400000;
-  const isTooLong = dbMode==='freezer' && (isUnknown||(it.freezeDate&&new Date(it.freezeDate).getTime()<limit));
+  const isTooLong = dbMode==='freezer' && (isUnknown||(it.freezeDate&&(Date.now()-new Date(it.freezeDate).getTime())>frzLimitMs(it)));
   const barClass = isTooLong?'tooLong':isEmpty?'empty':isLow?'low':'ok';
   const numColor = isEmpty?'#b83030':isLow?'#c47d0e':isTooLong?'#c47d0e':'#0f8c6b';
   const iconBg = isEmpty?'#fde8e8':isLow?'#fef3d0':isTooLong?'#fef3d0':'#edfaf5';
@@ -8233,7 +8260,7 @@ function updateEditorBanner() {
   if (countEl) {
     countEl.textContent = n > 0
       ? `${n} ${nl?'nog niet verstuurd':'pas encore envoyé(s)'}`
-      : (nl?'Editor modus — PC · v1.4.5':'Mode Éditeur — PC · v1.4.5');
+      : (nl?'Editor modus — PC · v1.4.6':'Mode Éditeur — PC · v1.4.6');
     countEl.style.color = n > 0 ? '#f0b429' : '#aaa';
   }
   if (pushBtn) pushBtn.style.display = n > 0 ? 'block' : 'none';
@@ -8256,7 +8283,7 @@ function initEditorMode() {
     banner.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="color:#f0b429;">💻</span>
-        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.4.5':'Mode Éditeur — PC · v1.4.5'}</span>
+        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.4.6':'Mode Éditeur — PC · v1.4.6'}</span>
       </div>
       <div style="display:flex;gap:8px;">
         <button onclick="editorSafetyModal()" id="editor-safe-btn" style="
@@ -8868,8 +8895,7 @@ function haBuildFreezer() {
       const unknown = !it.freezeDate || it.freezeDate === 'unknown';
       const ms = unknown ? null : new Date(it.freezeDate).getTime();
       const dagen = (ms && !isNaN(ms)) ? Math.floor((Date.now() - ms) / 86400000) : null;
-      const months = (cat && cat.freezer_months !== undefined) ? cat.freezer_months : 3;
-      const maxDagen = (months === null) ? null : months * 30;
+      const maxDagen = frzLimitMs(it) === Infinity ? null : frzLimitDays(it);
       const onbekend = unknown || dagen === null;
       const teLang = onbekend || (maxDagen !== null && dagen > maxDagen);
       return {
