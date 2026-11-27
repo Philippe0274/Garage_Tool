@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.5.1">
-<title>Garage Bavaylei 1.5.1</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.6.0">
+<title>Garage Bavaylei 1.6.0</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.5.1.webmanifest">
+<link rel="manifest" href="manifest-1.6.0.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.5.1';
+  const APP_CODE_VERSION = '1.6.0';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1452,6 +1452,85 @@
   .vk-note{margin-top:12px;font-size:13px;color:var(--text-dim);text-align:center}
   .vk-ghost{width:100%;margin-top:8px;border:1px dashed var(--border-strong);background:transparent;color:var(--text-dim);border-radius:12px;padding:11px;font-weight:700;font-size:13.5px;font-family:inherit}
   .vk-home-n{font:800 26px 'Archivo',sans-serif;color:#2a6f9e;margin-right:6px}
+
+  /* ═══ KOELKAST-TAG (1.6.0) ═══ */
+  #kk-screen{position:fixed;inset:0;z-index:250;background:var(--bg);display:none;flex-direction:column;overscroll-behavior:contain}
+  #kk-screen.open{display:flex}
+  #kk-screen *{box-sizing:border-box}
+  #kk-screen [hidden]{display:none!important}
+  .kk-top{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);padding-top:max(10px,env(safe-area-inset-top,0px))}
+  .kk-back{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);font-size:24px;line-height:1;color:var(--text);flex:none}
+  .kk-ttl{font-weight:900;font-size:19px;letter-spacing:-.01em}
+  .kk-pill{margin-left:auto;display:inline-flex;gap:6px;align-items:center;background:#e0f3ef;color:#1d7a6d;border:1px solid #a9d8cf;border-radius:20px;padding:5px 10px;font:700 12px 'JetBrains Mono',monospace;white-space:nowrap}
+  .kk-main{flex:1;overflow-y:auto;padding:12px 14px 24px;-webkit-overflow-scrolling:touch}
+  .kk-lab{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);margin:14px 2px 6px}
+  .kk-inp{width:100%;border:2px solid var(--border-strong);background:var(--surface);color:var(--text);border-radius:13px;padding:13px;font-weight:600;font-size:16px;font-family:inherit}
+  .kk-inp:focus{outline:none;border-color:var(--accent)}
+  .kk-inrow{display:flex;gap:8px;align-items:stretch}
+  .kk-inrow .kk-inp{flex:1;min-width:0}
+  .kk-mic{flex:none;width:54px;border:2px solid var(--border-strong);background:var(--surface);color:var(--text);border-radius:13px;font-size:22px;line-height:1}
+  .kk-mic.on{background:#b3261e;border-color:#b3261e;color:#fff;animation:vkpulse 1s ease-in-out infinite}
+  .kk-mic.pulse{border-color:var(--accent);box-shadow:0 0 0 3px rgba(224,90,43,.25)}
+  @keyframes vkpulse{50%{opacity:.6}}
+  .kk-listen{margin-top:8px;border-radius:12px;padding:8px 12px;font-size:13.5px;font-weight:700;background:var(--warning-bg);color:var(--warning)}
+  .kk-inp.fr{border-style:dashed;font-size:14px;padding:10px 12px}
+  .kk-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .kk-chips{display:flex;gap:6px;flex-wrap:wrap}
+  .kk-chip{border:1px solid var(--border-strong);background:var(--surface);color:var(--text-dim);border-radius:18px;padding:7px 12px;font-weight:800;font-size:13px;font-family:inherit}
+  .kk-chip.on{background:#1d7a6d;border-color:#1d7a6d;color:#fff}
+  .kk-chip.sug{background:var(--surface-2)}
+  .kk-step{display:flex;align-items:center;border:1px solid var(--border-strong);border-radius:13px;background:var(--surface)}
+  .kk-step button{width:44px;height:46px;border:0;background:transparent;font-size:20px;font-weight:800;color:var(--text-dim)}
+  .kk-step output{min-width:48px;text-align:center;font:700 16px 'JetBrains Mono',monospace}
+  .kk-info{margin-top:12px;border-radius:13px;padding:10px 12px;font-size:13px;background:#e0f3ef;color:#1d7a6d;border:1px solid #a9d8cf}
+  .kk-info.late{background:var(--warning-bg);color:var(--warning);border-color:#ecc98a}
+  .kk-auto{font:700 10px 'JetBrains Mono',monospace;color:var(--success);margin-left:6px}
+  .kk-bar{display:flex;gap:8px;margin-top:18px}
+  .kk-btn{flex:1;border:0;border-radius:14px;padding:15px 10px;font-weight:800;font-size:15px;font-family:inherit}
+  .kk-btn.p{background:var(--accent);color:#fff;flex:1.2}
+  .kk-btn.g{background:var(--surface-2);color:var(--text);border:1px solid var(--border)}
+  .kk-btn[disabled]{opacity:.45}
+  .kk-menu{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:18px;padding:18px 16px;margin-bottom:12px;font-weight:900;font-size:21px;font-family:inherit}
+  .kk-menu small{font-weight:500;font-size:13px;color:var(--text-dim)}
+  .kk-menu.in{background:var(--success-bg);border-color:var(--success);color:var(--success)}
+  .kk-menu.out{background:var(--warning-bg);border-color:var(--warning);color:var(--warning)}
+  .kk-menu.in small,.kk-menu.out small{color:inherit;opacity:.85}
+  .kk-menu.plain{font-size:15px;padding:13px 16px;background:transparent}
+  .kk-menu[disabled]{opacity:.5}
+  .kk-ok{display:flex;gap:10px;align-items:center;background:var(--success-bg);color:var(--success);border-radius:14px;padding:12px 14px;font-weight:800;margin-bottom:6px}
+  .kk-ok button{margin-left:auto;border:0;border-radius:10px;background:var(--surface);color:var(--text);font-weight:800;font-size:12.5px;padding:8px 10px;white-space:nowrap;font-family:inherit}
+  .kk-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:11px 12px;border:1px solid var(--border);border-radius:14px;background:var(--surface);margin-bottom:8px}
+  .kk-item.new{border-color:var(--success);box-shadow:0 0 0 3px var(--success-bg)}
+  .kk-item b{font-weight:800;overflow-wrap:anywhere}
+  .kk-item small{color:var(--text-dim);font:500 12px 'JetBrains Mono',monospace}
+  .kk-item .q{font:700 13px 'JetBrains Mono',monospace;color:var(--text-dim);text-align:right}
+  .kk-tl{grid-column:1/-1;justify-self:start;font:700 10.5px 'JetBrains Mono',monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--warning);background:var(--warning-bg);border-radius:6px;padding:3px 7px;margin-top:4px}
+  .kk-acts{display:flex;gap:6px;justify-self:end}
+  .kk-acts button{border:1px solid var(--border);background:var(--surface-2);color:var(--text-dim);border-radius:9px;min-width:36px;height:32px;font-weight:700;font-size:12px;padding:0 8px;font-family:inherit}
+  .kk-acts button.sure{background:#b3261e;border-color:#b3261e;color:#fff}
+  .kk-pick{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;width:100%;text-align:left;padding:11px 12px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);margin-bottom:8px;font-weight:700;font-size:15px;font-family:inherit}
+  .kk-pick.on{border-color:var(--accent);box-shadow:0 0 0 3px rgba(224,90,43,.2)}
+  .kk-pick small{color:var(--text-dim);font:500 12px 'JetBrains Mono',monospace}
+  .kk-panel{margin-top:10px;border:1px solid var(--accent);border-radius:16px;padding:12px;background:var(--surface)}
+  .kk-chk{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:13.5px;color:var(--text-dim)}
+  .kk-note{margin-top:12px;font-size:13px;color:var(--text-dim);text-align:center}
+  .kk-ghost{width:100%;margin-top:8px;border:1px dashed var(--border-strong);background:transparent;color:var(--text-dim);border-radius:12px;padding:11px;font-weight:700;font-size:13.5px;font-family:inherit}
+  .kk-home-n{font:800 26px 'Archivo',sans-serif;color:#1d7a6d;margin-right:6px}
+
+  .kk-sel{appearance:auto;font-size:16px}
+  .kk-grrow{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+  .kk-grrow label{flex:1 1 100%;font-size:13px;color:var(--text-dim);font-weight:700}
+  .kk-grrow .kk-inp{width:120px;flex:none}
+  .kk-grrow span{font:700 14px 'JetBrains Mono',monospace;color:var(--text-dim)}
+  .kk-seg{display:flex;border:1px solid var(--border-strong);border-radius:13px;overflow:hidden;background:var(--surface)}
+  .kk-seg button{flex:1;border:0;background:transparent;color:var(--text-dim);padding:11px 6px;font-weight:800;font-size:13px;font-family:inherit}
+  .kk-seg button.on{background:#1d7a6d;color:#fff}
+  .kk-seg button.on.tgt{background:#b3261e}
+  .kk-grp{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);margin:14px 2px 6px}
+  .kk-fl{grid-column:1/-1;justify-self:start;font:700 10.5px 'JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;border-radius:6px;padding:3px 7px;margin-top:4px}
+  .kk-fl.hard{background:#fbe3e0;color:#b3261e}
+  .kk-fl.soft{background:var(--warning-bg);color:var(--warning)}
+  .kk-fl.fine{background:var(--success-bg);color:var(--success)}
 </style>
 </head>
 <body>
@@ -1465,7 +1544,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.5.1</span>
+      <span class="app-version">versie: 1.6.0</span>
     </div>
   </div>
   <div class="top-controls">
@@ -1489,6 +1568,15 @@
     <div class="home-title" id="home-title">Wat wil je<br>vandaag doen?</div>
 
     <div class="home-choice">
+      <div class="choice-card" onclick="kkOpen()" id="home-kk-card">
+        <div class="choice-icon teal">🧊</div>
+        <div class="choice-text">
+          <div class="choice-title" id="lbl-kk-home">Koelkast</div>
+          <div class="choice-sub" id="home-kk-sub">Erin / eruit / datums</div>
+        </div>
+        <div class="vk-home-n" id="home-kk-n" style="color:#1d7a6d">0</div>
+        <div class="choice-arrow">›</div>
+      </div>
       <div class="choice-card" onclick="vkOpen()" id="home-vk-card">
         <div class="choice-icon teal">❄️</div>
         <div class="choice-text">
@@ -1927,6 +2015,9 @@
     <input type="text" class="form-input" id="ha-url-input-frz" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://ha.philippedm.be/api/webhook/... (vriezer)" onchange="haSaveUrl('frz')" style="margin:10px 0 6px;">
     <div id="ha-status-frz" style="font-size:12px;color:var(--text-dim);margin-bottom:6px;"></div>
     <button class="btn" id="ha-send-btn-frz" onclick="haSendFreezer()" style="margin-bottom:6px;">🧊 <span id="lbl-ha-send-frz">Stuur vriezer naar Home Assistant</span></button>
+    <input type="text" class="form-input" id="ha-url-input-kk" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://ha.philippedm.be/api/webhook/... (koelkast)" onchange="haSaveUrl('kk')" style="margin:10px 0 6px;">
+    <div id="ha-status-kk" style="font-size:12px;color:var(--text-dim);margin-bottom:6px;"></div>
+    <button class="btn" id="ha-send-btn-kk" onclick="haSendFridge()" style="margin-bottom:6px;">🌡️ <span id="lbl-ha-send-kk">Stuur koelkast naar Home Assistant</span></button>
     <div class="section-title" style="margin-top:8px;"><span class="section-title-text" id="lbl-settings-manage">Beheer</span></div>
     <button class="btn btn-secondary" onclick="openCategoryManager()" data-i18n="manage_cats">🏷️ Categorieën beheren</button>
     <button class="btn btn-secondary" onclick="openUnitManager()" data-i18n="manage_units">📏 Eenheden beheren</button>
@@ -2391,6 +2482,12 @@
 <div id="vk-screen" role="dialog" aria-label="Vrieskast">
   <div class="vk-top"><button class="vk-back" id="vk-back" aria-label="Terug">‹</button><div class="vk-ttl" id="vk-ttl">❄️ Vrieskast</div><div id="vk-pill" style="margin-left:auto"></div></div>
   <div class="vk-main" id="vk-main"></div>
+</div>
+
+<!-- ─── KOELKAST-TAG (1.6.0) ─────────────────────────────── -->
+<div id="kk-screen" role="dialog" aria-label="Koelkast">
+  <div class="kk-top"><button class="kk-back" id="kk-back" aria-label="Terug">‹</button><div class="kk-ttl" id="kk-ttl">🧊 Koelkast</div><div id="kk-pill" style="margin-left:auto"></div></div>
+  <div class="kk-main" id="kk-main"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -2877,6 +2974,7 @@ function setMode(mode) {
 function render() {
   try { shopHomeUpdate(); } catch (e) {}
   try { vkHomeUpdate(); } catch (e) {}
+  try { kkHomeUpdate(); } catch (e) {}
   const low = getLowStockItems();
   const expiring = getExpiringItems();
   const setEl = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
@@ -3502,7 +3600,10 @@ const DEFAULT_UNITS = [
   { id: 'u_portie', label: 'Portie', order: 29 },
   { id: 'u_zak', label: 'Zak', order: 30 },
   { id: 'u_bak', label: 'Bak', order: 31 },
-  { id: 'u_l', label: 'L', order: 32 }
+  { id: 'u_l', label: 'L', order: 32 },
+  { id: 'u_pot', label: 'Pot', order: 33 },
+  { id: 'u_pak', label: 'Pak', order: 34 },
+  { id: 'u_fles', label: 'Fles', order: 35 }
 ];
 
 const DEFAULT_SHOPS = [
@@ -6905,6 +7006,7 @@ window.addEventListener('hashchange', handleHashChange);
 function handleHashChange() {
   if (/boodschappen/i.test(location.hash)) { shopOpen(); return; }
   if (/vrieskast/i.test(location.hash)) { vkOpen(); return; }
+  if (/koelkast/i.test(location.hash)) { kkOpen(); return; }
   const m = location.hash.match(/box=([a-z0-9]+)/i);
   if (m) {
     const box = state.boxes.find(b => b.id === m[1]);
@@ -8345,7 +8447,7 @@ function updateEditorBanner() {
   if (countEl) {
     countEl.textContent = n > 0
       ? `${n} ${nl?'nog niet verstuurd':'pas encore envoyé(s)'}`
-      : (nl?'Editor modus — PC · v1.5.1':'Mode Éditeur — PC · v1.5.1');
+      : (nl?'Editor modus — PC · v1.6.0':'Mode Éditeur — PC · v1.6.0');
     countEl.style.color = n > 0 ? '#f0b429' : '#aaa';
   }
   if (pushBtn) pushBtn.style.display = n > 0 ? 'block' : 'none';
@@ -8368,7 +8470,7 @@ function initEditorMode() {
     banner.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="color:#f0b429;">💻</span>
-        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.5.1':'Mode Éditeur — PC · v1.5.1'}</span>
+        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.6.0':'Mode Éditeur — PC · v1.6.0'}</span>
       </div>
       <div style="display:flex;gap:8px;">
         <button onclick="editorSafetyModal()" id="editor-safe-btn" style="
@@ -8907,18 +9009,24 @@ const HA_URL_KEY = 'ha_webhook_url';
 const HA_SENT_KEY = 'ha_last_sent';
 const HA_URL_KEY_FRZ = 'ha_webhook_url_vriezer';
 const HA_SENT_KEY_FRZ = 'ha_last_sent_vriezer';
-function haGetUrl(kind) { try { return localStorage.getItem(kind === 'frz' ? HA_URL_KEY_FRZ : HA_URL_KEY) || ''; } catch(e) { return ''; } }
+const HA_URL_KEY_KK = 'ha_webhook_url_koelkast';
+const HA_SENT_KEY_KK = 'ha_last_sent_koelkast';
+function haKeyUrl(kind) { return kind === 'frz' ? HA_URL_KEY_FRZ : (kind === 'kk' ? HA_URL_KEY_KK : HA_URL_KEY); }
+function haKeySent(kind) { return kind === 'frz' ? HA_SENT_KEY_FRZ : (kind === 'kk' ? HA_SENT_KEY_KK : HA_SENT_KEY); }
+function haIdSuffix(kind) { return kind === 'frz' ? '-frz' : (kind === 'kk' ? '-kk' : ''); }
+function haGetUrl(kind) { try { return localStorage.getItem(haKeyUrl(kind)) || ''; } catch(e) { return ''; } }
 function haSaveUrl(kind) {
-  const el = document.getElementById(kind === 'frz' ? 'ha-url-input-frz' : 'ha-url-input');
+  const el = document.getElementById('ha-url-input' + haIdSuffix(kind));
   const v = el ? el.value.trim() : '';
-  try { localStorage.setItem(kind === 'frz' ? HA_URL_KEY_FRZ : HA_URL_KEY, v); } catch(e) {}
+  try { localStorage.setItem(haKeyUrl(kind), v); } catch(e) {}
   haUpdateUi();
   toast(currentLang==='fr' ? '✓ Adresse enregistrée' : '✓ Adres opgeslagen');
 }
 function haUpdateUi() {
   const nl = currentLang !== 'fr';
   [['', HA_SENT_KEY, 'ha-url-input', 'ha-status', 'lbl-ha-send', nl ? 'Stuur materiaal naar Home Assistant' : 'Envoyer le matériel à Home Assistant'],
-   ['frz', HA_SENT_KEY_FRZ, 'ha-url-input-frz', 'ha-status-frz', 'lbl-ha-send-frz', nl ? 'Stuur vriezer naar Home Assistant' : 'Envoyer le congélateur à Home Assistant']
+   ['frz', HA_SENT_KEY_FRZ, 'ha-url-input-frz', 'ha-status-frz', 'lbl-ha-send-frz', nl ? 'Stuur vriezer naar Home Assistant' : 'Envoyer le congélateur à Home Assistant'],
+   ['kk', HA_SENT_KEY_KK, 'ha-url-input-kk', 'ha-status-kk', 'lbl-ha-send-kk', nl ? 'Stuur koelkast naar Home Assistant' : 'Envoyer le réfrigérateur à Home Assistant']
   ].forEach(([kind, sentKey, inpId, stId, lblId, lblText]) => {
     const inp = document.getElementById(inpId);
     if (inp && inp.value !== haGetUrl(kind)) inp.value = haGetUrl(kind);
@@ -9007,7 +9115,7 @@ function haBuildFreezer() {
 async function haPost(kind, payload) {
   const nl = currentLang !== 'fr';
   const url = haGetUrl(kind);
-  const st = document.getElementById(kind === 'frz' ? 'ha-status-frz' : 'ha-status');
+  const st = document.getElementById('ha-status' + haIdSuffix(kind));
   if (!url) { toast(nl ? 'Vul eerst het webhook-adres in' : "Saisissez d'abord l'adresse webhook"); return; }
   const body = JSON.stringify(payload);
   if (st) st.textContent = nl ? 'Versturen...' : 'Envoi...';
@@ -9024,7 +9132,7 @@ async function haPost(kind, payload) {
   }
   if (ok) {
     const stamp = new Date().toLocaleString(nl ? 'nl-BE' : 'fr-BE');
-    try { localStorage.setItem(kind === 'frz' ? HA_SENT_KEY_FRZ : HA_SENT_KEY, stamp + ' (' + payload.aantal + ')'); } catch(e) {}
+    try { localStorage.setItem(haKeySent(kind), stamp + ' (' + payload.aantal + ')'); } catch(e) {}
     haUpdateUi();
     toast((nl ? '✓ Verstuurd: ' : '✓ Envoyé : ') + payload.aantal + (verified ? '' : (nl ? ' (antwoord niet te controleren)' : ' (réponse non vérifiable)')));
   } else {
@@ -9034,6 +9142,25 @@ async function haPost(kind, payload) {
   return ok;
 }
 function haSend() { return haPost('', haBuildList()); }
+function haBuildFridge() {
+  const items = state.stockItems
+    .filter(i => i.storageLocation === 'fridge' && (i.quantity || 0) > 0)
+    .map(it => ({
+      id: it.id,
+      naam: it.name || '',
+      naam_fr: it.name_fr || '',
+      aantal: it.quantity || 1,
+      eenheid: it.unit || '',
+      gram: it.unitGr || null,
+      houdbaar_tot: it.expiryDate ? String(it.expiryDate).slice(0, 10) : '',
+      soort: it.expiryDate ? (it.dateKind === 'TGT' ? 'TGT' : 'THT') : '',
+      ingezet: it.fridgeDate && it.fridgeDate !== 'unknown' ? String(it.fridgeDate).slice(0, 10) : ''
+    }));
+  items.sort((a, b) => (a.houdbaar_tot || '9999') < (b.houdbaar_tot || '9999') ? -1 : ((a.houdbaar_tot || '9999') > (b.houdbaar_tot || '9999') ? 1 : 0));
+  return { versie: 1, soort: 'koelkast', verstuurd: new Date().toISOString(), aantal: items.length, items: items };
+}
+async function haSendFridge() { return haPost('kk', haBuildFridge()); }
+
 const FRZ_SNAP_KEY = 'frz_last_sent_v1';
 function frzSnapNow() {
   const m = {};
@@ -10364,6 +10491,405 @@ function parseQty(v){
   if (!isFinite(n) || n < 0) return NaN;
   return Math.round(n * 4) / 4;
 }
+
+// ============================================================================
+// KOELKAST-TAG (1.6.0) — één NFC-tag op de koelkast: Erin / Eruit / Lijst, met houdbaarheidsdatum
+// Opent via #koelkast. Gebruikt de gewone voorraadopslag (storageLocation 'fridge').
+// Datum op het pak: THT (ten minste houdbaar tot) of TGT (te gebruiken tot) in item.dateKind; datum in item.expiryDate.
+// Eenheden: Pot/Pak met zelf in te vullen gram (item.unitGr), Stuk, L, Fles, Kg, Gr, Portie.
+// ============================================================================
+(function(){
+'use strict';
+var DAY = 86400000, UNITS = ['Stuk','Pot','Pak','L','Fles','Kg','Gr','Portie'];
+function fracUnit(u){ return u !== 'Kg' && u !== 'Gr'; }
+function hasGr(u){ return u === 'Pot' || u === 'Pak'; }
+function qf(n){ return fmtQty(n); }
+var X = {
+ nl:{ttl:'Koelkast',n:'artikels',in_:'➕ Erin',in_s:'Je zet iets in de koelkast',out:'➖ Eruit',out_s:'Je haalt iets uit de koelkast',list:'📋 Bekijk de lijst',
+  newt:'Nieuw in koelkast',edt:'Wijzig artikel',what:'Wat zet je erin?',ph:'bv. Hesp',frl:'Franse naam',frph:'wordt vanzelf ingevuld',auto:'✓ automatisch',qty:'Aantal',unit:'Eenheid',gramq:'Hoeveel gram per %u?',
+  datel:'Welke datum staat er op het pak?',tht:'Ten minste houdbaar tot',tgt:'Te gebruiken tot',p2:'+2 d',p3:'+3 d',p7:'+1 week',noDate:'Wis',
+  save:'Bewaar',again:'Bewaar + nog één',savech:'Bewaar wijziging',typ:'Typ een naam. De app zoekt dan zelf de Franse naam.',
+  i_none:'Geen datum ingevuld: de app waarschuwt voor dit artikel niet.',
+  i_tgt:'Te gebruiken tot <b>%d</b>. Na deze datum niet meer eten. Alexa meldt het de dag ervoor en die dag zelf.',
+  i_tgt_late:'<b>Niet meer eten.</b> Deze datum (%d) is voorbij en het is een "te gebruiken tot".',
+  i_tht:'Ten minste houdbaar tot <b>%d</b>. Daarna kan de kwaliteit achteruitgaan. Alexa meldt het die dag, zacht.',
+  i_tht_late:'De datum (%d) is voorbij. Dit is een kwaliteitsdatum: <b>kijk, ruik en proef</b> voor je beslist.',
+  outq:'Wat haal je eruit?',search:'Zoek in de koelkast…',howmany:'Hoeveel haal je eruit?',amt:'Je haalt eruit',reset:'↺ Opnieuw',all:'Alles',tolist:'Zet op de boodschappenlijst',go:'Eruit halen',
+  left:'Er blijft %q %u %n over in de koelkast.',none:'De koelkast bevat daarna geen %n meer.',nores:'Niets gevonden.',
+  inlist:'In de koelkast',chg:'✎ Wijzig',edit:'✎ Aanpassen',undoout:'↶ Terugzetten',sure:'Zeker?',
+  g_soon:'Moet snel op',g_later:'Later',nodate:'geen datum',tgtTill:'te gebruiken tot',thtTill:'ten minste tot',
+  f_gone:'⚠ Niet meer eten · %d',f_today:'⚠ Te gebruiken: vandaag',f_tom:'⚠ Te gebruiken: morgen',f_tgt:'Te gebruiken tot %d',f_thtlate:'Datum voorbij · kijk, ruik, proef',f_thttoday:'Ten minste houdbaar: vandaag',f_thtsoon:'Bijna: %d',
+  added:'%n %q %u staat in de koelkast',changed:'%n is gewijzigd',outmsg:'%q %u %n eruit',onlist:' · op de boodschappenlijst',back:'%n is teruggezet',del:'%n verwijderd',saved:'%n bewaard',
+  menu:'‹ Terug naar het menu',ha:'🏠 Stuur koelkast naar HA',hasend:'⏳ Versturen…',hadone:'✓ Doorgestuurd naar HA',hafail:'❌ HA bereikt niet',nocfg:'⚠️ Geen HA-adres voor de koelkast ingesteld (Instellingen)',
+  listen:'🎤 Luisteren… zeg wat je erin zet',listenfr:'🎤 Zeg nu de Franse naam…',nosr:'Spraak werkt hier niet. Typ de naam.',nothing:'🎤 Niets gehoord',denied:'🎤 Microfoon geblokkeerd. Sta hem toe in de browser.',tapfr:'Tik op 🎤 en zeg de Franse naam',mic:'Spreek',
+  edonly:'Op de laptop kun je artikels toevoegen, maar de hoeveelheid niet wijzigen.',empty:'De koelkast is leeg.',van:'van',gr:'gr'},
+ fr:{ttl:'Réfrigérateur',n:'articles',in_:'➕ Entrée',in_s:'Vous mettez quelque chose au réfrigérateur',out:'➖ Sortie',out_s:'Vous sortez quelque chose du réfrigérateur',list:'📋 Voir la liste',
+  newt:'Nouveau au réfrigérateur',edt:"Modifier l'article",what:'Que mettez-vous ?',ph:'p.ex. jambon',frl:'Nom français',frph:'rempli automatiquement',auto:'✓ automatique',qty:'Quantité',unit:'Unité',gramq:'Combien de grammes par %u ?',
+  datel:"Quelle date figure sur l'emballage ?",tht:'À consommer de préférence avant',tgt:"À consommer jusqu'au",p2:'+2 j',p3:'+3 j',p7:'+1 sem.',noDate:'Effacer',
+  save:'Enregistrer',again:'Enregistrer + un autre',savech:'Enregistrer',typ:'Tapez un nom. Le nom français est cherché automatiquement.',
+  i_none:"Pas de date : l'appli ne prévient pas pour cet article.",
+  i_tgt:"À consommer jusqu'au <b>%d</b>. Après cette date, ne plus manger. Alexa prévient la veille et le jour même.",
+  i_tgt_late:'<b>Ne plus manger.</b> Cette date (%d) est dépassée et c’est une date limite de consommation.',
+  i_tht:'À consommer de préférence avant le <b>%d</b>. Après, la qualité peut baisser. Alexa prévient le jour même, doucement.',
+  i_tht_late:'La date (%d) est dépassée. C’est une date de qualité : <b>regardez, sentez et goûtez</b> avant de décider.',
+  outq:'Que sortez-vous ?',search:'Chercher dans le réfrigérateur…',howmany:'Combien sortez-vous ?',amt:'Vous sortez',reset:'↺ Recommencer',all:'Tout',tolist:'Mettre sur la liste de courses',go:'Sortir',
+  left:'Il reste %q %u de %n au réfrigérateur.',none:'Il n’y aura plus de %n au réfrigérateur.',nores:'Rien trouvé.',
+  inlist:'Au réfrigérateur',chg:'✎ Modifier',edit:'✎ Modifier',undoout:'↶ Remettre',sure:'Sûr ?',
+  g_soon:'À consommer vite',g_later:'Plus tard',nodate:'pas de date',tgtTill:"à consommer jusqu'au",thtTill:'de préférence avant le',
+  f_gone:'⚠ Ne plus manger · %d',f_today:"⚠ À consommer aujourd'hui",f_tom:'⚠ À consommer demain',f_tgt:"À consommer jusqu'au %d",f_thtlate:'Date dépassée · regardez, sentez, goûtez',f_thttoday:"À consommer de préférence : aujourd'hui",f_thtsoon:'Bientôt : %d',
+  added:'%n %q %u est au réfrigérateur',changed:'%n est modifié',outmsg:'%q %u %n sorti',onlist:' · sur la liste de courses',back:'%n est remis',del:'%n supprimé',saved:'%n enregistré',
+  menu:'‹ Retour au menu',ha:'🏠 Envoyer à HA',hasend:'⏳ Envoi…',hadone:'✓ Envoyé à HA',hafail:'❌ HA injoignable',nocfg:'⚠️ Pas d’adresse HA pour le réfrigérateur (Paramètres)',
+  listen:'🎤 J’écoute… dites ce que vous mettez',listenfr:'🎤 Dites maintenant le nom français…',nosr:'La voix ne fonctionne pas ici. Tapez le nom.',nothing:'🎤 Rien entendu',denied:'🎤 Micro bloqué. Autorisez-le dans le navigateur.',tapfr:'Touchez 🎤 et dites le nom français',mic:'Parler',
+  edonly:'Sur le portable, vous pouvez ajouter des articles mais pas changer la quantité.',empty:'Le réfrigérateur est vide.',van:'de',gr:'g'}
+};
+function lang(){ return (typeof currentLang !== 'undefined' && currentLang === 'fr') ? 'fr' : 'nl'; }
+function T(k, v){ var s = (X[lang()][k] != null ? X[lang()][k] : X.nl[k]) || k; if (v) Object.keys(v).forEach(function(p){ s = s.split('%' + p).join(v[p]); }); return s; }
+function $(id){ return document.getElementById(id); }
+function esc(s){ return (typeof escapeHtml === 'function') ? escapeHtml(String(s == null ? '' : s)) : String(s); }
+function isoLocal(ms){ var d = new Date(ms); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
+function today(){ return isoLocal(Date.now()); }
+function fmt(s){ return new Date(s + 'T12:00:00').toLocaleDateString(lang() === 'fr' ? 'fr-BE' : 'nl-BE', { day:'numeric', month:'numeric', year:'numeric' }); }
+function left(s){ return Math.round((new Date(s + 'T12:00:00') - new Date(today() + 'T12:00:00')) / DAY); }
+function kkItems(){ return state.stockItems.filter(function(i){ return i.storageLocation === 'fridge' && (i.quantity || 0) > 0; }); }
+function isNew(i){ return i.createdAt && Date.now() - i.createdAt < DAY; }
+function editor(){ try { return isEditorDevice(); } catch(e) { return false; } }
+/* eenheid met gram: "Pot van 500 gr" */
+function ul(i){ var u = i.unit || ''; return hasGr(u) && i.unitGr ? u + ' ' + T('van') + ' ' + i.unitGr + ' ' + T('gr') : u; }
+function frOf(name){
+  var n = name.toLowerCase().trim(); if (!n) return '';
+  var ex = state.stockItems.filter(function(s){ return (s.name || '').toLowerCase() === n && s.name_fr; })[0];
+  if (ex) return ex.name_fr;
+  var d = window.shopDict || {}; if (d[n]) return d[n];
+  var keys = Object.keys(d).sort(function(a, b){ return b.length - a.length; }), pad = ' ' + n + ' ';
+  for (var i = 0; i < keys.length; i++) { if (pad.indexOf(' ' + keys[i] + ' ') > -1) return d[keys[i]]; }
+  return '';
+}
+
+var S = { scene:'menu', edit:null, frEdited:false, qty:1, unit:'Stuk', gr:'', kind:'THT', sel:null, dq:1, act:null, last:null, msg:'' };
+
+function root(){ return $('kk-main'); }
+function setTitle(t, pill){ $('kk-ttl').textContent = t; $('kk-pill').innerHTML = pill || ''; }
+function go(scene){ stopRec(); S.scene = scene; var f = { menu:menuView, add:addView, out:outView, list:listView }[scene]; f(); root().scrollTop = 0; }
+
+function menuView(){
+  var n = kkItems().length;
+  setTitle('🧊 ' + T('ttl'), '<span class="kk-pill">' + n + ' ' + T('n') + '</span>');
+  var ed = editor();
+  root().innerHTML =
+    '<button class="kk-menu in" data-a="in">' + T('in_') + '<small>' + T('in_s') + '</small></button>' +
+    '<button class="kk-menu out" data-a="out"' + (ed ? ' disabled' : '') + '>' + T('out') + '<small>' + T('out_s') + '</small></button>' +
+    '<button class="kk-menu plain" data-a="list">' + T('list') + '</button>' +
+    (ed ? '<p class="kk-note">' + T('edonly') + '</p>' : '');
+}
+
+/* ---------- erin / wijzigen ---------- */
+function addView(){
+  var e = S.edit;
+  setTitle(e ? T('edt') : T('newt'), '<span class="kk-pill">🧊 ' + T('ttl') + '</span>');
+  root().innerHTML =
+    '<div class="kk-lab">' + T('what') + '</div>' +
+    '<div class="kk-inrow"><input class="kk-inp" id="kk-name" placeholder="' + esc(T('ph')) + '" autocomplete="off" enterkeyhint="next"><button class="kk-mic" id="kk-mic-nl" data-a="micnl" aria-label="' + esc(T('mic')) + '">🎤</button></div>' +
+    '<div class="kk-listen" id="kk-listen" hidden></div>' +
+    '<div class="kk-chips" id="kk-sug" style="margin-top:8px"></div>' +
+    '<div class="kk-lab">' + T('frl') + ' <span class="kk-auto" id="kk-auto"></span></div>' +
+    '<div class="kk-inrow"><input class="kk-inp fr" id="kk-fr" placeholder="' + esc(T('frph')) + '" autocomplete="off"><button class="kk-mic" id="kk-mic-fr" data-a="micfr" aria-label="' + esc(T('mic')) + '">🎤</button></div>' +
+    '<div class="kk-lab">' + T('qty') + '</div>' +
+    '<div class="kk-row"><div class="kk-step"><button data-a="minus" aria-label="−">−</button><output id="kk-qty">1</output><button data-a="plus" aria-label="+">+</button></div><div class="kk-chips" id="kk-frac"></div></div>' +
+    '<div class="kk-lab">' + T('unit') + '</div>' +
+    '<select class="kk-inp kk-sel" id="kk-unit" aria-label="' + esc(T('unit')) + '"></select>' +
+    '<div class="kk-grrow" id="kk-grrow" hidden><label id="kk-grlab" for="kk-gr"></label><input class="kk-inp" id="kk-gr" type="number" inputmode="numeric" min="1" step="1" placeholder="500"><span>' + T('gr') + '</span></div>' +
+    '<div class="kk-lab">' + T('datel') + '</div>' +
+    '<div class="kk-seg" id="kk-kind"><button data-k="THT">' + T('tht') + '</button><button data-k="TGT">' + T('tgt') + '</button></div>' +
+    '<div class="kk-row" style="margin-top:8px"><input class="kk-inp" id="kk-date" type="date" style="flex:1;min-width:140px;padding:10px 12px;font-size:15px"><div class="kk-chips"><button class="kk-chip" data-p="2">' + T('p2') + '</button><button class="kk-chip" data-p="3">' + T('p3') + '</button><button class="kk-chip" data-p="7">' + T('p7') + '</button><button class="kk-chip" data-a="clrdate">' + T('noDate') + '</button></div></div>' +
+    '<div class="kk-info" id="kk-info"></div>' +
+    '<div class="kk-bar">' + (e ? '' : '<button class="kk-btn g" id="kk-again" data-a="again" disabled>' + T('again') + '</button>') + '<button class="kk-btn p" id="kk-save" data-a="save" disabled>' + (e ? T('savech') : T('save')) + '</button></div>';
+  if (e) { $('kk-name').value = e.name; $('kk-fr').value = e.name_fr || ''; S.frEdited = true; S.qty = e.quantity || 1; S.unit = e.unit || 'Stuk'; S.gr = e.unitGr || ''; S.kind = e.dateKind || 'THT'; $('kk-date').value = e.expiryDate || ''; }
+  else { $('kk-name').value = ''; $('kk-fr').value = ''; S.frEdited = false; S.qty = 1; S.unit = 'Stuk'; S.gr = ''; S.kind = 'THT'; $('kk-date').value = ''; }
+  drawUnits(); upd();
+  $('kk-name').oninput = function(){ S.frEdited = false; upd(); };
+  $('kk-fr').oninput = function(){ S.frEdited = true; $('kk-auto').textContent = ''; };
+  $('kk-date').onchange = upd;
+  $('kk-unit').onchange = function(){ S.unit = this.value; drawUnits(); };
+  $('kk-gr').oninput = function(){ S.gr = this.value.replace(/[^0-9]/g, ''); };
+  if (!e) setTimeout(function(){ try { $('kk-name').focus({ preventScroll:true }); } catch(x) {} }, 50);
+}
+/* ---------- spraak ---------- */
+var REC = null;
+function micPaint(which, msg){
+  ['nl', 'fr'].forEach(function(k){ var b = $('kk-mic-' + k); if (b) b.classList.toggle('on', which === k); });
+  var l = $('kk-listen'); if (l) { l.hidden = !msg; l.textContent = msg || ''; }
+}
+function stopRec(){ try { if (REC) { var r = REC; REC = null; r.onend = null; r.onerror = null; r.abort(); } } catch (e) {} micPaint(null, ''); }
+function listen(which, langCode, msg, onText, onFail){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast(T('nosr')); if (onFail) onFail('unsupported'); return; }
+  stopRec();
+  var r, got = false, err = '';
+  try { r = new SR(); } catch (e) { toast(T('nosr')); if (onFail) onFail('unsupported'); return; }
+  REC = r; r.lang = langCode; r.continuous = false; r.interimResults = false; r.maxAlternatives = 1;
+  r.onresult = function(e){
+    var t = ((e.results && e.results[0] && e.results[0][0] && e.results[0][0].transcript) || '').trim().replace(/[.,;:!?]+$/, '');
+    if (t) { got = true; onText(t); }
+  };
+  r.onerror = function(e){ err = (e && e.error) || 'error'; };
+  r.onend = function(){
+    if (REC === r) REC = null;
+    micPaint(null, '');
+    if (!got) { toast(err === 'not-allowed' || err === 'service-not-allowed' ? T('denied') : T('nothing')); if (onFail) onFail(err || 'none'); }
+  };
+  try { micPaint(which, msg); r.start(); }
+  catch (x) { REC = null; micPaint(null, ''); if (onFail) onFail('start'); }
+}
+function micFr(auto){
+  listen('fr', 'fr-FR', T('listenfr'), function(t){
+    $('kk-fr').value = t; S.frEdited = true; $('kk-auto').textContent = '🎤';
+    $('kk-mic-fr').classList.remove('pulse');
+  }, function(){
+    var b = $('kk-mic-fr'); if (b && auto) { b.classList.add('pulse'); micPaint(null, T('tapfr')); }
+  });
+}
+function micNl(){
+  listen('nl', 'nl-NL', T('listen'), function(t){
+    t = t.charAt(0).toUpperCase() + t.slice(1);
+    $('kk-name').value = t; S.frEdited = false; fillFromFridge(t); upd();
+    if (!$('kk-fr').value.trim()) setTimeout(function(){ if (S.scene === 'add' && $('kk-fr') && !$('kk-fr').value.trim()) micFr(true); }, 450);
+  });
+}
+
+function drawQty(){
+  if (!fracUnit(S.unit)) S.qty = Math.max(1, Math.round(S.qty));
+  if (S.qty < 0.25) S.qty = 1;
+  $('kk-qty').textContent = qf(S.qty);
+  var fr = fracUnit(S.unit), f = S.qty - Math.floor(S.qty);
+  $('kk-frac').innerHTML = fr ? [0, 0.25, 0.5, 0.75].map(function(x){ return '<button class="kk-chip' + (Math.abs(f - x) < 0.001 ? ' on' : '') + '" data-f="' + x + '">' + (x ? qf(x) : '0') + '</button>'; }).join('') : '';
+}
+function unitLabel(u){ return hasGr(u) ? u + ' ' + T('van') + ' … ' + T('gr') : u; }
+function drawUnits(){
+  drawQty();
+  var list = UNITS.slice(); if (S.unit && list.indexOf(S.unit) < 0) list.push(S.unit);
+  $('kk-unit').innerHTML = list.map(function(u){ return '<option value="' + esc(u) + '"' + (u === S.unit ? ' selected' : '') + '>' + esc(unitLabel(u)) + '</option>'; }).join('');
+  var g = hasGr(S.unit); $('kk-grrow').hidden = !g;
+  if (g) { $('kk-grlab').textContent = T('gramq', { u:S.unit.toLowerCase() }); $('kk-gr').value = S.gr || ''; }
+}
+function upd(){
+  var n = $('kk-name').value.trim(), has = n.length > 0, d = $('kk-date').value;
+  if (!S.frEdited) { var f = frOf(n); $('kk-fr').value = f; $('kk-auto').textContent = f ? T('auto') : ''; }
+  $('kk-save').disabled = !has; var ag = $('kk-again'); if (ag) ag.disabled = !has;
+  document.querySelectorAll('#kk-kind button').forEach(function(b){ var on = b.getAttribute('data-k') === S.kind; b.classList.toggle('on', on); b.classList.toggle('tgt', on && S.kind === 'TGT'); });
+  var info = $('kk-info'), cls = 'kk-info', txt;
+  if (!has) txt = T('typ');
+  else if (!d) txt = T('i_none');
+  else {
+    var l = left(d);
+    if (S.kind === 'TGT') { if (l < 0) { cls += ' late'; txt = T('i_tgt_late', { d:fmt(d) }); } else txt = T('i_tgt', { d:fmt(d) }); }
+    else { if (l < 0) { cls += ' late'; txt = T('i_tht_late', { d:fmt(d) }); } else txt = T('i_tht', { d:fmt(d) }); }
+  }
+  info.className = cls; info.innerHTML = txt;
+  var v = n.toLowerCase(), pool = {}; state.stockItems.filter(function(s){ return s.storageLocation === 'fridge'; }).forEach(function(s){ pool[s.name] = 1; });
+  Object.keys(window.shopDict || {}).forEach(function(k){ pool[k.charAt(0).toUpperCase() + k.slice(1)] = 1; });
+  var arr = Object.keys(pool).filter(function(p){ return v ? (p.toLowerCase().indexOf(v) > -1 && p.toLowerCase() !== v) : false; }).slice(0, 5);
+  if (!v) arr = kkItems().map(function(s){ return s.name; }).filter(function(x, i, a){ return a.indexOf(x) === i; }).slice(0, 6);
+  $('kk-sug').innerHTML = arr.map(function(p){ return '<button class="kk-chip sug" data-s="' + esc(p) + '">' + esc(p) + '</button>'; }).join('');
+}
+function fillFromFridge(name){
+  var ex = state.stockItems.filter(function(s){ return s.storageLocation === 'fridge' && s.name.toLowerCase() === name.toLowerCase(); })[0];
+  if (ex && ex.unit) { S.unit = ex.unit; S.gr = ex.unitGr || ''; drawUnits(); }
+}
+async function saveItem(more){
+  var name = $('kk-name').value.trim(); if (!name) return;
+  var fr = $('kk-fr').value.trim() || frOf(name), date = $('kk-date').value || null, e = S.edit, item;
+  var gr = hasGr(S.unit) ? (parseInt(S.gr, 10) || null) : null;
+  if (e) {
+    item = e; item.name = name; item.name_fr = fr; item.quantity = S.qty; item.unit = S.unit; item.unitGr = gr; item.expiryDate = date; item.dateKind = S.kind; item.lastUpdated = Date.now();
+  } else {
+    item = { id: uid(), createdAt: Date.now(), name: name, name_fr: fr, quantity: S.qty, unit: S.unit, unitGr: gr, subtype: null, minQuantity: 0, targetQuantity: null,
+      categoryId: findCat('cat_food') ? 'cat_food' : null, expiryDate: date, dateKind: S.kind, storageLocation: 'fridge', freezeDate: null, fridgeDate: today(), boxId: null,
+      shelfId: null, level: null, position: null, shopId: null, price: null, description: '', photos: [], lastUpdated: Date.now() };
+  }
+  await dbPut('stockItems', item);
+  if (!e) { state.stockItems.push(item); try { await rememberStockName(name); } catch(x) {} }
+  try { markSyncDirty(); } catch(x) {}
+  if (editor()) { try { editorTrackChange(e ? 'edit' : 'add', 'stock', item, e ? ['bijgewerkt'] : []); } catch(x) {} }
+  S.last = item;
+  if (more && !e) { toast('✓ ' + T('saved', { n:name })); S.edit = null; addView(); try { render(); } catch(x) {} return; }
+  S.edit = null; S.act = { type:'add', it:item };
+  S.msg = e ? T('changed', { n:name }) : T('added', { n:name, q:qf(item.quantity), u:ul(item) });
+  try { render(); } catch(x) {}
+  go('list');
+}
+
+/* ---------- eruit ---------- */
+function outView(){
+  setTitle(T('outq'), '<span class="kk-pill">🧊 ' + T('ttl') + '</span>');
+  root().innerHTML =
+    '<input class="kk-inp" id="kk-q" placeholder="' + esc(T('search')) + '" autocomplete="off">' +
+    '<div id="kk-dlist" style="margin-top:10px"></div>' +
+    '<div class="kk-panel" id="kk-panel" hidden>' +
+      '<b id="kk-dname"></b><div class="kk-lab" style="margin-top:8px">' + T('howmany') + '</div>' +
+      '<div class="kk-row" id="kk-dstep"><div class="kk-step"><button data-a="dminus" aria-label="−">−</button><output id="kk-dqty">1</output><button data-a="dplus" aria-label="+">+</button></div></div><div class="kk-row" id="kk-dfrac" style="margin-bottom:8px"><button class="kk-chip" data-q="0.25">−¼</button><button class="kk-chip" data-q="0.5">−½</button><button class="kk-chip" data-q="1">−1</button><button class="kk-chip" data-a="dreset">' + T('reset') + '</button></div><div class="kk-row"><b id="kk-damt" style="font:700 15px \'JetBrains Mono\',monospace"></b><span id="kk-dunit" style="font:700 13px \'JetBrains Mono\',monospace;color:var(--text-dim)"></span><button class="kk-chip" id="kk-dall" data-a="dall">' + T('all') + '</button></div>' +
+      '<label class="kk-chk" id="kk-dshopw" hidden><input type="checkbox" id="kk-dshop" checked> ' + T('tolist') + '</label>' +
+      '<div class="kk-info" id="kk-dinfo"></div>' +
+    '</div>' +
+    '<div class="kk-bar"><button class="kk-btn p" id="kk-dgo" data-a="dgo" disabled>' + T('go') + '</button></div>';
+  S.sel = null; drawOut(); $('kk-q').oninput = drawOut;
+}
+function drawOut(){
+  var v = $('kk-q').value.trim().toLowerCase();
+  var items = kkItems().filter(function(i){ return !v || i.name.toLowerCase().indexOf(v) > -1 || (i.name_fr || '').toLowerCase().indexOf(v) > -1; })
+    .sort(function(a, b){ return (a.expiryDate || '9999') < (b.expiryDate || '9999') ? -1 : ((a.expiryDate || '9999') > (b.expiryDate || '9999') ? 1 : a.name.localeCompare(b.name, 'nl')); });
+  $('kk-dlist').innerHTML = items.map(function(i){
+    return '<button class="kk-pick' + (S.sel === i ? ' on' : '') + '" data-pk="' + esc(i.id) + '"><span>' + esc(i.name) + '</span><span style="font:700 13px \'JetBrains Mono\',monospace;color:var(--text-dim)">×' + qf(i.quantity) + ' ' + esc(ul(i)) + '</span><small>' + esc(i.name_fr || '') + (i.expiryDate ? (i.name_fr ? ' · ' : '') + fmt(i.expiryDate) : '') + '</small></button>';
+  }).join('') || '<p class="kk-note">' + (v ? T('nores') : T('empty')) + '</p>';
+}
+function step(it){ return it && it.unit === 'Gr' ? 100 : 1; }
+function panel(){
+  var it = S.sel; if (!it) return;
+  var fr = fracUnit(it.unit);
+  $('kk-panel').hidden = false; $('kk-dname').textContent = it.name + (it.name_fr ? ' · ' + it.name_fr : '');
+  $('kk-dstep').hidden = fr; $('kk-dfrac').hidden = !fr;
+  $('kk-dunit').textContent = ul(it) + ' (' + qf(it.quantity) + ')'; $('kk-dqty').textContent = qf(S.dq);
+  $('kk-damt').textContent = fr ? T('amt') + ': ' + qf(S.dq) : ''; $('kk-dgo').disabled = !(S.dq > 0);
+  var all = S.dq >= it.quantity; $('kk-dshopw').hidden = !all; $('kk-dall').classList.toggle('on', all);
+  $('kk-dinfo').textContent = all ? T('none', { n:it.name.toLowerCase() }) : T('left', { q:qf(it.quantity - S.dq), u:ul(it), n:it.name.toLowerCase() });
+}
+async function takeOut(){
+  var it = S.sel; if (!it || editor()) return;
+  var r = Math.min(S.dq, it.quantity), gone = r >= it.quantity, shop = gone && $('kk-dshop') && $('kk-dshop').checked;
+  var keepRow = gone && (it.minQuantity || 0) > 0, deleted = false;
+  it.quantity -= r; it.lastUpdated = Date.now();
+  if (gone && !keepRow) { await dbDelete('stockItems', it.id); state.stockItems = state.stockItems.filter(function(x){ return x !== it; }); deleted = true; }
+  else await dbPut('stockItems', it);
+  try { markSyncDirty(); } catch(x) {}
+  if (shop && window.shopAddExternal) { try { window.shopAddExternal(it.name, r, it.unit || '', it.name_fr || frOf(it.name)); } catch(x) {} }
+  S.act = { type:'out', it:it, r:r, deleted:deleted, shop:!!(shop && window.shopAddExternal) }; S.last = null;
+  S.msg = T('outmsg', { q:qf(r), u:ul(it), n:it.name }) + (shop ? T('onlist') : '');
+  try { render(); } catch(x) {}
+  go('list');
+}
+async function undoOut(){
+  var a = S.act; if (!a || a.type !== 'out') return;
+  a.it.quantity += a.r; a.it.lastUpdated = Date.now();
+  await dbPut('stockItems', a.it);
+  if (a.deleted && state.stockItems.indexOf(a.it) < 0) state.stockItems.push(a.it);
+  try { markSyncDirty(); } catch(x) {}
+  if (a.shop && window.shopUndoExternal) { try { window.shopUndoExternal(a.it.name, a.r); } catch(x) {} }
+  S.msg = T('back', { n:a.it.name }); S.act = null; try { render(); } catch(x) {}
+  listView();
+}
+
+/* ---------- lijst ---------- */
+function flag(i){
+  if (!i.expiryDate) return null;
+  var l = left(i.expiryDate), d = fmt(i.expiryDate);
+  if (i.dateKind === 'TGT') {
+    if (l < 0) return ['hard', T('f_gone', { d:d })];
+    if (l === 0) return ['hard', T('f_today')];
+    if (l === 1) return ['hard', T('f_tom')];
+    return l <= 3 ? ['soft', T('f_tgt', { d:d })] : null;
+  }
+  if (l < 0) return ['soft', T('f_thtlate')];
+  if (l === 0) return ['soft', T('f_thttoday')];
+  return l <= 2 ? ['fine', T('f_thtsoon', { d:d })] : null;
+}
+function listView(){
+  var items = kkItems().sort(function(a, b){ var x = a.expiryDate || '9999', y = b.expiryDate || '9999'; return x < y ? -1 : (x > y ? 1 : 0); });
+  setTitle('🧊 ' + T('inlist'), '<span class="kk-pill">' + items.length + ' ' + T('n') + '</span>');
+  var ok = '';
+  if (S.msg) {
+    var btn = S.act && S.act.type === 'add' ? '<button data-a="edit">' + T('edit') + '</button>' : (S.act && S.act.type === 'out' ? '<button data-a="undoout">' + T('undoout') + '</button>' : '');
+    ok = '<div class="kk-ok"><span>✓</span><span>' + esc(S.msg) + '</span>' + btn + '</div>';
+  }
+  var ed = editor();
+  function card(i){
+    var f = flag(i);
+    var acts = (!ed && isNew(i)) ? '<span class="kk-acts"><button data-e="' + esc(i.id) + '">' + T('chg') + '</button><button data-d="' + esc(i.id) + '">🗑</button></span>' : '<span></span>';
+    var dt = i.expiryDate ? (i.dateKind === 'TGT' ? T('tgtTill') : T('thtTill')) + ' ' + fmt(i.expiryDate) : T('nodate');
+    return '<div class="kk-item' + (S.last === i ? ' new' : '') + '"><b>' + esc(i.name) + '</b><span class="q">×' + qf(i.quantity) + ' ' + esc(ul(i)) + '</span>' +
+      '<small>' + esc(i.name_fr ? i.name_fr + ' · ' : '') + esc(dt) + '</small>' + acts + (f ? '<span class="kk-fl ' + f[0] + '">' + esc(f[1]) + '</span>' : '') + '</div>';
+  }
+  var urgent = items.filter(function(i){ var f = flag(i); return f && f[0] !== 'fine'; });
+  var rest = items.filter(function(i){ return urgent.indexOf(i) < 0; });
+  root().innerHTML = ok +
+    (urgent.length ? '<div class="kk-grp" style="margin-top:6px">' + T('g_soon') + '</div>' + urgent.map(card).join('') : '') +
+    (rest.length ? (urgent.length ? '<div class="kk-grp">' + T('g_later') + '</div>' : '') + rest.map(card).join('') : '') +
+    (!items.length ? '<p class="kk-note">' + T('empty') + '</p>' : '') +
+    '<button class="kk-ghost" data-a="menu">' + T('menu') + '</button>' +
+    '<button class="kk-ghost" id="kk-ha" data-a="ha">' + T('ha') + '</button>';
+}
+async function sendHa(){
+  var b = $('kk-ha'); if (!b) return;
+  try {
+    if (!haGetUrl('kk')) { toast(T('nocfg')); return; }
+    b.textContent = T('hasend'); var ok = await haSendFridge(); b.textContent = ok ? T('hadone') : T('hafail');
+  } catch(e) { b.textContent = T('hafail'); }
+}
+
+/* ---------- gedeeld ---------- */
+function click(ev){
+  var t = ev.target.closest('button, label, input, select'); if (!t || t.tagName === 'INPUT' || t.tagName === 'SELECT') return;
+  var a = t.getAttribute('data-a');
+  if (t.dataset.k) { S.kind = t.dataset.k; upd(); return; }
+  if (t.dataset.p) { $('kk-date').value = isoLocal(Date.now() + parseInt(t.dataset.p, 10) * DAY); upd(); return; }
+  if (t.dataset.f) { var w = Math.floor(S.qty), nf = parseFloat(t.dataset.f); if (w + nf > 0) { S.qty = w + nf; drawQty(); } return; }
+  if (t.dataset.q) { if (S.sel) { S.dq = Math.min(S.sel.quantity, S.dq + parseFloat(t.dataset.q)); panel(); } return; }
+  if (t.dataset.s) { $('kk-name').value = t.dataset.s; S.frEdited = false; fillFromFridge(t.dataset.s); upd(); return; }
+  if (t.dataset.pk) { S.sel = kkItems().filter(function(i){ return i.id === t.dataset.pk; })[0]; S.dq = fracUnit(S.sel.unit) ? 0 : Math.min(step(S.sel), S.sel.quantity); drawOut(); panel(); return; }
+  if (t.dataset.e) { S.edit = state.stockItems.filter(function(i){ return i.id === t.dataset.e; })[0]; S.msg = ''; go('add'); return; }
+  if (t.dataset.d) {
+    if (t.className.indexOf('sure') < 0) { t.classList.add('sure'); t.textContent = T('sure'); setTimeout(function(){ t.classList.remove('sure'); t.textContent = '🗑'; }, 2500); return; }
+    var it = state.stockItems.filter(function(i){ return i.id === t.dataset.d; })[0]; if (!it) return;
+    delItem(it); return;
+  }
+  switch (a) {
+    case 'in': S.edit = null; S.msg = ''; go('add'); break;
+    case 'out': if (!editor()) { S.msg = ''; go('out'); } break;
+    case 'list': S.msg = ''; S.act = null; S.last = null; go('list'); break;
+    case 'menu': go('menu'); break;
+    case 'minus': { var dn = S.unit === 'Gr' ? 100 : 1, nq = S.qty - dn; if (nq >= (fracUnit(S.unit) ? 0.25 : 1)) { S.qty = nq; drawQty(); } break; }
+    case 'plus': S.qty += (S.unit === 'Gr' ? 100 : 1); drawQty(); break;
+    case 'micnl': micNl(); break;
+    case 'micfr': micFr(false); break;
+    case 'clrdate': $('kk-date').value = ''; upd(); break;
+    case 'save': saveItem(false); break;
+    case 'again': saveItem(true); break;
+    case 'edit': if (S.act && S.act.type === 'add') { S.edit = S.act.it; go('add'); } break;
+    case 'undoout': undoOut(); break;
+    case 'dminus': if (S.sel) { S.dq = Math.max(step(S.sel), S.dq - step(S.sel)); panel(); } break;
+    case 'dplus': if (S.sel) { S.dq = Math.min(S.sel.quantity, S.dq + step(S.sel)); panel(); } break;
+    case 'dall': if (S.sel) { S.dq = S.sel.quantity; panel(); } break;
+    case 'dreset': if (S.sel) { S.dq = 0; panel(); } break;
+    case 'dgo': takeOut(); break;
+    case 'ha': sendHa(); break;
+  }
+}
+async function delItem(it){
+  await dbDelete('stockItems', it.id); state.stockItems = state.stockItems.filter(function(x){ return x !== it; });
+  try { markSyncDirty(); } catch(x) {}
+  if (S.last === it) S.last = null; S.act = null; S.msg = '';
+  toast('🗑 ' + T('del', { n:it.name })); try { render(); } catch(x) {} listView();
+}
+function open(){
+  var el = $('kk-screen'); var eb = $('editor-banner'); el.style.top = (eb && eb.offsetHeight ? eb.offsetHeight : 0) + 'px'; el.classList.add('open'); S.msg = ''; S.act = null; S.last = null; S.edit = null; go('menu');
+}
+function close(){
+  stopRec();
+  $('kk-screen').classList.remove('open');
+  if (/koelkast/i.test(location.hash)) { try { history.replaceState(null, '', location.pathname + location.search); } catch(e) { location.hash = ''; } }
+}
+function home(){
+  var n = $('home-kk-n'); if (n) n.textContent = kkItems().length;
+  var s = $('home-kk-sub'); if (s) s.textContent = lang() === 'fr' ? 'Entrée / sortie / dates' : 'Erin / eruit / datums';
+  var l = $('lbl-kk-home'); if (l) l.textContent = T('ttl');
+}
+document.addEventListener('DOMContentLoaded', function(){
+  $('kk-back').addEventListener('click', function(){ if (S.scene === 'menu') close(); else go('menu'); });
+  $('kk-main').addEventListener('click', click);
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && $('kk-screen').classList.contains('open')) close(); });
+  window.addEventListener('hashchange', function(){ if (/koelkast/i.test(location.hash)) open(); });
+  home();
+});
+window.kkOpen = open; window.kkClose = close; window.kkHomeUpdate = home;
+})();
 
 window.openShoppingList = function(){ shopOpen(); };
 (function(){ var _sl = setLang; window.setLang = function(l){ _sl(l); try { shopHomeUpdate(); shopRender(); } catch(e) {} }; })();
