@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.7">
-<title>Garage Bavaylei 1.4.7</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.8">
+<title>Garage Bavaylei 1.4.8</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.4.7.webmanifest">
+<link rel="manifest" href="manifest-1.4.8.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.4.7';
+  const APP_CODE_VERSION = '1.4.8';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1393,6 +1393,7 @@
   #vk-screen{position:fixed;inset:0;z-index:250;background:var(--bg);display:none;flex-direction:column;overscroll-behavior:contain}
   #vk-screen.open{display:flex}
   #vk-screen *{box-sizing:border-box}
+  #vk-screen [hidden]{display:none!important}
   .vk-top{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);padding-top:max(10px,env(safe-area-inset-top,0px))}
   .vk-back{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);font-size:24px;line-height:1;color:var(--text);flex:none}
   .vk-ttl{font-weight:900;font-size:19px;letter-spacing:-.01em}
@@ -1457,7 +1458,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.4.7</span>
+      <span class="app-version">versie: 1.4.8</span>
     </div>
   </div>
   <div class="top-controls">
@@ -2811,7 +2812,7 @@ function renderBrowseFreezer() {
       <div class="stock-thumb">${cat?.icon || '🧊'}</div>
       <div class="stock-info">
         <div class="stock-name">🧊 ${escapeHtml(iName(it))}${it.subtype?` <span style="font-size:11px;color:var(--mode-accent);">· ${escapeHtml(it.subtype)}</span>`:''}
-          <span style="color:var(--text-dim);font-weight:400;font-size:12px;"> ×${qty}${it.unit?' '+escapeHtml(it.unit):''}</span>
+          <span style="color:var(--text-dim);font-weight:400;font-size:12px;"> ×${fmtQty(qty)}${it.unit?' '+escapeHtml(it.unit):''}</span>
         </div>
         <div class="stock-meta">${freezeLabel}</div>
         ${isTooLong?`<div class="stock-warnings"><span class="badge-warn badge-expiring">⚠️ ${isUnknown?(currentLang==='nl'?'Datum onbekend':'Date inconnue'):(currentLang==='nl'?'Best snel opeten':'À consommer bientôt')}</span></div>`:''}
@@ -3218,7 +3219,7 @@ function renderBrowseFridge() {
       <div class="stock-thumb">${cat?.icon || '🌡️'}</div>
       <div class="stock-info">
         <div class="stock-name">🌡️ ${escapeHtml(iName(it))}
-          <span style="color:var(--text-dim);font-weight:400;font-size:12px;"> ×${qty}${it.unit?' '+escapeHtml(it.unit):''}</span>
+          <span style="color:var(--text-dim);font-weight:400;font-size:12px;"> ×${fmtQty(qty)}${it.unit?' '+escapeHtml(it.unit):''}</span>
         </div>
         <div class="stock-meta">${dateLabel}</div>
         ${isTooLong?`<div class="stock-warnings"><span class="badge-warn badge-expiring">⚠️ ${nl?'Al te lang in ijskast':'Trop longtemps au réfrigérateur'}</span></div>`:''}
@@ -3311,7 +3312,7 @@ function renderBrowseFreezerKitchen() {
       <div class="stock-thumb">${cat?.icon || '❄️'}</div>
       <div class="stock-info">
         <div class="stock-name">❄️ ${escapeHtml(iName(it))}
-          <span style="color:var(--text-dim);font-weight:400;font-size:12px;"> ×${qty}${it.unit?' '+escapeHtml(it.unit):''}</span>
+          <span style="color:var(--text-dim);font-weight:400;font-size:12px;"> ×${fmtQty(qty)}${it.unit?' '+escapeHtml(it.unit):''}</span>
         </div>
         <div class="stock-meta">${dateLabel}</div>
         ${isTooLong?`<div class="stock-warnings"><span class="badge-warn badge-expiring">⚠️ ${isUnknown?(nl?'Datum onbekend':'Date inconnue'):(nl?'Best snel opeten':'À consommer bientôt')}</span></div>`:''}
@@ -3490,7 +3491,8 @@ const DEFAULT_UNITS = [
   { id: 'u_kg', label: 'Kg', order: 25 },
   { id: 'u_gr', label: 'Gr', order: 26 },
   { id: 'u_pak', label: 'Pak', order: 27 },
-  { id: 'u_doos', label: 'Doos', order: 28 }
+  { id: 'u_doos', label: 'Doos', order: 28 },
+  { id: 'u_portie', label: 'Portie', order: 29 }
 ];
 
 const DEFAULT_SHOPS = [
@@ -4624,7 +4626,7 @@ function renderStockRow(it) {
     </div>
     <div class="stock-counter">
       <button class="counter-btn minus" onclick="event.stopPropagation();dashboardAdjustStock('${it.id}',-1)">−</button>
-      <div class="${counterClass}" onclick="event.stopPropagation();promptSetQty('${it.id}')">${qty}<span class="stock-unit">${escapeHtml(it.unit||'')}</span></div>
+      <div class="${counterClass}" onclick="event.stopPropagation();promptSetQty('${it.id}')">${fmtQty(qty)}<span class="stock-unit">${escapeHtml(it.unit||'')}</span></div>
       <button class="counter-btn plus" onclick="event.stopPropagation();dashboardAdjustStock('${it.id}',1)">+</button>
     </div>
     <button class="quick-delete-btn" onclick="event.stopPropagation();deleteStock('${it.id}')" title="${currentLang==='fr'?'Supprimer':'Verwijderen'}" aria-label="${currentLang==='fr'?'Supprimer':'Verwijderen'}">🗑</button>
@@ -4654,8 +4656,8 @@ function promptSetQty(id) {
   if (!item) return;
   const val = prompt(`${t('set_qty')} ${item.name}${item.unit ? ` (${item.unit})` : ''}`, item.quantity || 0);
   if (val === null) return;
-  const n = parseInt(val, 10);
-  if (isNaN(n) || n < 0) return;
+  const n = parseQty(val);
+  if (isNaN(n)) return;
   item.quantity = n;
   item.lastUpdated = Date.now();
   dbPut('stockItems', item).then(() => { renderStockList(); render(); markSyncDirty(); });
@@ -5456,7 +5458,7 @@ function openStockEditor(stockId, preselectShelfId, preselectLevel, preselectPos
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">${t('current_qty')}</label>
-        <input type="number" class="form-input" id="stock-qty" value="${item?.quantity ?? 0}" min="0">
+        <input type="number" class="form-input" id="stock-qty" value="${item?.quantity ?? 0}" min="0" step="0.25" inputmode="decimal">
       </div>
       <div class="form-group">
         <label class="form-label">${t('unit')}</label>
@@ -5744,7 +5746,7 @@ async function saveStock(id) {
   const item = id ? state.stockItems.find(i => i.id === id) : { id: uid(), createdAt: Date.now() };
   item.name = name;
   item.name_fr = document.getElementById('stock-name-fr')?.value.trim() || item.name_fr || '';
-  item.quantity = parseInt(document.getElementById('stock-qty').value) || 0;
+  item.quantity = (function(v){ return isNaN(v) ? 0 : v; })(parseQty(document.getElementById('stock-qty').value));
   const unitVal = document.getElementById('stock-unit').value;
   item.unit = (unitVal && unitVal !== '__new__') ? unitVal.trim() : '';
   // subtype — enkel opslaan als het een melk-item is
@@ -7847,7 +7849,7 @@ function dbCardHTML(it, nl) {
         </div>
       </div>
       <div class="db-card-qty">
-        <span class="db-card-num" style="color:${numColor};">${qty}</span>
+        <span class="db-card-num" style="color:${numColor};">${fmtQty(qty)}</span>
         ${it.unit?`<span class="db-card-unit">${escapeHtml(it.unit)}</span>`:''}
         ${min>0?`<span class="db-card-min">min ${min}</span>`:''}
       </div>
@@ -8333,7 +8335,7 @@ function updateEditorBanner() {
   if (countEl) {
     countEl.textContent = n > 0
       ? `${n} ${nl?'nog niet verstuurd':'pas encore envoyé(s)'}`
-      : (nl?'Editor modus — PC · v1.4.7':'Mode Éditeur — PC · v1.4.7');
+      : (nl?'Editor modus — PC · v1.4.8':'Mode Éditeur — PC · v1.4.8');
     countEl.style.color = n > 0 ? '#f0b429' : '#aaa';
   }
   if (pushBtn) pushBtn.style.display = n > 0 ? 'block' : 'none';
@@ -8356,7 +8358,7 @@ function initEditorMode() {
     banner.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="color:#f0b429;">💻</span>
-        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.4.7':'Mode Éditeur — PC · v1.4.7'}</span>
+        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.4.8':'Mode Éditeur — PC · v1.4.8'}</span>
       </div>
       <div style="display:flex;gap:8px;">
         <button onclick="editorSafetyModal()" id="editor-safe-btn" style="
@@ -9495,9 +9497,9 @@ function dashboardAdjustStock(id, delta) {
     currentLang==='nl'?'Voorraad aanpassen':'Ajuster le stock',
     `<p style="margin-bottom:14px;font-size:15px;text-align:center;">
       <strong>${escapeHtml(iName(item))}</strong><br>
-      <span style="font-size:24px;font-weight:900;">${item.quantity||0}</span>
+      <span style="font-size:24px;font-weight:900;">${fmtQty(item.quantity||0)}</span>
       <span style="color:var(--text-dim);"> → </span>
-      <span style="font-size:24px;font-weight:900;color:${delta>0?'var(--success)':'var(--danger)'};">${newQty}</span>
+      <span style="font-size:24px;font-weight:900;color:${delta>0?'var(--success)':'var(--danger)'};">${fmtQty(newQty)}</span>
       ${item.unit ? `<span style="font-size:13px;color:var(--text-dim);"> ${escapeHtml(item.unit)}</span>` : ''}
     </p>
     <div class="btn-row">
@@ -9953,18 +9955,20 @@ window.shopAddExternal = function(name, qty, unit, fr){ ld(); addItem(name, qty,
 })();
 
 // ============================================================================
-// VRIESKAST-TAG (1.4.7) — één NFC-tag op de vrieskast: Erin / Eruit / Lijst
+// VRIESKAST-TAG (1.4.7, 1.4.8: Portie + ¼ ½ ¾) — één NFC-tag op de vrieskast: Erin / Eruit / Lijst
 // Opent via #vrieskast. Gebruikt de gewone voorraadopslag (storageLocation 'freezer').
 // ============================================================================
 (function(){
 'use strict';
-var DAY = 86400000, UNITS = ['Zak','Kg','Gr','Stuk','Bak'];
+var DAY = 86400000, UNITS = ['Zak','Kg','Gr','Stuk','Bak','Portie'];
+function fracUnit(u){ return u !== 'Kg' && u !== 'Gr'; }
+function qf(n){ return fmtQty(n); }
 var X = {
  nl:{ttl:'Vrieskast',n:'artikels',in_:'➕ Erin',in_s:'Je zet iets in de vrieskast',out:'➖ Eruit',out_s:'Je haalt iets uit de vrieskast',list:'📋 Bekijk de lijst',
   newt:'Nieuw in vrieskast',edt:'Wijzig artikel',what:'Wat zet je erin?',ph:"bv. Gamba's",frl:'Franse naam',frph:'wordt vanzelf ingevuld',auto:'✓ automatisch',qty:'Aantal',date:'Ingevroren op',today:'Vandaag',yday:'Gisteren',
   save:'Bewaar',again:'Bewaar + nog één',savech:'Bewaar wijziging',typ:'Typ een naam. De app zoekt dan zelf de bewaartijd en de Franse naam.',
   keep:'Bewaartijd voor %n: <b>%m</b>. Best opeten vóór <b>%d</b>.',late:'<b>Best snel opeten.</b> %n blijft %m goed in de diepvries, en dat is al voorbij (%d).',mon:'maanden',mon1:'maand',
-  outq:'Wat haal je eruit?',search:'Zoek in de vrieskast…',howmany:'Hoeveel haal je eruit?',all:'Alles',tolist:'Zet op de boodschappenlijst',go:'Eruit halen',
+  outq:'Wat haal je eruit?',search:'Zoek in de vrieskast…',howmany:'Hoeveel haal je eruit?',amt:'Je haalt eruit',reset:'↺ Opnieuw',all:'Alles',tolist:'Zet op de boodschappenlijst',go:'Eruit halen',
   left:'Er blijft %q %u %n over in de vrieskast.',none:'De vrieskast bevat daarna geen %n meer.',nores:'Niets gevonden.',
   inlist:'In de vrieskast',chg:'✎ Wijzig',edit:'✎ Aanpassen',undoout:'↶ Terugzetten',sure:'Zeker?',soon:'⚠ Best snel opeten',
   added:'%n %q %u staat in de vrieskast',changed:'%n is gewijzigd',outmsg:'%q %u %n eruit',onlist:' · op de boodschappenlijst',back:'%n is teruggezet',del:'%n verwijderd',saved:'%n bewaard',
@@ -9974,7 +9978,7 @@ var X = {
   newt:'Nouveau au congélateur',edt:"Modifier l'article",what:'Que mettez-vous ?',ph:'p.ex. gambas',frl:'Nom français',frph:'rempli automatiquement',auto:'✓ automatique',qty:'Quantité',date:'Congelé le',today:"Aujourd'hui",yday:'Hier',
   save:'Enregistrer',again:'Enregistrer + un autre',savech:'Enregistrer',typ:'Tapez un nom. Le temps de conservation et le nom français sont cherchés automatiquement.',
   keep:'Conservation pour %n : <b>%m</b>. À consommer avant le <b>%d</b>.',late:'<b>À consommer rapidement.</b> %n se garde %m au congélateur, et c’est déjà dépassé (%d).',mon:'mois',mon1:'mois',
-  outq:'Que sortez-vous ?',search:'Chercher dans le congélateur…',howmany:'Combien sortez-vous ?',all:'Tout',tolist:'Mettre sur la liste de courses',go:'Sortir',
+  outq:'Que sortez-vous ?',search:'Chercher dans le congélateur…',howmany:'Combien sortez-vous ?',amt:'Vous sortez',reset:'↺ Recommencer',all:'Tout',tolist:'Mettre sur la liste de courses',go:'Sortir',
   left:'Il reste %q %u de %n au congélateur.',none:'Il n’y aura plus de %n au congélateur.',nores:'Rien trouvé.',
   inlist:'Au congélateur',chg:'✎ Modifier',edit:'✎ Modifier',undoout:'↶ Remettre',sure:'Sûr ?',soon:'⚠ À consommer rapidement',
   added:'%n %q %u est au congélateur',changed:'%n est modifié',outmsg:'%q %u %n sorti',onlist:' · sur la liste de courses',back:'%n est remis',del:'%n supprimé',saved:'%n enregistré',
@@ -10030,20 +10034,29 @@ function addView(){
     '<div class="vk-lab">' + T('frl') + ' <span class="vk-auto" id="vk-auto"></span></div>' +
     '<input class="vk-inp fr" id="vk-fr" placeholder="' + esc(T('frph')) + '" autocomplete="off">' +
     '<div class="vk-lab">' + T('qty') + '</div>' +
-    '<div class="vk-row"><div class="vk-step"><button data-a="minus" aria-label="−">−</button><output id="vk-qty">1</output><button data-a="plus" aria-label="+">+</button></div><div class="vk-chips" id="vk-units"></div></div>' +
+    '<div class="vk-row"><div class="vk-step"><button data-a="minus" aria-label="−">−</button><output id="vk-qty">1</output><button data-a="plus" aria-label="+">+</button></div><div class="vk-chips" id="vk-frac"></div></div>' +
+    '<div class="vk-chips" id="vk-units" style="margin-top:8px"></div>' +
     '<div class="vk-lab">' + T('date') + '</div>' +
     '<div class="vk-row"><input class="vk-inp" id="vk-date" type="date" style="flex:1;min-width:140px;padding:10px 12px;font-size:15px"><div class="vk-chips"><button class="vk-chip" data-a="today">' + T('today') + '</button><button class="vk-chip" data-a="yday">' + T('yday') + '</button></div></div>' +
     '<div class="vk-info" id="vk-info"></div>' +
     '<div class="vk-bar">' + (e ? '' : '<button class="vk-btn g" id="vk-again" data-a="again" disabled>' + T('again') + '</button>') + '<button class="vk-btn p" id="vk-save" data-a="save" disabled>' + (e ? T('savech') : T('save')) + '</button></div>';
   if (e) { $('vk-name').value = e.name; $('vk-fr').value = e.name_fr || ''; S.frEdited = true; S.qty = e.quantity || 1; S.unit = e.unit || 'Zak'; $('vk-date').value = (e.freezeDate && e.freezeDate !== 'unknown') ? e.freezeDate : today(); }
   else { $('vk-name').value = ''; $('vk-fr').value = ''; S.frEdited = false; S.qty = 1; S.unit = 'Zak'; $('vk-date').value = today(); }
-  $('vk-qty').textContent = S.qty; drawUnits(); upd();
+  drawUnits(); upd();
   $('vk-name').oninput = function(){ S.frEdited = false; upd(); };
   $('vk-fr').oninput = function(){ S.frEdited = true; $('vk-auto').textContent = ''; };
   $('vk-date').onchange = upd;
   if (!e) setTimeout(function(){ try { $('vk-name').focus({ preventScroll:true }); } catch(x) {} }, 50);
 }
+function drawQty(){
+  if (!fracUnit(S.unit)) S.qty = Math.max(1, Math.round(S.qty));
+  if (S.qty < 0.25) S.qty = 1;
+  $('vk-qty').textContent = qf(S.qty);
+  var fr = fracUnit(S.unit), f = S.qty - Math.floor(S.qty);
+  $('vk-frac').innerHTML = fr ? [0, 0.25, 0.5, 0.75].map(function(x){ return '<button class="vk-chip' + (Math.abs(f - x) < 0.001 ? ' on' : '') + '" data-f="' + x + '">' + (x ? qf(x) : '0') + '</button>'; }).join('') : '';
+}
 function drawUnits(){
+  drawQty();
   var list = UNITS.slice(); if (S.unit && list.indexOf(S.unit) < 0) list.push(S.unit);
   $('vk-units').innerHTML = list.map(function(u){ return '<button class="vk-chip' + (u === S.unit ? ' on' : '') + '" data-u="' + esc(u) + '">' + esc(u) + '</button>'; }).join('');
 }
@@ -10084,7 +10097,7 @@ async function saveItem(more){
   S.last = item;
   if (more && !e) { toast('✓ ' + T('saved', { n:name })); S.edit = null; addView(); try { render(); } catch(x) {} return; }
   S.edit = null; S.act = { type:'add', it:item };
-  S.msg = e ? T('changed', { n:name }) : T('added', { n:name, q:item.quantity, u:item.unit });
+  S.msg = e ? T('changed', { n:name }) : T('added', { n:name, q:qf(item.quantity), u:item.unit });
   try { render(); } catch(x) {}
   go('list');
 }
@@ -10097,7 +10110,7 @@ function outView(){
     '<div id="vk-dlist" style="margin-top:10px"></div>' +
     '<div class="vk-panel" id="vk-panel" hidden>' +
       '<b id="vk-dname"></b><div class="vk-lab" style="margin-top:8px">' + T('howmany') + '</div>' +
-      '<div class="vk-row"><div class="vk-step"><button data-a="dminus" aria-label="−">−</button><output id="vk-dqty">1</output><button data-a="dplus" aria-label="+">+</button></div><span id="vk-dunit" style="font:700 13px \'JetBrains Mono\',monospace;color:var(--text-dim)"></span><button class="vk-chip" id="vk-dall" data-a="dall">' + T('all') + '</button></div>' +
+      '<div class="vk-row" id="vk-dstep"><div class="vk-step"><button data-a="dminus" aria-label="−">−</button><output id="vk-dqty">1</output><button data-a="dplus" aria-label="+">+</button></div></div><div class="vk-row" id="vk-dfrac" style="margin-bottom:8px"><button class="vk-chip" data-q="0.25">−¼</button><button class="vk-chip" data-q="0.5">−½</button><button class="vk-chip" data-q="1">−1</button><button class="vk-chip" data-a="dreset">' + T('reset') + '</button></div><div class="vk-row"><b id="vk-damt" style="font:700 15px \'JetBrains Mono\',monospace"></b><span id="vk-dunit" style="font:700 13px \'JetBrains Mono\',monospace;color:var(--text-dim)"></span><button class="vk-chip" id="vk-dall" data-a="dall">' + T('all') + '</button></div>' +
       '<label class="vk-chk" id="vk-dshopw" hidden><input type="checkbox" id="vk-dshop" checked> ' + T('tolist') + '</label>' +
       '<div class="vk-info" id="vk-dinfo"></div>' +
     '</div>' +
@@ -10109,16 +10122,19 @@ function drawOut(){
   var items = frz().filter(function(i){ return !v || i.name.toLowerCase().indexOf(v) > -1 || (i.name_fr || '').toLowerCase().indexOf(v) > -1; })
     .sort(function(a, b){ return a.name.localeCompare(b.name, 'nl'); });
   $('vk-dlist').innerHTML = items.map(function(i){
-    return '<button class="vk-pick' + (S.sel === i ? ' on' : '') + '" data-p="' + esc(i.id) + '"><span>' + esc(i.name) + '</span><span style="font:700 13px \'JetBrains Mono\',monospace;color:var(--text-dim)">×' + i.quantity + ' ' + esc(i.unit || '') + '</span><small>' + esc(i.name_fr || '') + (i.freezeDate && i.freezeDate !== 'unknown' ? (i.name_fr ? ' · ' : '') + fmt(i.freezeDate) : '') + '</small></button>';
+    return '<button class="vk-pick' + (S.sel === i ? ' on' : '') + '" data-p="' + esc(i.id) + '"><span>' + esc(i.name) + '</span><span style="font:700 13px \'JetBrains Mono\',monospace;color:var(--text-dim)">×' + qf(i.quantity) + ' ' + esc(i.unit || '') + '</span><small>' + esc(i.name_fr || '') + (i.freezeDate && i.freezeDate !== 'unknown' ? (i.name_fr ? ' · ' : '') + fmt(i.freezeDate) : '') + '</small></button>';
   }).join('') || '<p class="vk-note">' + (v ? T('nores') : T('empty')) + '</p>';
 }
 function step(it){ return it && it.unit === 'Gr' ? 100 : 1; }
 function panel(){
   var it = S.sel; if (!it) return;
+  var fr = fracUnit(it.unit);
   $('vk-panel').hidden = false; $('vk-dname').textContent = it.name + (it.name_fr ? ' · ' + it.name_fr : '');
-  $('vk-dunit').textContent = (it.unit || '') + ' (' + it.quantity + ')'; $('vk-dqty').textContent = S.dq; $('vk-dgo').disabled = false;
+  $('vk-dstep').hidden = fr; $('vk-dfrac').hidden = !fr;
+  $('vk-dunit').textContent = (it.unit || '') + ' (' + qf(it.quantity) + ')'; $('vk-dqty').textContent = qf(S.dq);
+  $('vk-damt').textContent = fr ? T('amt') + ': ' + qf(S.dq) : ''; $('vk-dgo').disabled = !(S.dq > 0);
   var all = S.dq >= it.quantity; $('vk-dshopw').hidden = !all; $('vk-dall').classList.toggle('on', all);
-  $('vk-dinfo').textContent = all ? T('none', { n:it.name.toLowerCase() }) : T('left', { q:it.quantity - S.dq, u:it.unit || '', n:it.name.toLowerCase() });
+  $('vk-dinfo').textContent = all ? T('none', { n:it.name.toLowerCase() }) : T('left', { q:qf(it.quantity - S.dq), u:it.unit || '', n:it.name.toLowerCase() });
 }
 async function takeOut(){
   var it = S.sel; if (!it || editor()) return;
@@ -10130,7 +10146,7 @@ async function takeOut(){
   try { markSyncDirty(); } catch(x) {}
   if (shop && window.shopAddExternal) { try { window.shopAddExternal(it.name, r, it.unit || '', it.name_fr || frOf(it.name)); } catch(x) {} }
   S.act = { type:'out', it:it, r:r, deleted:deleted, shop:!!(shop && window.shopAddExternal) }; S.last = null;
-  S.msg = T('outmsg', { q:r, u:it.unit || '', n:it.name }) + (shop ? T('onlist') : '');
+  S.msg = T('outmsg', { q:qf(r), u:it.unit || '', n:it.name }) + (shop ? T('onlist') : '');
   try { render(); } catch(x) {}
   go('list');
 }
@@ -10160,7 +10176,7 @@ function listView(){
     var lim = 0; try { lim = frzLimitDays(i); } catch(x) { lim = 180; }
     var soon = days === null || (lim !== Infinity && days >= lim * 0.8);
     var acts = (!ed && isNew(i)) ? '<span class="vk-acts"><button data-e="' + esc(i.id) + '">' + T('chg') + '</button><button data-d="' + esc(i.id) + '">🗑</button></span>' : '<span></span>';
-    return '<div class="vk-item' + (S.last === i ? ' new' : '') + '"><b>' + esc(i.name) + '</b><span class="q">×' + i.quantity + ' ' + esc(i.unit || '') + '</span>' +
+    return '<div class="vk-item' + (S.last === i ? ' new' : '') + '"><b>' + esc(i.name) + '</b><span class="q">×' + qf(i.quantity) + ' ' + esc(i.unit || '') + '</span>' +
       '<small>' + esc(i.name_fr ? i.name_fr + ' · ' : '') + (days === null ? '—' : fmt(i.freezeDate) + ' (' + days + ' d)') + '</small>' + acts + (soon ? '<span class="vk-tl">' + T('soon') + '</span>' : '') + '</div>';
   }).join('') +
   '<button class="vk-ghost" data-a="menu">' + T('menu') + '</button>' +
@@ -10179,8 +10195,10 @@ function click(ev){
   var t = ev.target.closest('button, label, input'); if (!t || t.tagName === 'INPUT') return;
   var a = t.getAttribute('data-a');
   if (t.dataset.u) { S.unit = t.dataset.u; drawUnits(); return; }
+  if (t.dataset.f) { var w = Math.floor(S.qty), nf = parseFloat(t.dataset.f); if (w + nf > 0) { S.qty = w + nf; drawQty(); } return; }
+  if (t.dataset.q) { if (S.sel) { S.dq = Math.min(S.sel.quantity, S.dq + parseFloat(t.dataset.q)); panel(); } return; }
   if (t.dataset.s) { $('vk-name').value = t.dataset.s; S.frEdited = false; fillFromFreezer(t.dataset.s); upd(); return; }
-  if (t.dataset.p) { S.sel = frz().filter(function(i){ return i.id === t.dataset.p; })[0]; S.dq = Math.min(step(S.sel), S.sel.quantity); drawOut(); panel(); return; }
+  if (t.dataset.p) { S.sel = frz().filter(function(i){ return i.id === t.dataset.p; })[0]; S.dq = fracUnit(S.sel.unit) ? 0 : Math.min(step(S.sel), S.sel.quantity); drawOut(); panel(); return; }
   if (t.dataset.e) { S.edit = state.stockItems.filter(function(i){ return i.id === t.dataset.e; })[0]; S.msg = ''; go('add'); return; }
   if (t.dataset.d) {
     if (t.className.indexOf('sure') < 0) { t.classList.add('sure'); t.textContent = T('sure'); setTimeout(function(){ t.classList.remove('sure'); t.textContent = '🗑'; }, 2500); return; }
@@ -10192,17 +10210,18 @@ function click(ev){
     case 'out': if (!editor()) { S.msg = ''; go('out'); } break;
     case 'list': S.msg = ''; S.act = null; S.last = null; go('list'); break;
     case 'menu': go('menu'); break;
-    case 'minus': S.qty = Math.max(1, S.qty - (S.unit === 'Gr' ? 100 : 1)); $('vk-qty').textContent = S.qty; break;
-    case 'plus': S.qty += (S.unit === 'Gr' ? 100 : 1); $('vk-qty').textContent = S.qty; break;
+    case 'minus': { var dn = S.unit === 'Gr' ? 100 : 1, nq = S.qty - dn; if (nq >= (fracUnit(S.unit) ? 0.25 : 1)) { S.qty = nq; drawQty(); } break; }
+    case 'plus': S.qty += (S.unit === 'Gr' ? 100 : 1); drawQty(); break;
     case 'today': $('vk-date').value = today(); upd(); break;
     case 'yday': $('vk-date').value = isoLocal(Date.now() - DAY); upd(); break;
     case 'save': saveItem(false); break;
     case 'again': saveItem(true); break;
     case 'edit': if (S.act && S.act.type === 'add') { S.edit = S.act.it; go('add'); } break;
     case 'undoout': undoOut(); break;
-    case 'dminus': if (S.sel) { S.dq = Math.max(1, S.dq - step(S.sel)); panel(); } break;
+    case 'dminus': if (S.sel) { S.dq = Math.max(step(S.sel), S.dq - step(S.sel)); panel(); } break;
     case 'dplus': if (S.sel) { S.dq = Math.min(S.sel.quantity, S.dq + step(S.sel)); panel(); } break;
     case 'dall': if (S.sel) { S.dq = S.sel.quantity; panel(); } break;
+    case 'dreset': if (S.sel) { S.dq = 0; panel(); } break;
     case 'dgo': takeOut(); break;
     case 'ha': sendHa(); break;
   }
@@ -10234,6 +10253,20 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 window.vkOpen = open; window.vkClose = close; window.vkHomeUpdate = home;
 })();
+
+// ---- 1.4.8: aantallen in kwarten tonen/lezen ----
+function fmtQty(n){
+  n = Number(n); if (!isFinite(n)) return '0';
+  var q = Math.round(n * 4) / 4;
+  if (Math.abs(q - n) > 0.001) return String(Math.round(n * 100) / 100).replace('.', ',');
+  var w = Math.floor(q), r = q - w, sym = { 0:'', 0.25:'¼', 0.5:'½', 0.75:'¾' }[r];
+  return w ? String(w) + sym : (sym || '0');
+}
+function parseQty(v){
+  var n = parseFloat(String(v == null ? '' : v).replace(',', '.'));
+  if (!isFinite(n) || n < 0) return NaN;
+  return Math.round(n * 4) / 4;
+}
 
 window.openShoppingList = function(){ shopOpen(); };
 (function(){ var _sl = setLang; window.setLang = function(l){ _sl(l); try { shopHomeUpdate(); shopRender(); } catch(e) {} }; })();
