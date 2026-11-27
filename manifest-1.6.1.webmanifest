@@ -1,0 +1,32 @@
+{
+  "id": "garage-bavaylei-1.6.1",
+  "name": "Garage Bavaylei 1.6.1",
+  "short_name": "Garage 1.6.1",
+  "description": "Garage- en voorraadbeheer",
+  "start_url": "./index.html?v=1.6.1&installed=1",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1c1f24",
+  "theme_color": "#1c1f24",
+  "icons": [
+    {
+      "src": "icon-192.png?v=1.6.1",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png?v=1.6.1",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png?v=1.6.1",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

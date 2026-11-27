@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.6.0">
-<title>Garage Bavaylei 1.6.0</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.6.1">
+<title>Garage Bavaylei 1.6.1</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.6.0.webmanifest">
+<link rel="manifest" href="manifest-1.6.1.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.6.0';
+  const APP_CODE_VERSION = '1.6.1';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1544,7 +1544,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.6.0</span>
+      <span class="app-version">versie: 1.6.1</span>
     </div>
   </div>
   <div class="top-controls">
@@ -8447,7 +8447,7 @@ function updateEditorBanner() {
   if (countEl) {
     countEl.textContent = n > 0
       ? `${n} ${nl?'nog niet verstuurd':'pas encore envoyé(s)'}`
-      : (nl?'Editor modus — PC · v1.6.0':'Mode Éditeur — PC · v1.6.0');
+      : (nl?'Editor modus — PC · v1.6.1':'Mode Éditeur — PC · v1.6.1');
     countEl.style.color = n > 0 ? '#f0b429' : '#aaa';
   }
   if (pushBtn) pushBtn.style.display = n > 0 ? 'block' : 'none';
@@ -8470,7 +8470,7 @@ function initEditorMode() {
     banner.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="color:#f0b429;">💻</span>
-        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.6.0':'Mode Éditeur — PC · v1.6.0'}</span>
+        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.6.1':'Mode Éditeur — PC · v1.6.1'}</span>
       </div>
       <div style="display:flex;gap:8px;">
         <button onclick="editorSafetyModal()" id="editor-safe-btn" style="
@@ -9009,18 +9009,55 @@ const HA_URL_KEY = 'ha_webhook_url';
 const HA_SENT_KEY = 'ha_last_sent';
 const HA_URL_KEY_FRZ = 'ha_webhook_url_vriezer';
 const HA_SENT_KEY_FRZ = 'ha_last_sent_vriezer';
+
+const HA_MEM = {};
+const HA_MEM_DB = 'garage_settings_v1';
+function haMemOpen() {
+  return new Promise((res, rej) => {
+    try {
+      const r = indexedDB.open(HA_MEM_DB, 1);
+      r.onupgradeneeded = () => { r.result.createObjectStore('kv', { keyPath: 'k' }); };
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    } catch (e) { rej(e); }
+  });
+}
+async function haMemLoad() {
+  try {
+    const d = await haMemOpen();
+    await new Promise(res => {
+      const q = d.transaction('kv').objectStore('kv').getAll();
+      q.onsuccess = () => { (q.result || []).forEach(o => { HA_MEM[o.k] = o.v; }); res(); };
+      q.onerror = () => res();
+    });
+    d.close();
+  } catch (e) {}
+  try { haUpdateUi(); } catch (e) {}
+}
+async function haMemSave(k, v) {
+  try {
+    const d = await haMemOpen();
+    await new Promise(res => { const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put({ k: k, v: v }); t.oncomplete = res; t.onerror = res; t.onabort = res; });
+    d.close();
+  } catch (e) {}
+}
 const HA_URL_KEY_KK = 'ha_webhook_url_koelkast';
 const HA_SENT_KEY_KK = 'ha_last_sent_koelkast';
 function haKeyUrl(kind) { return kind === 'frz' ? HA_URL_KEY_FRZ : (kind === 'kk' ? HA_URL_KEY_KK : HA_URL_KEY); }
 function haKeySent(kind) { return kind === 'frz' ? HA_SENT_KEY_FRZ : (kind === 'kk' ? HA_SENT_KEY_KK : HA_SENT_KEY); }
 function haIdSuffix(kind) { return kind === 'frz' ? '-frz' : (kind === 'kk' ? '-kk' : ''); }
-function haGetUrl(kind) { try { return localStorage.getItem(haKeyUrl(kind)) || ''; } catch(e) { return ''; } }
+function haGetUrl(kind) { const k = haKeyUrl(kind); if (HA_MEM[k]) return HA_MEM[k]; try { return localStorage.getItem(k) || ''; } catch(e) { return ''; } }
 function haSaveUrl(kind) {
   const el = document.getElementById('ha-url-input' + haIdSuffix(kind));
   const v = el ? el.value.trim() : '';
-  try { localStorage.setItem(haKeyUrl(kind), v); } catch(e) {}
+  const key = haKeyUrl(kind);
+  let lsOk = false, err = '';
+  try { localStorage.setItem(key, v); lsOk = (localStorage.getItem(key) || '') === v; } catch(e) { err = String((e && e.name) || e); }
+  HA_MEM[key] = v;
+  haMemSave(key, v);
   haUpdateUi();
-  toast(currentLang==='fr' ? '✓ Adresse enregistrée' : '✓ Adres opgeslagen');
+  if (lsOk) toast(currentLang==='fr' ? '✓ Adresse enregistrée' : '✓ Adres opgeslagen');
+  else toast((currentLang==='fr' ? '✓ Enregistrée (emplacement de secours) · navigateur : ' : '✓ Opgeslagen (reserveplek) · browser weigert: ') + (err || 'onbekend'));
 }
 function haUpdateUi() {
   const nl = currentLang !== 'fr';
@@ -9698,6 +9735,7 @@ async function confirmDashboardAdjust(id, delta) {
 
 
 
+haMemLoad();
 
 // ============================================================================
 // BOODSCHAPPEN (1.4.0) — gedeelde boodschappenlijst per winkel, Frans bericht voor Angela
