@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.6.1">
-<title>Garage Bavaylei 1.6.1</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.6.2">
+<title>Garage Bavaylei 1.6.2</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.6.1.webmanifest">
+<link rel="manifest" href="manifest-1.6.2.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.6.1';
+  const APP_CODE_VERSION = '1.6.2';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1544,7 +1544,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.6.1</span>
+      <span class="app-version">versie: 1.6.2</span>
     </div>
   </div>
   <div class="top-controls">
@@ -8447,7 +8447,7 @@ function updateEditorBanner() {
   if (countEl) {
     countEl.textContent = n > 0
       ? `${n} ${nl?'nog niet verstuurd':'pas encore envoyé(s)'}`
-      : (nl?'Editor modus — PC · v1.6.1':'Mode Éditeur — PC · v1.6.1');
+      : (nl?'Editor modus — PC · v1.6.2':'Mode Éditeur — PC · v1.6.2');
     countEl.style.color = n > 0 ? '#f0b429' : '#aaa';
   }
   if (pushBtn) pushBtn.style.display = n > 0 ? 'block' : 'none';
@@ -8470,7 +8470,7 @@ function initEditorMode() {
     banner.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="color:#f0b429;">💻</span>
-        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.6.1':'Mode Éditeur — PC · v1.6.1'}</span>
+        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.6.2':'Mode Éditeur — PC · v1.6.2'}</span>
       </div>
       <div style="display:flex;gap:8px;">
         <button onclick="editorSafetyModal()" id="editor-safe-btn" style="
@@ -10544,7 +10544,7 @@ function hasGr(u){ return u === 'Pot' || u === 'Pak'; }
 function qf(n){ return fmtQty(n); }
 var X = {
  nl:{ttl:'Koelkast',n:'artikels',in_:'➕ Erin',in_s:'Je zet iets in de koelkast',out:'➖ Eruit',out_s:'Je haalt iets uit de koelkast',list:'📋 Bekijk de lijst',
-  newt:'Nieuw in koelkast',edt:'Wijzig artikel',what:'Wat zet je erin?',ph:'bv. Hesp',frl:'Franse naam',frph:'wordt vanzelf ingevuld',auto:'✓ automatisch',qty:'Aantal',unit:'Eenheid',gramq:'Hoeveel gram per %u?',
+  newt:'Nieuw in koelkast',edt:'Wijzig artikel',what:'Wat zet je erin?',ph:'bv. Hesp',frl:'Franse naam',frph:'wordt vanzelf ingevuld',auto:'✓ automatisch',qty:'Aantal',unit:'Eenheid',newunit:'+ Nieuwe eenheid…',newph:'bv. Blik',addu:'Voeg toe',unitdup:'Die eenheid bestaat al',gramq:'Hoeveel gram per %u?',
   datel:'Welke datum staat er op het pak?',tht:'Ten minste houdbaar tot',tgt:'Te gebruiken tot',p2:'+2 d',p3:'+3 d',p7:'+1 week',noDate:'Wis',
   save:'Bewaar',again:'Bewaar + nog één',savech:'Bewaar wijziging',typ:'Typ een naam. De app zoekt dan zelf de Franse naam.',
   i_none:'Geen datum ingevuld: de app waarschuwt voor dit artikel niet.',
@@ -10562,7 +10562,7 @@ var X = {
   listen:'🎤 Luisteren… zeg wat je erin zet',listenfr:'🎤 Zeg nu de Franse naam…',nosr:'Spraak werkt hier niet. Typ de naam.',nothing:'🎤 Niets gehoord',denied:'🎤 Microfoon geblokkeerd. Sta hem toe in de browser.',tapfr:'Tik op 🎤 en zeg de Franse naam',mic:'Spreek',
   edonly:'Op de laptop kun je artikels toevoegen, maar de hoeveelheid niet wijzigen.',empty:'De koelkast is leeg.',van:'van',gr:'gr'},
  fr:{ttl:'Réfrigérateur',n:'articles',in_:'➕ Entrée',in_s:'Vous mettez quelque chose au réfrigérateur',out:'➖ Sortie',out_s:'Vous sortez quelque chose du réfrigérateur',list:'📋 Voir la liste',
-  newt:'Nouveau au réfrigérateur',edt:"Modifier l'article",what:'Que mettez-vous ?',ph:'p.ex. jambon',frl:'Nom français',frph:'rempli automatiquement',auto:'✓ automatique',qty:'Quantité',unit:'Unité',gramq:'Combien de grammes par %u ?',
+  newt:'Nouveau au réfrigérateur',edt:"Modifier l'article",what:'Que mettez-vous ?',ph:'p.ex. jambon',frl:'Nom français',frph:'rempli automatiquement',auto:'✓ automatique',qty:'Quantité',unit:'Unité',newunit:'+ Nouvelle unité…',newph:'p.ex. boîte',addu:'Ajouter',unitdup:'Cette unité existe déjà',gramq:'Combien de grammes par %u ?',
   datel:"Quelle date figure sur l'emballage ?",tht:'À consommer de préférence avant',tgt:"À consommer jusqu'au",p2:'+2 j',p3:'+3 j',p7:'+1 sem.',noDate:'Effacer',
   save:'Enregistrer',again:'Enregistrer + un autre',savech:'Enregistrer',typ:'Tapez un nom. Le nom français est cherché automatiquement.',
   i_none:"Pas de date : l'appli ne prévient pas pour cet article.",
@@ -10635,6 +10635,7 @@ function addView(){
     '<div class="kk-row"><div class="kk-step"><button data-a="minus" aria-label="−">−</button><output id="kk-qty">1</output><button data-a="plus" aria-label="+">+</button></div><div class="kk-chips" id="kk-frac"></div></div>' +
     '<div class="kk-lab">' + T('unit') + '</div>' +
     '<select class="kk-inp kk-sel" id="kk-unit" aria-label="' + esc(T('unit')) + '"></select>' +
+    '<div class="kk-grrow" id="kk-newrow" hidden><input class="kk-inp" id="kk-newunit" placeholder="' + esc(T('newph')) + '" autocomplete="off" style="flex:1;width:auto"><button class="kk-btn p" data-a="addunit" style="flex:none;padding:12px 16px">' + T('addu') + '</button></div>' +
     '<div class="kk-grrow" id="kk-grrow" hidden><label id="kk-grlab" for="kk-gr"></label><input class="kk-inp" id="kk-gr" type="number" inputmode="numeric" min="1" step="1" placeholder="500"><span>' + T('gr') + '</span></div>' +
     '<div class="kk-lab">' + T('datel') + '</div>' +
     '<div class="kk-seg" id="kk-kind"><button data-k="THT">' + T('tht') + '</button><button data-k="TGT">' + T('tgt') + '</button></div>' +
@@ -10647,7 +10648,7 @@ function addView(){
   $('kk-name').oninput = function(){ S.frEdited = false; upd(); };
   $('kk-fr').oninput = function(){ S.frEdited = true; $('kk-auto').textContent = ''; };
   $('kk-date').onchange = upd;
-  $('kk-unit').onchange = function(){ S.unit = this.value; drawUnits(); };
+  $('kk-unit').onchange = function(){ if (this.value === '__new__') { $('kk-newrow').hidden = false; this.value = S.unit; try { $('kk-newunit').focus(); } catch(x) {} return; } $('kk-newrow').hidden = true; S.unit = this.value; drawUnits(); };
   $('kk-gr').oninput = function(){ S.gr = this.value.replace(/[^0-9]/g, ''); };
   if (!e) setTimeout(function(){ try { $('kk-name').focus({ preventScroll:true }); } catch(x) {} }, 50);
 }
@@ -10704,8 +10705,10 @@ function drawQty(){
 function unitLabel(u){ return hasGr(u) ? u + ' ' + T('van') + ' … ' + T('gr') : u; }
 function drawUnits(){
   drawQty();
-  var list = UNITS.slice(); if (S.unit && list.indexOf(S.unit) < 0) list.push(S.unit);
-  $('kk-unit').innerHTML = list.map(function(u){ return '<option value="' + esc(u) + '"' + (u === S.unit ? ' selected' : '') + '>' + esc(unitLabel(u)) + '</option>'; }).join('');
+  var list = UNITS.slice();
+  (state.units || []).forEach(function(u){ if (u.kk && u.label && list.indexOf(u.label) < 0) list.push(u.label); });
+  if (S.unit && list.indexOf(S.unit) < 0) list.push(S.unit);
+  $('kk-unit').innerHTML = list.map(function(u){ return '<option value="' + esc(u) + '"' + (u === S.unit ? ' selected' : '') + '>' + esc(unitLabel(u)) + '</option>'; }).join('') + '<option value="__new__">' + esc(T('newunit')) + '</option>';
   var g = hasGr(S.unit); $('kk-grrow').hidden = !g;
   if (g) { $('kk-grlab').textContent = T('gramq', { u:S.unit.toLowerCase() }); $('kk-gr').value = S.gr || ''; }
 }
@@ -10732,6 +10735,22 @@ function upd(){
 function fillFromFridge(name){
   var ex = state.stockItems.filter(function(s){ return s.storageLocation === 'fridge' && s.name.toLowerCase() === name.toLowerCase(); })[0];
   if (ex && ex.unit) { S.unit = ex.unit; S.gr = ex.unitGr || ''; drawUnits(); }
+}
+async function addUnit(){
+  var inp = $('kk-newunit'), label = (inp.value || '').trim().replace(/\s+/g, ' ');
+  if (!label) return;
+  var low = label.toLowerCase();
+  var have = UNITS.concat((state.units || []).map(function(u){ return u.label; })).filter(function(l){ return l && l.toLowerCase() === low; })[0];
+  if (have) {
+    var ex = (state.units || []).filter(function(u){ return u.label === have; })[0];
+    if (ex && !ex.kk) { ex.kk = true; try { await dbPut('units', ex); } catch(x) {} }
+    S.unit = have; inp.value = ''; $('kk-newrow').hidden = true; drawUnits(); return;
+  }
+  var unit = { id: uid(), label: label, order: (state.units || []).length + 1, createdAt: Date.now(), kk: true };
+  await dbPut('units', unit); state.units.push(unit);
+  try { markSyncDirty(); } catch(x) {}
+  S.unit = label; inp.value = ''; $('kk-newrow').hidden = true; drawUnits();
+  toast('✓ ' + label);
 }
 async function saveItem(more){
   var name = $('kk-name').value.trim(); if (!name) return;
@@ -10887,6 +10906,7 @@ function click(ev){
     case 'plus': S.qty += (S.unit === 'Gr' ? 100 : 1); drawQty(); break;
     case 'micnl': micNl(); break;
     case 'micfr': micFr(false); break;
+    case 'addunit': addUnit(); break;
     case 'clrdate': $('kk-date').value = ''; upd(); break;
     case 'save': saveItem(false); break;
     case 'again': saveItem(true); break;
