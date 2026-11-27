@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.6">
-<title>Garage Bavaylei 1.4.6</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.7">
+<title>Garage Bavaylei 1.4.7</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.4.6.webmanifest">
+<link rel="manifest" href="manifest-1.4.7.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.4.6';
+  const APP_CODE_VERSION = '1.4.7';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1388,6 +1388,62 @@
   .bd-proc{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
   .bd-proc input[type=date]{border:1.5px solid #b5d4ea;background:#e6f2fa;color:#2a6f9e;border-radius:9px;padding:6px 8px;font:700 12px 'JetBrains Mono',monospace}
   .bd-home-n{font:800 26px 'Archivo',sans-serif;color:var(--accent);margin-right:6px}
+
+  /* ═══ VRIESKAST-TAG (1.4.7) ═══ */
+  #vk-screen{position:fixed;inset:0;z-index:250;background:var(--bg);display:none;flex-direction:column;overscroll-behavior:contain}
+  #vk-screen.open{display:flex}
+  #vk-screen *{box-sizing:border-box}
+  .vk-top{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);padding-top:max(10px,env(safe-area-inset-top,0px))}
+  .vk-back{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);font-size:24px;line-height:1;color:var(--text);flex:none}
+  .vk-ttl{font-weight:900;font-size:19px;letter-spacing:-.01em}
+  .vk-pill{margin-left:auto;display:inline-flex;gap:6px;align-items:center;background:#e6f2fa;color:#2a6f9e;border:1px solid #b5d4ea;border-radius:20px;padding:5px 10px;font:700 12px 'JetBrains Mono',monospace;white-space:nowrap}
+  .vk-main{flex:1;overflow-y:auto;padding:12px 14px 24px;-webkit-overflow-scrolling:touch}
+  .vk-lab{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);margin:14px 2px 6px}
+  .vk-inp{width:100%;border:2px solid var(--border-strong);background:var(--surface);color:var(--text);border-radius:13px;padding:13px;font-weight:600;font-size:16px;font-family:inherit}
+  .vk-inp:focus{outline:none;border-color:var(--accent)}
+  .vk-inp.fr{border-style:dashed;font-size:14px;padding:10px 12px}
+  .vk-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .vk-chips{display:flex;gap:6px;flex-wrap:wrap}
+  .vk-chip{border:1px solid var(--border-strong);background:var(--surface);color:var(--text-dim);border-radius:18px;padding:7px 12px;font-weight:800;font-size:13px;font-family:inherit}
+  .vk-chip.on{background:#2a6f9e;border-color:#2a6f9e;color:#fff}
+  .vk-chip.sug{background:var(--surface-2)}
+  .vk-step{display:flex;align-items:center;border:1px solid var(--border-strong);border-radius:13px;background:var(--surface)}
+  .vk-step button{width:44px;height:46px;border:0;background:transparent;font-size:20px;font-weight:800;color:var(--text-dim)}
+  .vk-step output{min-width:48px;text-align:center;font:700 16px 'JetBrains Mono',monospace}
+  .vk-info{margin-top:12px;border-radius:13px;padding:10px 12px;font-size:13px;background:#e6f2fa;color:#2a6f9e;border:1px solid #b5d4ea}
+  .vk-info.late{background:var(--warning-bg);color:var(--warning);border-color:#ecc98a}
+  .vk-auto{font:700 10px 'JetBrains Mono',monospace;color:var(--success);margin-left:6px}
+  .vk-bar{display:flex;gap:8px;margin-top:18px}
+  .vk-btn{flex:1;border:0;border-radius:14px;padding:15px 10px;font-weight:800;font-size:15px;font-family:inherit}
+  .vk-btn.p{background:var(--accent);color:#fff;flex:1.2}
+  .vk-btn.g{background:var(--surface-2);color:var(--text);border:1px solid var(--border)}
+  .vk-btn[disabled]{opacity:.45}
+  .vk-menu{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:18px;padding:18px 16px;margin-bottom:12px;font-weight:900;font-size:21px;font-family:inherit}
+  .vk-menu small{font-weight:500;font-size:13px;color:var(--text-dim)}
+  .vk-menu.in{background:var(--success-bg);border-color:var(--success);color:var(--success)}
+  .vk-menu.out{background:var(--warning-bg);border-color:var(--warning);color:var(--warning)}
+  .vk-menu.in small,.vk-menu.out small{color:inherit;opacity:.85}
+  .vk-menu.plain{font-size:15px;padding:13px 16px;background:transparent}
+  .vk-menu[disabled]{opacity:.5}
+  .vk-ok{display:flex;gap:10px;align-items:center;background:var(--success-bg);color:var(--success);border-radius:14px;padding:12px 14px;font-weight:800;margin-bottom:6px}
+  .vk-ok button{margin-left:auto;border:0;border-radius:10px;background:var(--surface);color:var(--text);font-weight:800;font-size:12.5px;padding:8px 10px;white-space:nowrap;font-family:inherit}
+  .vk-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:11px 12px;border:1px solid var(--border);border-radius:14px;background:var(--surface);margin-bottom:8px}
+  .vk-item.new{border-color:var(--success);box-shadow:0 0 0 3px var(--success-bg)}
+  .vk-item b{font-weight:800;overflow-wrap:anywhere}
+  .vk-item small{color:var(--text-dim);font:500 12px 'JetBrains Mono',monospace}
+  .vk-item .q{font:700 13px 'JetBrains Mono',monospace;color:var(--text-dim);text-align:right}
+  .vk-tl{grid-column:1/-1;justify-self:start;font:700 10.5px 'JetBrains Mono',monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--warning);background:var(--warning-bg);border-radius:6px;padding:3px 7px;margin-top:4px}
+  .vk-acts{display:flex;gap:6px;justify-self:end}
+  .vk-acts button{border:1px solid var(--border);background:var(--surface-2);color:var(--text-dim);border-radius:9px;min-width:36px;height:32px;font-weight:700;font-size:12px;padding:0 8px;font-family:inherit}
+  .vk-acts button.sure{background:#b3261e;border-color:#b3261e;color:#fff}
+  .vk-pick{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;width:100%;text-align:left;padding:11px 12px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);margin-bottom:8px;font-weight:700;font-size:15px;font-family:inherit}
+  .vk-pick.on{border-color:var(--accent);box-shadow:0 0 0 3px rgba(224,90,43,.2)}
+  .vk-pick small{color:var(--text-dim);font:500 12px 'JetBrains Mono',monospace}
+  .vk-panel{margin-top:10px;border:1px solid var(--accent);border-radius:16px;padding:12px;background:var(--surface)}
+  .vk-chk{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:13.5px;color:var(--text-dim)}
+  .vk-note{margin-top:12px;font-size:13px;color:var(--text-dim);text-align:center}
+  .vk-ghost{width:100%;margin-top:8px;border:1px dashed var(--border-strong);background:transparent;color:var(--text-dim);border-radius:12px;padding:11px;font-weight:700;font-size:13.5px;font-family:inherit}
+  .vk-home-n{font:800 26px 'Archivo',sans-serif;color:#2a6f9e;margin-right:6px}
 </style>
 </head>
 <body>
@@ -1401,7 +1457,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.4.6</span>
+      <span class="app-version">versie: 1.4.7</span>
     </div>
   </div>
   <div class="top-controls">
@@ -1425,6 +1481,15 @@
     <div class="home-title" id="home-title">Wat wil je<br>vandaag doen?</div>
 
     <div class="home-choice">
+      <div class="choice-card" onclick="vkOpen()" id="home-vk-card">
+        <div class="choice-icon teal">❄️</div>
+        <div class="choice-text">
+          <div class="choice-title" id="lbl-vk-home">Vrieskast</div>
+          <div class="choice-sub" id="home-vk-sub">Erin / eruit</div>
+        </div>
+        <div class="vk-home-n" id="home-vk-n">0</div>
+        <div class="choice-arrow">›</div>
+      </div>
       <div class="choice-card accent" onclick="shopOpen()" id="home-shop-card">
         <div class="choice-icon orange">🛒</div>
         <div class="choice-text">
@@ -2314,6 +2379,12 @@
   <div class="bd-veil" id="bd-veil" hidden><div class="bd-sheet" id="bd-sheet" role="dialog" aria-modal="true"></div></div>
 </div>
 
+<!-- ─── VRIESKAST-TAG (1.4.7) ─────────────────────────────── -->
+<div id="vk-screen" role="dialog" aria-label="Vrieskast">
+  <div class="vk-top"><button class="vk-back" id="vk-back" aria-label="Terug">‹</button><div class="vk-ttl" id="vk-ttl">❄️ Vrieskast</div><div id="vk-pill" style="margin-left:auto"></div></div>
+  <div class="vk-main" id="vk-main"></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2797,6 +2868,7 @@ function setMode(mode) {
 // ── RENDER HOME STATS ──────────────────────────────────────
 function render() {
   try { shopHomeUpdate(); } catch (e) {}
+  try { vkHomeUpdate(); } catch (e) {}
   const low = getLowStockItems();
   const expiring = getExpiringItems();
   const setEl = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
@@ -6820,6 +6892,7 @@ function handleScannedUrl(text) {
 window.addEventListener('hashchange', handleHashChange);
 function handleHashChange() {
   if (/boodschappen/i.test(location.hash)) { shopOpen(); return; }
+  if (/vrieskast/i.test(location.hash)) { vkOpen(); return; }
   const m = location.hash.match(/box=([a-z0-9]+)/i);
   if (m) {
     const box = state.boxes.find(b => b.id === m[1]);
@@ -8260,7 +8333,7 @@ function updateEditorBanner() {
   if (countEl) {
     countEl.textContent = n > 0
       ? `${n} ${nl?'nog niet verstuurd':'pas encore envoyé(s)'}`
-      : (nl?'Editor modus — PC · v1.4.6':'Mode Éditeur — PC · v1.4.6');
+      : (nl?'Editor modus — PC · v1.4.7':'Mode Éditeur — PC · v1.4.7');
     countEl.style.color = n > 0 ? '#f0b429' : '#aaa';
   }
   if (pushBtn) pushBtn.style.display = n > 0 ? 'block' : 'none';
@@ -8283,7 +8356,7 @@ function initEditorMode() {
     banner.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="color:#f0b429;">💻</span>
-        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.4.6':'Mode Éditeur — PC · v1.4.6'}</span>
+        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.4.7':'Mode Éditeur — PC · v1.4.7'}</span>
       </div>
       <div style="display:flex;gap:8px;">
         <button onclick="editorSafetyModal()" id="editor-safe-btn" style="
@@ -9503,7 +9576,7 @@ var _n = 0; function nid(){ _n++; return 'b' + Date.now().toString(36) + _n; }
 function $(id){ return document.getElementById(id); }
 
 /* ---- Frans woordenboekje (alleen voor de gewone dingen; de rest blijft Nederlands tot je zelf een Franse naam geeft) ---- */
-var DICT = {"melk":"lait","eieren":"œufs","ei":"œuf","brood":"pain","boterkoeken":"couques au beurre","koffie":"café","koffiefilters":"filtres à café","toiletpapier":"papier toilette","rijst":"riz","wasmiddel":"lessive","gehakt":"viande hachée","bananen":"bananes","yoghurt":"yaourt","kaas":"fromage","tomaten":"tomates","kip":"poulet","kippenboutfilet":"filet de cuisses de poulet","spinazie":"épinards","boter":"beurre","suiker":"sucre","bloem":"farine","pasta":"pâtes","water":"eau","bier":"bière","wijn":"vin","appels":"pommes","sinaasappels":"oranges","aardappelen":"pommes de terre","uien":"oignons","wortelen":"carottes","sla":"salade","komkommer":"concombre","paprika":"poivrons","champignons":"champignons","ham":"jambon","worst":"saucisse","vis":"poisson","zalm":"saumon","afwasmiddel":"liquide vaisselle","shampoo":"shampooing","tandpasta":"dentifrice","keukenrol":"essuie-tout","vuilniszakken":"sacs poubelle","thee":"thé","chocolade":"chocolat","olie":"huile","azijn":"vinaigre","room":"crème","pizza":"pizza","frieten":"frites","ijs":"glace","appelsap":"jus de pomme","sinaasappelsap":"jus d'orange"};
+var DICT = {"melk":"lait","eieren":"œufs","ei":"œuf","brood":"pain","boterkoeken":"couques au beurre","koffie":"café","koffiefilters":"filtres à café","toiletpapier":"papier toilette","rijst":"riz","wasmiddel":"lessive","gehakt":"viande hachée","bananen":"bananes","yoghurt":"yaourt","kaas":"fromage","tomaten":"tomates","kip":"poulet","kippenboutfilet":"filet de cuisses de poulet","spinazie":"épinards","boter":"beurre","suiker":"sucre","bloem":"farine","pasta":"pâtes","water":"eau","bier":"bière","wijn":"vin","appels":"pommes","sinaasappels":"oranges","aardappelen":"pommes de terre","uien":"oignons","wortelen":"carottes","sla":"salade","komkommer":"concombre","paprika":"poivrons","champignons":"champignons","ham":"jambon","worst":"saucisse","vis":"poisson","zalm":"saumon","afwasmiddel":"liquide vaisselle","shampoo":"shampooing","tandpasta":"dentifrice","keukenrol":"essuie-tout","vuilniszakken":"sacs poubelle","thee":"thé","chocolade":"chocolat","olie":"huile","azijn":"vinaigre","room":"crème","pizza":"pizza","frieten":"frites","ijs":"glace","appelsap":"jus de pomme","sinaasappelsap":"jus d'orange","boontjes":"haricots verts","gamba's":"gambas","gambas":"gambas","erwten":"petits pois","doperwten":"petits pois","prei gesneden":"poireaux émincés","prei":"poireaux","bloemkool":"chou-fleur","knolselder in blokjes":"céleri-rave en dés","knolselder":"céleri-rave","calamares ringen":"anneaux de calamars","calamares":"calamars","stoofvlees":"viande à ragoût","spek":"lard","broccoli":"brocoli","kabeljauw":"cabillaud","garnalen":"crevettes","spruitjes":"choux de Bruxelles","frambozen":"framboises","aardbeien":"fraises","mosselen":"moules","kalkoen":"dinde","biefstuk":"steak","karbonade":"côtelette","ribbetjes":"travers de porc","lasagne":"lasagnes","soep":"soupe","erwtjes":"petits pois","maïs":"maïs","mais":"maïs","courgette":"courgette","pompoen":"potiron","bessen":"fruits rouges"};
 var UNITFR = {stuk:'pce', pak:'paquet', doos:'boîte', rol:'rouleau(x)', kg:'kg', gr:'g', bokaal:'bocal', blik:'boîte', fles:'bouteille', brik:'brique', st:'pce'};
 var SHFR = {markt:'Marché', bakker:'Boulangerie', slager:'Boucherie', apotheek:'Pharmacie', andere:'Autres'};
 var SH_EMO = {lidl:'🔵', aldi:'🟦', colruyt:'🟠', delhaize:'🦁', carrefour:'🔷', markt:'🧺', bakker:'🥖', slager:'🥩', apotheek:'💊', andere:'⚪'};
@@ -9874,6 +9947,292 @@ document.addEventListener('DOMContentLoaded', function(){
   render_home();
 });
 window.shopRender = render;
+window.shopDict = DICT;
+window.shopUndoExternal = function(name, qty){ ld(); var au = autoRows().filter(function(r){ return lc(r.nl) === lc(name); })[0]; if (au && D.autoQty[au.id]) { D.autoQty[au.id] = Math.max(0, D.autoQty[au.id] - qty); if (D.autoQty[au.id] <= au.qty - 0 && D.autoQty[au.id] === 0) delete D.autoQty[au.id]; } else { var m = D.manual.filter(function(x){ return lc(x.name) === lc(name) && !x.done; })[0]; if (m) { m.qty -= qty; if (m.qty <= 0) D.manual = D.manual.filter(function(x){ return x !== m; }); } } sv(); try { render_home(); } catch(e) {} };
+window.shopAddExternal = function(name, qty, unit, fr){ ld(); addItem(name, qty, unit, '', true, fr || ''); try { render_home(); } catch(e) {} };
+})();
+
+// ============================================================================
+// VRIESKAST-TAG (1.4.7) — één NFC-tag op de vrieskast: Erin / Eruit / Lijst
+// Opent via #vrieskast. Gebruikt de gewone voorraadopslag (storageLocation 'freezer').
+// ============================================================================
+(function(){
+'use strict';
+var DAY = 86400000, UNITS = ['Zak','Kg','Gr','Stuk','Bak'];
+var X = {
+ nl:{ttl:'Vrieskast',n:'artikels',in_:'➕ Erin',in_s:'Je zet iets in de vrieskast',out:'➖ Eruit',out_s:'Je haalt iets uit de vrieskast',list:'📋 Bekijk de lijst',
+  newt:'Nieuw in vrieskast',edt:'Wijzig artikel',what:'Wat zet je erin?',ph:"bv. Gamba's",frl:'Franse naam',frph:'wordt vanzelf ingevuld',auto:'✓ automatisch',qty:'Aantal',date:'Ingevroren op',today:'Vandaag',yday:'Gisteren',
+  save:'Bewaar',again:'Bewaar + nog één',savech:'Bewaar wijziging',typ:'Typ een naam. De app zoekt dan zelf de bewaartijd en de Franse naam.',
+  keep:'Bewaartijd voor %n: <b>%m</b>. Best opeten vóór <b>%d</b>.',late:'<b>Best snel opeten.</b> %n blijft %m goed in de diepvries, en dat is al voorbij (%d).',mon:'maanden',mon1:'maand',
+  outq:'Wat haal je eruit?',search:'Zoek in de vrieskast…',howmany:'Hoeveel haal je eruit?',all:'Alles',tolist:'Zet op de boodschappenlijst',go:'Eruit halen',
+  left:'Er blijft %q %u %n over in de vrieskast.',none:'De vrieskast bevat daarna geen %n meer.',nores:'Niets gevonden.',
+  inlist:'In de vrieskast',chg:'✎ Wijzig',edit:'✎ Aanpassen',undoout:'↶ Terugzetten',sure:'Zeker?',soon:'⚠ Best snel opeten',
+  added:'%n %q %u staat in de vrieskast',changed:'%n is gewijzigd',outmsg:'%q %u %n eruit',onlist:' · op de boodschappenlijst',back:'%n is teruggezet',del:'%n verwijderd',saved:'%n bewaard',
+  menu:'‹ Terug naar het menu',ha:'🏠 Stuur vriezer naar HA',hasend:'⏳ Versturen…',hadone:'✓ Doorgestuurd naar HA',hafail:'❌ HA bereikt niet',nocfg:'⚠️ Geen HA-adres voor de vriezer ingesteld',
+  edonly:'Op de laptop kun je artikels toevoegen, maar de hoeveelheid niet wijzigen.',empty:'De vrieskast is leeg.'},
+ fr:{ttl:'Congélateur',n:'articles',in_:'➕ Entrée',in_s:'Vous mettez quelque chose au congélateur',out:'➖ Sortie',out_s:'Vous sortez quelque chose du congélateur',list:'📋 Voir la liste',
+  newt:'Nouveau au congélateur',edt:"Modifier l'article",what:'Que mettez-vous ?',ph:'p.ex. gambas',frl:'Nom français',frph:'rempli automatiquement',auto:'✓ automatique',qty:'Quantité',date:'Congelé le',today:"Aujourd'hui",yday:'Hier',
+  save:'Enregistrer',again:'Enregistrer + un autre',savech:'Enregistrer',typ:'Tapez un nom. Le temps de conservation et le nom français sont cherchés automatiquement.',
+  keep:'Conservation pour %n : <b>%m</b>. À consommer avant le <b>%d</b>.',late:'<b>À consommer rapidement.</b> %n se garde %m au congélateur, et c’est déjà dépassé (%d).',mon:'mois',mon1:'mois',
+  outq:'Que sortez-vous ?',search:'Chercher dans le congélateur…',howmany:'Combien sortez-vous ?',all:'Tout',tolist:'Mettre sur la liste de courses',go:'Sortir',
+  left:'Il reste %q %u de %n au congélateur.',none:'Il n’y aura plus de %n au congélateur.',nores:'Rien trouvé.',
+  inlist:'Au congélateur',chg:'✎ Modifier',edit:'✎ Modifier',undoout:'↶ Remettre',sure:'Sûr ?',soon:'⚠ À consommer rapidement',
+  added:'%n %q %u est au congélateur',changed:'%n est modifié',outmsg:'%q %u %n sorti',onlist:' · sur la liste de courses',back:'%n est remis',del:'%n supprimé',saved:'%n enregistré',
+  menu:'‹ Retour au menu',ha:'🏠 Envoyer à HA',hasend:'⏳ Envoi…',hadone:'✓ Envoyé à HA',hafail:'❌ HA injoignable',nocfg:'⚠️ Pas d’adresse HA pour le congélateur',
+  edonly:'Sur le portable, vous pouvez ajouter des articles mais pas changer la quantité.',empty:'Le congélateur est vide.'}
+};
+function lang(){ return (typeof currentLang !== 'undefined' && currentLang === 'fr') ? 'fr' : 'nl'; }
+function T(k, v){ var s = (X[lang()][k] != null ? X[lang()][k] : X.nl[k]) || k; if (v) Object.keys(v).forEach(function(p){ s = s.split('%' + p).join(v[p]); }); return s; }
+function $(id){ return document.getElementById(id); }
+function esc(s){ return (typeof escapeHtml === 'function') ? escapeHtml(String(s == null ? '' : s)) : String(s); }
+function isoLocal(ms){ var d = new Date(ms); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
+function today(){ return isoLocal(Date.now()); }
+function fmt(s){ return new Date(s + 'T12:00:00').toLocaleDateString(lang() === 'fr' ? 'fr-BE' : 'nl-BE', { day:'numeric', month:'numeric', year:'numeric' }); }
+function frz(){ return state.stockItems.filter(function(i){ return i.storageLocation === 'freezer' && (i.quantity || 0) > 0; }); }
+function isNew(i){ return i.createdAt && Date.now() - i.createdAt < DAY; }
+function editor(){ try { return isEditorDevice(); } catch(e) { return false; } }
+function months(name){ try { return frzMonthsOf({ name: name, name_fr: '', categoryId: findCat('cat_frozen') ? 'cat_frozen' : null }); } catch(e) { return 6; } }
+function frOf(name){
+  var n = name.toLowerCase().trim(); if (!n) return '';
+  var ex = state.stockItems.filter(function(s){ return (s.name || '').toLowerCase() === n && s.name_fr; })[0];
+  if (ex) return ex.name_fr;
+  var d = window.shopDict || {}; if (d[n]) return d[n];
+  var keys = Object.keys(d).sort(function(a, b){ return b.length - a.length; }), pad = ' ' + n + ' ';
+  for (var i = 0; i < keys.length; i++) { if (pad.indexOf(' ' + keys[i] + ' ') > -1) return d[keys[i]]; }
+  return '';
+}
+
+var S = { scene:'menu', edit:null, frEdited:false, qty:1, unit:'Zak', date:'', sel:null, dq:1, act:null, last:null };
+
+function root(){ return $('vk-main'); }
+function setTitle(t, pill){ $('vk-ttl').textContent = t; $('vk-pill').innerHTML = pill || ''; }
+function go(scene){ S.scene = scene; var f = { menu:menuView, add:addView, out:outView, list:listView }[scene]; f(); root().scrollTop = 0; }
+
+function menuView(){
+  var n = frz().length;
+  setTitle('❄️ ' + T('ttl'), '<span class="vk-pill">' + n + ' ' + T('n') + '</span>');
+  var ed = editor();
+  root().innerHTML =
+    '<button class="vk-menu in" data-a="in">' + T('in_') + '<small>' + T('in_s') + '</small></button>' +
+    '<button class="vk-menu out" data-a="out"' + (ed ? ' disabled' : '') + '>' + T('out') + '<small>' + T('out_s') + '</small></button>' +
+    '<button class="vk-menu plain" data-a="list">' + T('list') + '</button>' +
+    (ed ? '<p class="vk-note">' + T('edonly') + '</p>' : '');
+}
+
+/* ---------- erin / wijzigen ---------- */
+function addView(){
+  var e = S.edit;
+  setTitle(e ? T('edt') : T('newt'), '<span class="vk-pill">❄️ ' + T('ttl') + '</span>');
+  root().innerHTML =
+    '<div class="vk-lab">' + T('what') + '</div>' +
+    '<input class="vk-inp" id="vk-name" placeholder="' + esc(T('ph')) + '" autocomplete="off" enterkeyhint="next">' +
+    '<div class="vk-chips" id="vk-sug" style="margin-top:8px"></div>' +
+    '<div class="vk-lab">' + T('frl') + ' <span class="vk-auto" id="vk-auto"></span></div>' +
+    '<input class="vk-inp fr" id="vk-fr" placeholder="' + esc(T('frph')) + '" autocomplete="off">' +
+    '<div class="vk-lab">' + T('qty') + '</div>' +
+    '<div class="vk-row"><div class="vk-step"><button data-a="minus" aria-label="−">−</button><output id="vk-qty">1</output><button data-a="plus" aria-label="+">+</button></div><div class="vk-chips" id="vk-units"></div></div>' +
+    '<div class="vk-lab">' + T('date') + '</div>' +
+    '<div class="vk-row"><input class="vk-inp" id="vk-date" type="date" style="flex:1;min-width:140px;padding:10px 12px;font-size:15px"><div class="vk-chips"><button class="vk-chip" data-a="today">' + T('today') + '</button><button class="vk-chip" data-a="yday">' + T('yday') + '</button></div></div>' +
+    '<div class="vk-info" id="vk-info"></div>' +
+    '<div class="vk-bar">' + (e ? '' : '<button class="vk-btn g" id="vk-again" data-a="again" disabled>' + T('again') + '</button>') + '<button class="vk-btn p" id="vk-save" data-a="save" disabled>' + (e ? T('savech') : T('save')) + '</button></div>';
+  if (e) { $('vk-name').value = e.name; $('vk-fr').value = e.name_fr || ''; S.frEdited = true; S.qty = e.quantity || 1; S.unit = e.unit || 'Zak'; $('vk-date').value = (e.freezeDate && e.freezeDate !== 'unknown') ? e.freezeDate : today(); }
+  else { $('vk-name').value = ''; $('vk-fr').value = ''; S.frEdited = false; S.qty = 1; S.unit = 'Zak'; $('vk-date').value = today(); }
+  $('vk-qty').textContent = S.qty; drawUnits(); upd();
+  $('vk-name').oninput = function(){ S.frEdited = false; upd(); };
+  $('vk-fr').oninput = function(){ S.frEdited = true; $('vk-auto').textContent = ''; };
+  $('vk-date').onchange = upd;
+  if (!e) setTimeout(function(){ try { $('vk-name').focus({ preventScroll:true }); } catch(x) {} }, 50);
+}
+function drawUnits(){
+  var list = UNITS.slice(); if (S.unit && list.indexOf(S.unit) < 0) list.push(S.unit);
+  $('vk-units').innerHTML = list.map(function(u){ return '<button class="vk-chip' + (u === S.unit ? ' on' : '') + '" data-u="' + esc(u) + '">' + esc(u) + '</button>'; }).join('');
+}
+function upd(){
+  var n = $('vk-name').value.trim(), has = n.length > 0;
+  if (!S.frEdited) { var f = frOf(n); $('vk-fr').value = f; $('vk-auto').textContent = f ? T('auto') : ''; }
+  $('vk-save').disabled = !has; var ag = $('vk-again'); if (ag) ag.disabled = !has;
+  var m = months(n), d = $('vk-date').value || today();
+  var best = new Date(new Date(d + 'T12:00:00').getTime() + (m || 6) * 30 * DAY), late = best.getTime() < Date.now();
+  var ml = m + ' ' + (m === 1 ? T('mon1') : T('mon'));
+  var info = $('vk-info'); info.className = 'vk-info' + (has && late ? ' late' : '');
+  info.innerHTML = !has ? T('typ') : (late ? T('late', { n:esc(n), m:ml, d:fmt(isoLocal(best.getTime())) }) : T('keep', { n:esc(n.toLowerCase()), m:ml, d:fmt(isoLocal(best.getTime())) }));
+  // suggesties
+  var v = n.toLowerCase(), pool = {}; frz().concat(state.stockItems.filter(function(s){ return s.storageLocation === 'freezer'; })).forEach(function(s){ pool[s.name] = 1; });
+  Object.keys(window.shopDict || {}).forEach(function(k){ pool[k.charAt(0).toUpperCase() + k.slice(1)] = 1; });
+  var arr = Object.keys(pool).filter(function(p){ return v ? (p.toLowerCase().indexOf(v) > -1 && p.toLowerCase() !== v) : false; }).slice(0, 5);
+  if (!v) arr = frz().map(function(s){ return s.name; }).filter(function(x, i, a){ return a.indexOf(x) === i; }).slice(0, 6);
+  $('vk-sug').innerHTML = arr.map(function(p){ return '<button class="vk-chip sug" data-s="' + esc(p) + '">' + esc(p) + '</button>'; }).join('');
+}
+function fillFromFreezer(name){
+  var ex = state.stockItems.filter(function(s){ return s.storageLocation === 'freezer' && s.name.toLowerCase() === name.toLowerCase(); })[0];
+  if (ex && ex.unit) { S.unit = ex.unit; drawUnits(); }
+}
+async function saveItem(more){
+  var name = $('vk-name').value.trim(); if (!name) return;
+  var fr = $('vk-fr').value.trim() || frOf(name), date = $('vk-date').value || today(), e = S.edit, item;
+  if (e) {
+    item = e; item.name = name; item.name_fr = fr; item.quantity = S.qty; item.unit = S.unit; item.freezeDate = date; item.lastUpdated = Date.now();
+  } else {
+    item = { id: uid(), createdAt: Date.now(), name: name, name_fr: fr, quantity: S.qty, unit: S.unit, subtype: null, minQuantity: 0, targetQuantity: null,
+      categoryId: findCat('cat_frozen') ? 'cat_frozen' : null, expiryDate: null, storageLocation: 'freezer', freezeDate: date, fridgeDate: null, boxId: null,
+      shelfId: null, level: null, position: null, shopId: null, price: null, description: '', photos: [], lastUpdated: Date.now() };
+  }
+  await dbPut('stockItems', item);
+  if (!e) { state.stockItems.push(item); try { await rememberStockName(name); } catch(x) {} }
+  try { markSyncDirty(); } catch(x) {}
+  if (editor()) { try { editorTrackChange(e ? 'edit' : 'add', 'stock', item, e ? ['bijgewerkt'] : []); } catch(x) {} }
+  S.last = item;
+  if (more && !e) { toast('✓ ' + T('saved', { n:name })); S.edit = null; addView(); try { render(); } catch(x) {} return; }
+  S.edit = null; S.act = { type:'add', it:item };
+  S.msg = e ? T('changed', { n:name }) : T('added', { n:name, q:item.quantity, u:item.unit });
+  try { render(); } catch(x) {}
+  go('list');
+}
+
+/* ---------- eruit ---------- */
+function outView(){
+  setTitle(T('outq'), '<span class="vk-pill">❄️ ' + T('ttl') + '</span>');
+  root().innerHTML =
+    '<input class="vk-inp" id="vk-q" placeholder="' + esc(T('search')) + '" autocomplete="off">' +
+    '<div id="vk-dlist" style="margin-top:10px"></div>' +
+    '<div class="vk-panel" id="vk-panel" hidden>' +
+      '<b id="vk-dname"></b><div class="vk-lab" style="margin-top:8px">' + T('howmany') + '</div>' +
+      '<div class="vk-row"><div class="vk-step"><button data-a="dminus" aria-label="−">−</button><output id="vk-dqty">1</output><button data-a="dplus" aria-label="+">+</button></div><span id="vk-dunit" style="font:700 13px \'JetBrains Mono\',monospace;color:var(--text-dim)"></span><button class="vk-chip" id="vk-dall" data-a="dall">' + T('all') + '</button></div>' +
+      '<label class="vk-chk" id="vk-dshopw" hidden><input type="checkbox" id="vk-dshop" checked> ' + T('tolist') + '</label>' +
+      '<div class="vk-info" id="vk-dinfo"></div>' +
+    '</div>' +
+    '<div class="vk-bar"><button class="vk-btn p" id="vk-dgo" data-a="dgo" disabled>' + T('go') + '</button></div>';
+  S.sel = null; drawOut(); $('vk-q').oninput = drawOut;
+}
+function drawOut(){
+  var v = $('vk-q').value.trim().toLowerCase();
+  var items = frz().filter(function(i){ return !v || i.name.toLowerCase().indexOf(v) > -1 || (i.name_fr || '').toLowerCase().indexOf(v) > -1; })
+    .sort(function(a, b){ return a.name.localeCompare(b.name, 'nl'); });
+  $('vk-dlist').innerHTML = items.map(function(i){
+    return '<button class="vk-pick' + (S.sel === i ? ' on' : '') + '" data-p="' + esc(i.id) + '"><span>' + esc(i.name) + '</span><span style="font:700 13px \'JetBrains Mono\',monospace;color:var(--text-dim)">×' + i.quantity + ' ' + esc(i.unit || '') + '</span><small>' + esc(i.name_fr || '') + (i.freezeDate && i.freezeDate !== 'unknown' ? (i.name_fr ? ' · ' : '') + fmt(i.freezeDate) : '') + '</small></button>';
+  }).join('') || '<p class="vk-note">' + (v ? T('nores') : T('empty')) + '</p>';
+}
+function step(it){ return it && it.unit === 'Gr' ? 100 : 1; }
+function panel(){
+  var it = S.sel; if (!it) return;
+  $('vk-panel').hidden = false; $('vk-dname').textContent = it.name + (it.name_fr ? ' · ' + it.name_fr : '');
+  $('vk-dunit').textContent = (it.unit || '') + ' (' + it.quantity + ')'; $('vk-dqty').textContent = S.dq; $('vk-dgo').disabled = false;
+  var all = S.dq >= it.quantity; $('vk-dshopw').hidden = !all; $('vk-dall').classList.toggle('on', all);
+  $('vk-dinfo').textContent = all ? T('none', { n:it.name.toLowerCase() }) : T('left', { q:it.quantity - S.dq, u:it.unit || '', n:it.name.toLowerCase() });
+}
+async function takeOut(){
+  var it = S.sel; if (!it || editor()) return;
+  var r = Math.min(S.dq, it.quantity), gone = r >= it.quantity, shop = gone && $('vk-dshop') && $('vk-dshop').checked;
+  var keepRow = gone && (it.minQuantity || 0) > 0, deleted = false;
+  it.quantity -= r; it.lastUpdated = Date.now();
+  if (gone && !keepRow) { await dbDelete('stockItems', it.id); state.stockItems = state.stockItems.filter(function(x){ return x !== it; }); deleted = true; }
+  else await dbPut('stockItems', it);
+  try { markSyncDirty(); } catch(x) {}
+  if (shop && window.shopAddExternal) { try { window.shopAddExternal(it.name, r, it.unit || '', it.name_fr || frOf(it.name)); } catch(x) {} }
+  S.act = { type:'out', it:it, r:r, deleted:deleted, shop:!!(shop && window.shopAddExternal) }; S.last = null;
+  S.msg = T('outmsg', { q:r, u:it.unit || '', n:it.name }) + (shop ? T('onlist') : '');
+  try { render(); } catch(x) {}
+  go('list');
+}
+async function undoOut(){
+  var a = S.act; if (!a || a.type !== 'out') return;
+  a.it.quantity += a.r; a.it.lastUpdated = Date.now();
+  await dbPut('stockItems', a.it);
+  if (a.deleted && state.stockItems.indexOf(a.it) < 0) state.stockItems.push(a.it);
+  try { markSyncDirty(); } catch(x) {}
+  if (a.shop && window.shopUndoExternal) { try { window.shopUndoExternal(a.it.name, a.r); } catch(x) {} }
+  S.msg = T('back', { n:a.it.name }); S.act = null; try { render(); } catch(x) {}
+  listView();
+}
+
+/* ---------- lijst ---------- */
+function listView(){
+  var items = frz().sort(function(a, b){ return (b.freezeDate || '') < (a.freezeDate || '') ? -1 : 1; });
+  setTitle('❄️ ' + T('inlist'), '<span class="vk-pill">' + items.length + ' ' + T('n') + '</span>');
+  var ok = '';
+  if (S.msg) {
+    var btn = S.act && S.act.type === 'add' ? '<button data-a="edit">' + T('edit') + '</button>' : (S.act && S.act.type === 'out' ? '<button data-a="undoout">' + T('undoout') + '</button>' : '');
+    ok = '<div class="vk-ok"><span>✓</span><span>' + esc(S.msg) + '</span>' + btn + '</div>';
+  }
+  var ed = editor();
+  root().innerHTML = ok + items.map(function(i){
+    var days = i.freezeDate && i.freezeDate !== 'unknown' ? Math.round((Date.now() - new Date(i.freezeDate + 'T12:00:00').getTime()) / DAY) : null;
+    var lim = 0; try { lim = frzLimitDays(i); } catch(x) { lim = 180; }
+    var soon = days === null || (lim !== Infinity && days >= lim * 0.8);
+    var acts = (!ed && isNew(i)) ? '<span class="vk-acts"><button data-e="' + esc(i.id) + '">' + T('chg') + '</button><button data-d="' + esc(i.id) + '">🗑</button></span>' : '<span></span>';
+    return '<div class="vk-item' + (S.last === i ? ' new' : '') + '"><b>' + esc(i.name) + '</b><span class="q">×' + i.quantity + ' ' + esc(i.unit || '') + '</span>' +
+      '<small>' + esc(i.name_fr ? i.name_fr + ' · ' : '') + (days === null ? '—' : fmt(i.freezeDate) + ' (' + days + ' d)') + '</small>' + acts + (soon ? '<span class="vk-tl">' + T('soon') + '</span>' : '') + '</div>';
+  }).join('') +
+  '<button class="vk-ghost" data-a="menu">' + T('menu') + '</button>' +
+  '<button class="vk-ghost" id="vk-ha" data-a="ha">' + T('ha') + '</button>';
+}
+async function sendHa(){
+  var b = $('vk-ha'); if (!b) return;
+  try {
+    if (!haGetUrl('frz')) { toast(T('nocfg')); return; }
+    b.textContent = T('hasend'); await haSendFreezer(); b.textContent = T('hadone');
+  } catch(e) { b.textContent = T('hafail'); }
+}
+
+/* ---------- gedeeld ---------- */
+function click(ev){
+  var t = ev.target.closest('button, label, input'); if (!t || t.tagName === 'INPUT') return;
+  var a = t.getAttribute('data-a');
+  if (t.dataset.u) { S.unit = t.dataset.u; drawUnits(); return; }
+  if (t.dataset.s) { $('vk-name').value = t.dataset.s; S.frEdited = false; fillFromFreezer(t.dataset.s); upd(); return; }
+  if (t.dataset.p) { S.sel = frz().filter(function(i){ return i.id === t.dataset.p; })[0]; S.dq = Math.min(step(S.sel), S.sel.quantity); drawOut(); panel(); return; }
+  if (t.dataset.e) { S.edit = state.stockItems.filter(function(i){ return i.id === t.dataset.e; })[0]; S.msg = ''; go('add'); return; }
+  if (t.dataset.d) {
+    if (t.className.indexOf('sure') < 0) { t.classList.add('sure'); t.textContent = T('sure'); setTimeout(function(){ t.classList.remove('sure'); t.textContent = '🗑'; }, 2500); return; }
+    var it = state.stockItems.filter(function(i){ return i.id === t.dataset.d; })[0]; if (!it) return;
+    delItem(it); return;
+  }
+  switch (a) {
+    case 'in': S.edit = null; S.msg = ''; go('add'); break;
+    case 'out': if (!editor()) { S.msg = ''; go('out'); } break;
+    case 'list': S.msg = ''; S.act = null; S.last = null; go('list'); break;
+    case 'menu': go('menu'); break;
+    case 'minus': S.qty = Math.max(1, S.qty - (S.unit === 'Gr' ? 100 : 1)); $('vk-qty').textContent = S.qty; break;
+    case 'plus': S.qty += (S.unit === 'Gr' ? 100 : 1); $('vk-qty').textContent = S.qty; break;
+    case 'today': $('vk-date').value = today(); upd(); break;
+    case 'yday': $('vk-date').value = isoLocal(Date.now() - DAY); upd(); break;
+    case 'save': saveItem(false); break;
+    case 'again': saveItem(true); break;
+    case 'edit': if (S.act && S.act.type === 'add') { S.edit = S.act.it; go('add'); } break;
+    case 'undoout': undoOut(); break;
+    case 'dminus': if (S.sel) { S.dq = Math.max(1, S.dq - step(S.sel)); panel(); } break;
+    case 'dplus': if (S.sel) { S.dq = Math.min(S.sel.quantity, S.dq + step(S.sel)); panel(); } break;
+    case 'dall': if (S.sel) { S.dq = S.sel.quantity; panel(); } break;
+    case 'dgo': takeOut(); break;
+    case 'ha': sendHa(); break;
+  }
+}
+async function delItem(it){
+  await dbDelete('stockItems', it.id); state.stockItems = state.stockItems.filter(function(x){ return x !== it; });
+  try { markSyncDirty(); } catch(x) {}
+  if (S.last === it) S.last = null; S.act = null; S.msg = '';
+  toast('🗑 ' + T('del', { n:it.name })); try { render(); } catch(x) {} listView();
+}
+function open(){
+  var el = $('vk-screen'); var eb = $('editor-banner'); el.style.top = (eb && eb.offsetHeight ? eb.offsetHeight : 0) + 'px'; el.classList.add('open'); S.msg = ''; S.act = null; S.last = null; S.edit = null; go('menu');
+}
+function close(){
+  $('vk-screen').classList.remove('open');
+  if (/vrieskast/i.test(location.hash)) { try { history.replaceState(null, '', location.pathname + location.search); } catch(e) { location.hash = ''; } }
+}
+function home(){
+  var n = $('home-vk-n'); if (n) n.textContent = frz().length;
+  var s = $('home-vk-sub'); if (s) s.textContent = lang() === 'fr' ? 'Entrée / sortie' : 'Erin / eruit';
+  var l = $('lbl-vk-home'); if (l) l.textContent = T('ttl');
+}
+document.addEventListener('DOMContentLoaded', function(){
+  $('vk-back').addEventListener('click', function(){ if (S.scene === 'menu') close(); else go('menu'); });
+  $('vk-main').addEventListener('click', click);
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && $('vk-screen').classList.contains('open')) close(); });
+  window.addEventListener('hashchange', function(){ if (/vrieskast/i.test(location.hash)) open(); });
+  home();
+});
+window.vkOpen = open; window.vkClose = close; window.vkHomeUpdate = home;
 })();
 
 window.openShoppingList = function(){ shopOpen(); };
