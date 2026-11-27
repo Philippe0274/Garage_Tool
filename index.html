@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.8">
-<title>Garage Bavaylei 1.4.8</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.9">
+<title>Garage Bavaylei 1.4.9</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.4.8.webmanifest">
+<link rel="manifest" href="manifest-1.4.9.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.4.8';
+  const APP_CODE_VERSION = '1.4.9';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1458,7 +1458,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.4.8</span>
+      <span class="app-version">versie: 1.4.9</span>
     </div>
   </div>
   <div class="top-controls">
@@ -8335,7 +8335,7 @@ function updateEditorBanner() {
   if (countEl) {
     countEl.textContent = n > 0
       ? `${n} ${nl?'nog niet verstuurd':'pas encore envoyé(s)'}`
-      : (nl?'Editor modus — PC · v1.4.8':'Mode Éditeur — PC · v1.4.8');
+      : (nl?'Editor modus — PC · v1.4.9':'Mode Éditeur — PC · v1.4.9');
     countEl.style.color = n > 0 ? '#f0b429' : '#aaa';
   }
   if (pushBtn) pushBtn.style.display = n > 0 ? 'block' : 'none';
@@ -8358,7 +8358,7 @@ function initEditorMode() {
     banner.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="color:#f0b429;">💻</span>
-        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.4.8':'Mode Éditeur — PC · v1.4.8'}</span>
+        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.4.9':'Mode Éditeur — PC · v1.4.9'}</span>
       </div>
       <div style="display:flex;gap:8px;">
         <button onclick="editorSafetyModal()" id="editor-safe-btn" style="
@@ -9021,9 +9021,47 @@ async function haPost(kind, payload) {
     if (st) st.textContent = (nl ? 'Mislukt: ' : 'Échec : ') + detail;
     toast(nl ? 'Versturen mislukt' : "Échec de l'envoi");
   }
+  return ok;
 }
 function haSend() { return haPost('', haBuildList()); }
-function haSendFreezer() { return haPost('frz', haBuildFreezer()); }
+const FRZ_SNAP_KEY = 'frz_last_sent_v1';
+function frzSnapNow() {
+  const m = {};
+  state.stockItems.filter(i => (i.storageLocation === 'freezer' || i.storageLocation === 'freezer_kitchen') && (i.quantity || 0) > 0)
+    .forEach(i => { m[i.id] = { naam: i.name || '', naam_fr: i.name_fr || '', aantal: i.quantity || 0, eenheid: i.unit || '' }; });
+  return m;
+}
+function frzSnapLoad() { try { const r = localStorage.getItem(FRZ_SNAP_KEY); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
+function frzDiff(oldS, newS) {
+  const add = [], rem = [];
+  if (!oldS) return { add, rem, first: true };
+  Object.keys(newS).forEach(id => {
+    const n = newS[id], o = oldS[id];
+    if (!o) add.push({ naam: n.naam, naam_fr: n.naam_fr, aantal: n.aantal, eenheid: n.eenheid });
+    else if (o.eenheid !== n.eenheid) {
+      rem.push({ naam: o.naam, naam_fr: o.naam_fr, aantal: o.aantal, eenheid: o.eenheid });
+      add.push({ naam: n.naam, naam_fr: n.naam_fr, aantal: n.aantal, eenheid: n.eenheid });
+    }
+    else if (n.aantal > o.aantal) add.push({ naam: n.naam, naam_fr: n.naam_fr, aantal: n.aantal - o.aantal, eenheid: n.eenheid });
+    else if (n.aantal < o.aantal) rem.push({ naam: n.naam, naam_fr: n.naam_fr, aantal: o.aantal - n.aantal, eenheid: n.eenheid });
+  });
+  Object.keys(oldS).forEach(id => {
+    if (!newS[id]) { const o = oldS[id]; rem.push({ naam: o.naam, naam_fr: o.naam_fr, aantal: o.aantal, eenheid: o.eenheid }); }
+  });
+  return { add, rem, first: false };
+}
+async function haSendFreezer() {
+  const payload = haBuildFreezer();
+  const now = frzSnapNow();
+  const d = frzDiff(frzSnapLoad(), now);
+  payload.toegevoegd = d.add;
+  payload.verwijderd = d.rem;
+  payload.eerste_keer = d.first;
+  payload.wijziging_id = new Date().toISOString();
+  const ok = await haPost('frz', payload);
+  if (ok) { try { localStorage.setItem(FRZ_SNAP_KEY, JSON.stringify(now)); } catch (e) {} }
+  return ok;
+}
 window.addEventListener('load', () => { setTimeout(haUpdateUi, 600); });
 
 function buildExportObject() {
