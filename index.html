@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.4.9">
-<title>Garage Bavaylei 1.4.9</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.5.0">
+<title>Garage Bavaylei 1.5.0</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.4.9.webmanifest">
+<link rel="manifest" href="manifest-1.5.0.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.4.9';
+  const APP_CODE_VERSION = '1.5.0';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1402,6 +1402,13 @@
   .vk-lab{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);margin:14px 2px 6px}
   .vk-inp{width:100%;border:2px solid var(--border-strong);background:var(--surface);color:var(--text);border-radius:13px;padding:13px;font-weight:600;font-size:16px;font-family:inherit}
   .vk-inp:focus{outline:none;border-color:var(--accent)}
+  .vk-inrow{display:flex;gap:8px;align-items:stretch}
+  .vk-inrow .vk-inp{flex:1;min-width:0}
+  .vk-mic{flex:none;width:54px;border:2px solid var(--border-strong);background:var(--surface);color:var(--text);border-radius:13px;font-size:22px;line-height:1}
+  .vk-mic.on{background:#b3261e;border-color:#b3261e;color:#fff;animation:vkpulse 1s ease-in-out infinite}
+  .vk-mic.pulse{border-color:var(--accent);box-shadow:0 0 0 3px rgba(224,90,43,.25)}
+  @keyframes vkpulse{50%{opacity:.6}}
+  .vk-listen{margin-top:8px;border-radius:12px;padding:8px 12px;font-size:13.5px;font-weight:700;background:var(--warning-bg);color:var(--warning)}
   .vk-inp.fr{border-style:dashed;font-size:14px;padding:10px 12px}
   .vk-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .vk-chips{display:flex;gap:6px;flex-wrap:wrap}
@@ -1458,7 +1465,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.4.9</span>
+      <span class="app-version">versie: 1.5.0</span>
     </div>
   </div>
   <div class="top-controls">
@@ -8335,7 +8342,7 @@ function updateEditorBanner() {
   if (countEl) {
     countEl.textContent = n > 0
       ? `${n} ${nl?'nog niet verstuurd':'pas encore envoyé(s)'}`
-      : (nl?'Editor modus — PC · v1.4.9':'Mode Éditeur — PC · v1.4.9');
+      : (nl?'Editor modus — PC · v1.5.0':'Mode Éditeur — PC · v1.5.0');
     countEl.style.color = n > 0 ? '#f0b429' : '#aaa';
   }
   if (pushBtn) pushBtn.style.display = n > 0 ? 'block' : 'none';
@@ -8358,7 +8365,7 @@ function initEditorMode() {
     banner.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="color:#f0b429;">💻</span>
-        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.4.9':'Mode Éditeur — PC · v1.4.9'}</span>
+        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.5.0':'Mode Éditeur — PC · v1.5.0'}</span>
       </div>
       <div style="display:flex;gap:8px;">
         <button onclick="editorSafetyModal()" id="editor-safe-btn" style="
@@ -9993,7 +10000,7 @@ window.shopAddExternal = function(name, qty, unit, fr){ ld(); addItem(name, qty,
 })();
 
 // ============================================================================
-// VRIESKAST-TAG (1.4.7, 1.4.8: Portie + ¼ ½ ¾) — één NFC-tag op de vrieskast: Erin / Eruit / Lijst
+// VRIESKAST-TAG (1.4.7, 1.4.8: Portie + ¼ ½ ¾, 1.5.0: spraakinvoer) — één NFC-tag op de vrieskast: Erin / Eruit / Lijst
 // Opent via #vrieskast. Gebruikt de gewone voorraadopslag (storageLocation 'freezer').
 // ============================================================================
 (function(){
@@ -10011,6 +10018,7 @@ var X = {
   inlist:'In de vrieskast',chg:'✎ Wijzig',edit:'✎ Aanpassen',undoout:'↶ Terugzetten',sure:'Zeker?',soon:'⚠ Best snel opeten',
   added:'%n %q %u staat in de vrieskast',changed:'%n is gewijzigd',outmsg:'%q %u %n eruit',onlist:' · op de boodschappenlijst',back:'%n is teruggezet',del:'%n verwijderd',saved:'%n bewaard',
   menu:'‹ Terug naar het menu',ha:'🏠 Stuur vriezer naar HA',hasend:'⏳ Versturen…',hadone:'✓ Doorgestuurd naar HA',hafail:'❌ HA bereikt niet',nocfg:'⚠️ Geen HA-adres voor de vriezer ingesteld',
+  listen:'🎤 Luisteren… zeg wat je erin zet',listenfr:'🎤 Zeg nu de Franse naam…',nosr:'Spraak werkt hier niet. Typ de naam.',nothing:'🎤 Niets gehoord',denied:'🎤 Microfoon geblokkeerd. Sta hem toe in de browser.',tapfr:'Tik op 🎤 en zeg de Franse naam',mic:'Spreek',
   edonly:'Op de laptop kun je artikels toevoegen, maar de hoeveelheid niet wijzigen.',empty:'De vrieskast is leeg.'},
  fr:{ttl:'Congélateur',n:'articles',in_:'➕ Entrée',in_s:'Vous mettez quelque chose au congélateur',out:'➖ Sortie',out_s:'Vous sortez quelque chose du congélateur',list:'📋 Voir la liste',
   newt:'Nouveau au congélateur',edt:"Modifier l'article",what:'Que mettez-vous ?',ph:'p.ex. gambas',frl:'Nom français',frph:'rempli automatiquement',auto:'✓ automatique',qty:'Quantité',date:'Congelé le',today:"Aujourd'hui",yday:'Hier',
@@ -10021,6 +10029,7 @@ var X = {
   inlist:'Au congélateur',chg:'✎ Modifier',edit:'✎ Modifier',undoout:'↶ Remettre',sure:'Sûr ?',soon:'⚠ À consommer rapidement',
   added:'%n %q %u est au congélateur',changed:'%n est modifié',outmsg:'%q %u %n sorti',onlist:' · sur la liste de courses',back:'%n est remis',del:'%n supprimé',saved:'%n enregistré',
   menu:'‹ Retour au menu',ha:'🏠 Envoyer à HA',hasend:'⏳ Envoi…',hadone:'✓ Envoyé à HA',hafail:'❌ HA injoignable',nocfg:'⚠️ Pas d’adresse HA pour le congélateur',
+  listen:'🎤 J’écoute… dites ce que vous mettez',listenfr:'🎤 Dites maintenant le nom français…',nosr:'La voix ne fonctionne pas ici. Tapez le nom.',nothing:'🎤 Rien entendu',denied:'🎤 Micro bloqué. Autorisez-le dans le navigateur.',tapfr:'Touchez 🎤 et dites le nom français',mic:'Parler',
   edonly:'Sur le portable, vous pouvez ajouter des articles mais pas changer la quantité.',empty:'Le congélateur est vide.'}
 };
 function lang(){ return (typeof currentLang !== 'undefined' && currentLang === 'fr') ? 'fr' : 'nl'; }
@@ -10048,7 +10057,7 @@ var S = { scene:'menu', edit:null, frEdited:false, qty:1, unit:'Zak', date:'', s
 
 function root(){ return $('vk-main'); }
 function setTitle(t, pill){ $('vk-ttl').textContent = t; $('vk-pill').innerHTML = pill || ''; }
-function go(scene){ S.scene = scene; var f = { menu:menuView, add:addView, out:outView, list:listView }[scene]; f(); root().scrollTop = 0; }
+function go(scene){ stopRec(); S.scene = scene; var f = { menu:menuView, add:addView, out:outView, list:listView }[scene]; f(); root().scrollTop = 0; }
 
 function menuView(){
   var n = frz().length;
@@ -10067,10 +10076,11 @@ function addView(){
   setTitle(e ? T('edt') : T('newt'), '<span class="vk-pill">❄️ ' + T('ttl') + '</span>');
   root().innerHTML =
     '<div class="vk-lab">' + T('what') + '</div>' +
-    '<input class="vk-inp" id="vk-name" placeholder="' + esc(T('ph')) + '" autocomplete="off" enterkeyhint="next">' +
+    '<div class="vk-inrow"><input class="vk-inp" id="vk-name" placeholder="' + esc(T('ph')) + '" autocomplete="off" enterkeyhint="next"><button class="vk-mic" id="vk-mic-nl" data-a="micnl" aria-label="' + esc(T('mic')) + '">🎤</button></div>' +
+    '<div class="vk-listen" id="vk-listen" hidden></div>' +
     '<div class="vk-chips" id="vk-sug" style="margin-top:8px"></div>' +
     '<div class="vk-lab">' + T('frl') + ' <span class="vk-auto" id="vk-auto"></span></div>' +
-    '<input class="vk-inp fr" id="vk-fr" placeholder="' + esc(T('frph')) + '" autocomplete="off">' +
+    '<div class="vk-inrow"><input class="vk-inp fr" id="vk-fr" placeholder="' + esc(T('frph')) + '" autocomplete="off"><button class="vk-mic" id="vk-mic-fr" data-a="micfr" aria-label="' + esc(T('mic')) + '">🎤</button></div>' +
     '<div class="vk-lab">' + T('qty') + '</div>' +
     '<div class="vk-row"><div class="vk-step"><button data-a="minus" aria-label="−">−</button><output id="vk-qty">1</output><button data-a="plus" aria-label="+">+</button></div><div class="vk-chips" id="vk-frac"></div></div>' +
     '<div class="vk-chips" id="vk-units" style="margin-top:8px"></div>' +
@@ -10086,6 +10096,49 @@ function addView(){
   $('vk-date').onchange = upd;
   if (!e) setTimeout(function(){ try { $('vk-name').focus({ preventScroll:true }); } catch(x) {} }, 50);
 }
+/* ---------- spraak ---------- */
+var REC = null;
+function micPaint(which, msg){
+  ['nl', 'fr'].forEach(function(k){ var b = $('vk-mic-' + k); if (b) b.classList.toggle('on', which === k); });
+  var l = $('vk-listen'); if (l) { l.hidden = !msg; l.textContent = msg || ''; }
+}
+function stopRec(){ try { if (REC) { var r = REC; REC = null; r.onend = null; r.onerror = null; r.abort(); } } catch (e) {} micPaint(null, ''); }
+function listen(which, langCode, msg, onText, onFail){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast(T('nosr')); if (onFail) onFail('unsupported'); return; }
+  stopRec();
+  var r, got = false, err = '';
+  try { r = new SR(); } catch (e) { toast(T('nosr')); if (onFail) onFail('unsupported'); return; }
+  REC = r; r.lang = langCode; r.continuous = false; r.interimResults = false; r.maxAlternatives = 1;
+  r.onresult = function(e){
+    var t = ((e.results && e.results[0] && e.results[0][0] && e.results[0][0].transcript) || '').trim().replace(/[.,;:!?]+$/, '');
+    if (t) { got = true; onText(t); }
+  };
+  r.onerror = function(e){ err = (e && e.error) || 'error'; };
+  r.onend = function(){
+    if (REC === r) REC = null;
+    micPaint(null, '');
+    if (!got) { toast(err === 'not-allowed' || err === 'service-not-allowed' ? T('denied') : T('nothing')); if (onFail) onFail(err || 'none'); }
+  };
+  try { micPaint(which, msg); r.start(); }
+  catch (x) { REC = null; micPaint(null, ''); if (onFail) onFail('start'); }
+}
+function micFr(auto){
+  listen('fr', 'fr-FR', T('listenfr'), function(t){
+    $('vk-fr').value = t; S.frEdited = true; $('vk-auto').textContent = '🎤';
+    $('vk-mic-fr').classList.remove('pulse');
+  }, function(){
+    var b = $('vk-mic-fr'); if (b && auto) { b.classList.add('pulse'); micPaint(null, T('tapfr')); }
+  });
+}
+function micNl(){
+  listen('nl', 'nl-NL', T('listen'), function(t){
+    t = t.charAt(0).toUpperCase() + t.slice(1);
+    $('vk-name').value = t; S.frEdited = false; fillFromFreezer(t); upd();
+    if (!$('vk-fr').value.trim()) setTimeout(function(){ if (S.scene === 'add' && $('vk-fr') && !$('vk-fr').value.trim()) micFr(true); }, 450);
+  });
+}
+
 function drawQty(){
   if (!fracUnit(S.unit)) S.qty = Math.max(1, Math.round(S.qty));
   if (S.qty < 0.25) S.qty = 1;
@@ -10250,6 +10303,8 @@ function click(ev){
     case 'menu': go('menu'); break;
     case 'minus': { var dn = S.unit === 'Gr' ? 100 : 1, nq = S.qty - dn; if (nq >= (fracUnit(S.unit) ? 0.25 : 1)) { S.qty = nq; drawQty(); } break; }
     case 'plus': S.qty += (S.unit === 'Gr' ? 100 : 1); drawQty(); break;
+    case 'micnl': micNl(); break;
+    case 'micfr': micFr(false); break;
     case 'today': $('vk-date').value = today(); upd(); break;
     case 'yday': $('vk-date').value = isoLocal(Date.now() - DAY); upd(); break;
     case 'save': saveItem(false); break;
@@ -10274,6 +10329,7 @@ function open(){
   var el = $('vk-screen'); var eb = $('editor-banner'); el.style.top = (eb && eb.offsetHeight ? eb.offsetHeight : 0) + 'px'; el.classList.add('open'); S.msg = ''; S.act = null; S.last = null; S.edit = null; go('menu');
 }
 function close(){
+  stopRec();
   $('vk-screen').classList.remove('open');
   if (/vrieskast/i.test(location.hash)) { try { history.replaceState(null, '', location.pathname + location.search); } catch(e) { location.hash = ''; } }
 }
