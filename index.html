@@ -9,12 +9,12 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.5.0">
-<title>Garage Bavaylei 1.5.0</title>
+<meta name="apple-mobile-web-app-title" content="Garage Bavaylei 1.5.1">
+<title>Garage Bavaylei 1.5.1</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest-1.5.0.webmanifest">
+<link rel="manifest" href="manifest-1.5.1.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const APP_CODE_VERSION = '1.5.0';
+  const APP_CODE_VERSION = '1.5.1';
   window.GARAGE_APP_CODE_VERSION = APP_CODE_VERSION;
 
   async function garageClearRuntimeCache() {
@@ -1465,7 +1465,7 @@
     <div class="logo-stack">
       <span class="logo-text">GARAGE<span>/</span>ORG</span>
       <span class="app-address">De Bavaylei 104B 02/2, 1800 Vilvoorde</span>
-      <span class="app-version">versie: 1.5.0</span>
+      <span class="app-version">versie: 1.5.1</span>
     </div>
   </div>
   <div class="top-controls">
@@ -3499,7 +3499,10 @@ const DEFAULT_UNITS = [
   { id: 'u_gr', label: 'Gr', order: 26 },
   { id: 'u_pak', label: 'Pak', order: 27 },
   { id: 'u_doos', label: 'Doos', order: 28 },
-  { id: 'u_portie', label: 'Portie', order: 29 }
+  { id: 'u_portie', label: 'Portie', order: 29 },
+  { id: 'u_zak', label: 'Zak', order: 30 },
+  { id: 'u_bak', label: 'Bak', order: 31 },
+  { id: 'u_l', label: 'L', order: 32 }
 ];
 
 const DEFAULT_SHOPS = [
@@ -5431,7 +5434,7 @@ function openStockEditor(stockId, preselectShelfId, preselectLevel, preselectPos
   const currentUnit = item?.unit || '';
   const unitOptions = `<option value="">—</option>` + state.units.map(u =>
     `<option value="${escapeHtml(u.label)}" ${u.label===currentUnit?'selected':''}>${escapeHtml(u.label)}</option>`
-  ).join('') + `<option value="__new__">${t('add_new_unit')}</option>`;
+  ).join('') + ((currentUnit && !state.units.some(u => u.label === currentUnit)) ? `<option value="${escapeHtml(currentUnit)}" selected>${escapeHtml(currentUnit)}</option>` : '') + `<option value="__new__">${t('add_new_unit')}</option>`;
 
   openModal(item ? `🥫 ${escapeHtml(item.name)}` : t('add_stock_item_title'), `
     ${nameDatalist}
@@ -8342,7 +8345,7 @@ function updateEditorBanner() {
   if (countEl) {
     countEl.textContent = n > 0
       ? `${n} ${nl?'nog niet verstuurd':'pas encore envoyé(s)'}`
-      : (nl?'Editor modus — PC · v1.5.0':'Mode Éditeur — PC · v1.5.0');
+      : (nl?'Editor modus — PC · v1.5.1':'Mode Éditeur — PC · v1.5.1');
     countEl.style.color = n > 0 ? '#f0b429' : '#aaa';
   }
   if (pushBtn) pushBtn.style.display = n > 0 ? 'block' : 'none';
@@ -8365,7 +8368,7 @@ function initEditorMode() {
     banner.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="color:#f0b429;">💻</span>
-        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.5.0':'Mode Éditeur — PC · v1.5.0'}</span>
+        <span id="editor-banner-count" style="color:#aaa;">${nl?'Editor modus — PC · v1.5.1':'Mode Éditeur — PC · v1.5.1'}</span>
       </div>
       <div style="display:flex;gap:8px;">
         <button onclick="editorSafetyModal()" id="editor-safe-btn" style="
@@ -10000,12 +10003,12 @@ window.shopAddExternal = function(name, qty, unit, fr){ ld(); addItem(name, qty,
 })();
 
 // ============================================================================
-// VRIESKAST-TAG (1.4.7, 1.4.8: Portie + ¼ ½ ¾, 1.5.0: spraakinvoer) — één NFC-tag op de vrieskast: Erin / Eruit / Lijst
+// VRIESKAST-TAG (1.4.7, 1.4.8: Portie + ¼ ½ ¾, 1.5.0: spraakinvoer, 1.5.1: eenheid L) — één NFC-tag op de vrieskast: Erin / Eruit / Lijst
 // Opent via #vrieskast. Gebruikt de gewone voorraadopslag (storageLocation 'freezer').
 // ============================================================================
 (function(){
 'use strict';
-var DAY = 86400000, UNITS = ['Zak','Kg','Gr','Stuk','Bak','Portie'];
+var DAY = 86400000, UNITS = ['Zak','Kg','Gr','Stuk','Bak','Portie','L'];
 function fracUnit(u){ return u !== 'Kg' && u !== 'Gr'; }
 function qf(n){ return fmtQty(n); }
 var X = {
